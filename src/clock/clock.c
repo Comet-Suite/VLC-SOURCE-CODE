@@ -386,7 +386,8 @@ vlc_clock_get_context(vlc_clock_t *clock, vlc_tick_t system_now, vlc_tick_t ts,
     return ctx;
 }
 
-static void vlc_clock_main_reset(vlc_clock_main_t *main_clock)
+static void vlc_clock_main_reset(vlc_clock_main_t *main_clock,
+                                 bool switch_contexts)
 {
     struct vlc_clock_context *ctx = main_clock->context;
 
@@ -396,6 +397,27 @@ static void vlc_clock_main_reset(vlc_clock_main_t *main_clock)
     main_clock->wait_sync_ref_priority = UINT_MAX;
     main_clock->pause_date = VLC_TICK_INVALID;
     vlc_cond_broadcast(&main_clock->cond);
+
+    if (!switch_contexts)
+        return;
+
+    struct vlc_clock_context *ctx_it;
+    vlc_list_foreach(ctx_it, &main_clock->prev_contexts, node)
+    {
+        while (!vlc_list_is_empty(&ctx_it->using_clocks))
+        {
+            vlc_clock_t *clock_it =
+                vlc_list_first_entry_or_null(&ctx_it->using_clocks,
+                                             vlc_clock_t, node);
+            bool last = clock_it->node.next == &ctx_it->using_clocks;
+            vlc_clock_switch_context(clock_it, ctx);
+            if (last)
+            {
+                /* ctx_it has been freed, do not read it again */
+                break;
+            }
+        }
+    }
 }
 
 static inline void vlc_clock_on_update(vlc_clock_t *clock,
@@ -995,7 +1017,7 @@ void vlc_clock_main_Reset(vlc_clock_main_t *main_clock)
 {
     vlc_mutex_assert(&main_clock->lock);
 
-    vlc_clock_main_reset(main_clock);
+    vlc_clock_main_reset(main_clock, true);
 
     main_clock->first_pcr =
         clock_point_Create(VLC_TICK_INVALID, VLC_TICK_INVALID);
@@ -1023,7 +1045,7 @@ void vlc_clock_main_SetFirstPcr(vlc_clock_main_t *main_clock,
         vlc_warning(main_clock->logger, "new clock context(%u) @%"PRId64,
                     ctx->clock_id, ts);
     }
-    vlc_clock_main_reset(main_clock);
+    vlc_clock_main_reset(main_clock, false);
 
     main_clock->first_pcr = clock_point_Create(system_now, ts);
     main_clock->wait_sync_ref_priority = UINT_MAX;
@@ -1373,7 +1395,7 @@ void vlc_clock_Delete(vlc_clock_t *clock)
         /* Don't reset the main clock if the master has been overridden by the
          * input master */
         if (main_clock->input_master != NULL)
-            vlc_clock_main_reset(main_clock);
+            vlc_clock_main_reset(main_clock, false);
         main_clock->master = NULL;
     }
     main_clock->rc--;
