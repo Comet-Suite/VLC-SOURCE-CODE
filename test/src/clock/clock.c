@@ -775,13 +775,24 @@ static void contexts_run(const struct clock_ctx *ctx)
 {
     vlc_tick_t converted;
     vlc_tick_t system = ctx->system_start;
-    vlc_tick_t stream_context0 = 1;
+    vlc_tick_t stream_context0 = ctx->stream_start;
     uint32_t clock_id;
 
     vlc_clock_main_Lock(ctx->mainclk);
 
-    /* Initial SetFirstPcr, that will initialise the default and main context */
-    vlc_clock_main_SetFirstPcr(ctx->mainclk, system, stream_context0);
+    /* We create another clock to track points from the first created context
+     * after the second context is being created. See below. */
+    char *track2_name;
+    int ret = asprintf(&track2_name, "%s/video2", ctx->scenario->name);
+    assert(ret != -1);
+    vlc_clock_t *track2 = vlc_clock_main_CreateSlave(
+        ctx->mainclk, track2_name, VIDEO_ES,
+        NULL, NULL);
+    assert(track2 != NULL);
+
+    // NOTE: the input clock is already started by the scenario
+    vlc_clock_Start(ctx->slave, system, stream_context0);
+    vlc_clock_Start(track2, system, stream_context0);
 
     /* Check that the converted point is valid */
     converted = vlc_clock_ConvertToSystem(ctx->slave, system, stream_context0,
@@ -793,11 +804,17 @@ static void contexts_run(const struct clock_ctx *ctx)
     assert(converted == system);
     vlc_clock_Update(ctx->slave, system, stream_context0, 1.0f);
 
-    /* Discontinuity from 1us to 30 sec */
+    /* Discontinuity of 30 sec */
     vlc_tick_t system_context0 = system;
-    vlc_tick_t stream_context1 = VLC_TICK_FROM_SEC(30);
+    vlc_tick_t stream_context1 = stream_context0 + VLC_TICK_FROM_SEC(30);
     system += VLC_TICK_FROM_MS(100);
-    vlc_clock_main_SetFirstPcr(ctx->mainclk, system, stream_context1);
+    vlc_clock_Reset(ctx->input);
+    vlc_clock_Update(ctx->input, system, stream_context1, 1.0f);
+    vlc_clock_Start(ctx->input, system, stream_context1);
+
+    /* We detect the discontinuity on the first track, acknowledge the new context. */
+    vlc_clock_Reset(ctx->slave);
+    vlc_clock_Start(ctx->slave, system, stream_context1);
 
     /* Check that we can use the new context (or new origin) */
     converted = vlc_clock_ConvertToSystem(ctx->slave, system, stream_context1,
@@ -809,7 +826,7 @@ static void contexts_run(const struct clock_ctx *ctx)
 
     /* Check that we can still use the old context when converting a point
      * closer to the original context */
-    converted = vlc_clock_ConvertToSystem(ctx->slave, system,
+    converted = vlc_clock_ConvertToSystem(track2, system,
                                           VLC_TICK_FROM_MS(10) + stream_context0,
                                           1.0f, &clock_id);
     fprintf(stderr, "%s:%d: clock_id=%" PRIu32 " == 0\n", __func__, __LINE__, clock_id);
@@ -824,7 +841,12 @@ static void contexts_run(const struct clock_ctx *ctx)
     /* Discontinuity back to 1us */
     system += VLC_TICK_FROM_MS(100);
     vlc_tick_t stream_context2 = 1;
-    vlc_clock_main_SetFirstPcr(ctx->mainclk, system, stream_context2);
+    vlc_clock_Reset(ctx->input);
+    vlc_clock_Update(ctx->input, system, stream_context2, 1.0f);
+    vlc_clock_Start(ctx->input, system, stream_context2);
+
+    vlc_clock_Reset(ctx->slave);
+    vlc_clock_Start(ctx->slave, system, stream_context2);
 
     /* Check that we can use the new context (or new origin) */
     converted = vlc_clock_ConvertToSystem(ctx->slave, system, stream_context2,
@@ -849,6 +871,9 @@ static void contexts_run(const struct clock_ctx *ctx)
     assert(converted != system_context0);
 
     vlc_clock_main_Unlock(ctx->mainclk);
+
+    vlc_clock_Delete(track2);
+    free(track2_name);
 }
 
 #define VLC_TICK_12H VLC_TICK_FROM_SEC(12 * 60 * 60)
