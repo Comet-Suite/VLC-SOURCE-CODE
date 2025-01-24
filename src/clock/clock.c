@@ -694,6 +694,10 @@ vlc_clock_monotonic_to_system(vlc_clock_t *clock, struct vlc_clock_context *ctx,
                               vlc_tick_t now, vlc_tick_t ts, double rate)
 {
     vlc_clock_main_t *main_clock = clock->owner;
+    assert(ctx != NULL);
+
+    if (ctx->wait_sync_ref.system == VLC_TICK_INVALID && ctx->start_time.system != VLC_TICK_INVALID)
+        return (ts - ctx->start_time.stream) / rate + ctx->start_time.system;
 
     if (clock->priority < main_clock->wait_sync_ref_priority
      && ctx == main_clock->context
