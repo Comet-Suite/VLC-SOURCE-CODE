@@ -682,7 +682,6 @@ static void vlc_clock_input_reset(vlc_clock_t *clock)
         return;
     }
 
-    assert(context->start_time.stream != VLC_TICK_INVALID);
     vlc_list_append(&context->node, &main_clock->prev_contexts);
     main_clock->context = context_new();
 
