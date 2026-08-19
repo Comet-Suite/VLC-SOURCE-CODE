@@ -54,6 +54,10 @@ Flickable {
         if (idx < 0)
             return
 
+        // Force an early layout to prevent snapping to stale positions: the
+        // Column would only place the lines of a new lyrics track next frame
+        lyricsColumn.forceLayout()
+
         const item = lyricsRepeater.itemAt(idx)
         if (!item)
             return
