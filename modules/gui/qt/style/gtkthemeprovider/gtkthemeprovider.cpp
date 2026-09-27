@@ -285,6 +285,12 @@ static int updatePalette(vlc_qt_theme_provider_t* obj)
         setGtkColorSetBg(obj, CS, VQTC_NAME_PRIMARY, TOOLBUTTON_SELECTOR);
         setGtkColorSetFg(obj, CS, VQTC_NAME_PRIMARY, TOOLBUTTON_SELECTOR);
 
+        GdkRGBA toolButtonHover = isDark ? GdkRGBA{1.0, 1.0, 1.0, 0.08}
+                                         : GdkRGBA{0.0, 0.0, 0.0, 0.08};
+        GdkRGBA toolButtonPressed{0.0, 0.0, 0.0, 0.15};
+        setGtkColor(obj, CS, VQTC_SECTION_BG, VQTC_NAME_PRIMARY, VQTC_STATE_HOVERED, toolButtonHover);
+        setGtkColor(obj, CS, VQTC_SECTION_BG, VQTC_NAME_PRIMARY, VQTC_STATE_PRESSED, toolButtonPressed);
+
         GdkRGBA toolbuttonbg = GetBgColor(TOOLBUTTON_SELECTOR);
         toolbuttonbg.alpha = 0.0;
         setGtkColor(obj, CS, VQTC_SECTION_BG, VQTC_NAME_PRIMARY, VQTC_STATE_NORMAL, toolbuttonbg);
