@@ -1416,13 +1416,33 @@ static void EsOutProgramChangePause(es_out_sys_t *p_sys, bool b_paused, vlc_tick
 {
     es_out_pgrm_t *pgrm;
 
+    /* We need to pause the input clock, then the vlc_clock, and only
+     * unpause in the reverse order, so that the following operation are
+     * properly ordered:
+     *  - input clock is paused, the date is registered
+     *  - vlc_clock is paused, the date is registered
+     *  - ...
+     *  - vlc_clock is unpaused, the proper offsets are applied
+     *  - input_clock in unpaused, a new point is emitted right after
+     *
+     * Without this ordering for unpausing, the pause duration is accounted
+     * twice by the vlc_clock since the input clock point is registered while
+     * pause is in place in the vlc_clock, so it also gets the offset.
+     *
+     * Technically, pausing the input clock after has no harmful
+     * consequences currently, but is still semantically more correct.
+     * */
     vlc_list_foreach(pgrm, &p_sys->programs, node)
     {
-        input_clock_ChangePause(pgrm->p_input_clock, b_paused, i_date);
+        if (b_paused)
+            input_clock_ChangePause(pgrm->p_input_clock, b_paused, i_date);
 
         vlc_clock_main_Lock(pgrm->clocks.main);
         vlc_clock_main_ChangePause(pgrm->clocks.main, i_date, b_paused);
         vlc_clock_main_Unlock(pgrm->clocks.main);
+
+        if (!b_paused)
+            input_clock_ChangePause(pgrm->p_input_clock, b_paused, i_date);
     }
 }
 
