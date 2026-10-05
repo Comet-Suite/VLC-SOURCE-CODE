@@ -383,6 +383,7 @@ libqt_plugin_la_SOURCES = \
 	widgets/native/searchlineedit.cpp widgets/native/searchlineedit.hpp \
 	widgets/native/viewblockingrectangle.cpp widgets/native/viewblockingrectangle.hpp \
 	widgets/native/backdropblenditem.cpp widgets/native/backdropblenditem.hpp \
+	widgets/native/roundedcornermask.cpp widgets/native/roundedcornermask.hpp \
 	widgets/native/doubleclickignoringitem.hpp
 
 # Meta-object compilation
@@ -540,7 +541,8 @@ nodist_libqt_plugin_la_SOURCES = \
 	widgets/native/mlfolderseditor.moc.cpp \
 	widgets/native/searchlineedit.moc.cpp \
 	widgets/native/viewblockingrectangle.moc.cpp \
-	widgets/native/backdropblenditem.moc.cpp
+	widgets/native/backdropblenditem.moc.cpp \
+	widgets/native/roundedcornermask.moc.cpp
 
 nodist_libqt_plugin_la_SOURCES += \
 	dialogs/extended/ui_equalizer.h \
@@ -1474,7 +1476,8 @@ libqt_plugin_la_SHADER_FRAG = shaders/FadingEdge.frag \
                               shaders/VoronoiSnow.frag \
                               shaders/DualKawaseBlur_upsample.frag \
                               shaders/DualKawaseBlur_downsample.frag \
-                              shaders/DualKawaseBlur_upsample_postprocess.frag
+                              shaders/DualKawaseBlur_upsample_postprocess.frag \
+                              shaders/RoundedCornerMask.frag
 
 libqt_plugin_la_SHADER_VERT = shaders/FadingEdgeX.vert \
                               shaders/FadingEdgeY.vert \
