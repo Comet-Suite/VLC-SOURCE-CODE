@@ -852,7 +852,7 @@ vlc_clock_output_start(vlc_clock_t *clock,
         return;
 
     /* Attach to the correct context in case of reset */
-    clock->context = context;
+    vlc_clock_switch_context(clock, context);
 
     if (clock->priority >= main_clock->wait_sync_ref_priority)
         return;
