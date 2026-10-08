@@ -322,7 +322,7 @@ vlc_clock_switch_context(vlc_clock_t *clock, struct vlc_clock_context *ctx)
     vlc_clock_attach_context(clock, ctx);
 
     if (main_clock->logger != NULL && clock->track_str_id != NULL)
-        vlc_warning(main_clock->logger, "clock(%s): using clock context(%u)",
+        vlc_debug(main_clock->logger, "clock(%s): using clock context(%u)",
                     clock->track_str_id, ctx->clock_id);
 }
 
