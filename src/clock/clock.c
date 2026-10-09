@@ -318,6 +318,9 @@ vlc_clock_switch_context(vlc_clock_t *clock, struct vlc_clock_context *ctx)
 {
     vlc_clock_main_t *main_clock = clock->owner;
 
+    if (clock->context == ctx)
+        return;
+
     vlc_clock_remove_current_context(clock);
     vlc_clock_attach_context(clock, ctx);
 
