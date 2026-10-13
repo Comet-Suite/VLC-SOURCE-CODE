@@ -864,6 +864,9 @@ vlc_clock_output_start(vlc_clock_t *clock,
     vlc_clock_main_t *main_clock = clock->owner;
     vlc_mutex_assert(&main_clock->lock);
 
+    if (main_clock->paused && main_clock->pause_date != VLC_TICK_INVALID)
+        start_date = main_clock->pause_date;
+
     if (clock->last_conversion == VLC_TICK_INVALID)
         clock->last_conversion = start_date;
 
