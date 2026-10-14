@@ -51,8 +51,7 @@ FocusScope {
     }
 
     // Only applicable in video mode:
-    property bool displayFadeRectangles: !_controlsUnderVideo && (height > (implicitFadeRectangleHeight * 3))
-    property real implicitFadeRectangleHeight: VLCStyle.dp(206, VLCStyle.scale)
+    property bool displayFadeRectangles: !MainCtx.pinVideoControls && MainCtx.hasEmbededVideo
 
     // Private
 
@@ -302,8 +301,22 @@ FocusScope {
                     }
                 }
 
-                component FadeRectangle : Rectangle {
-                    implicitHeight: rootPlayer.implicitFadeRectangleHeight
+                Rectangle {
+                    anchors.fill: parent
+
+                    visible: rootPlayer.displayFadeRectangles && playerToolbarVisibilityFSM.isVisible
+
+                    opacity: topBar.opacity //topbar and controlbar should have the same opacity
+
+                    gradient: Gradient {
+                        GradientStop { position: 0; color: Qt.rgba(0, 0, 0, .8) }
+                        GradientStop { position: topBar.height  / videoSurface.height; color: Qt.rgba(0, 0, 0, .2) }
+                        GradientStop { position: topBar.height * 1.6 / videoSurface.height; color: Qt.rgba(0, 0, 0, 0) } //transparent
+                        GradientStop { position: 1 - (controlBar.height * 1.3  / videoSurface.height); color: Qt.rgba(0, 0, 0, 0) } //transparent
+                        GradientStop { position: 1 - ((controlBar.height - controlBar.sliderY - VLCStyle.margin_xxsmall) / videoSurface.height); color: Qt.rgba(0, 0, 0, .7) }
+                        GradientStop { position: 1 - (controlBar.height * 0.3 / videoSurface.height) ; color: Qt.rgba(0, 0, 0, .8) }
+                        GradientStop { position: 1; color: Qt.rgba(0, 0, 0, .9) }
+                    }
 
                     SGManipulator {
                         // The rectangle is the bottom-most item in the interface,
@@ -312,36 +325,6 @@ FocusScope {
                         // blending, we are using `SGManipulator`:
                         blending: false
                     }
-                }
-
-                FadeRectangle {
-                    anchors.top: parent.top
-                    anchors.left: parent.left
-                    anchors.right: parent.right
-
-                    opacity: topBar.opacity
-                    visible: rootPlayer.displayFadeRectangles && !topBarAcrylicBg.visible
-
-                    gradient: Gradient {
-                        GradientStop { position: 0; color: Qt.rgba(0, 0, 0, .8) }
-                        GradientStop { position: 1; color: "transparent" }
-                    }
-                }
-
-                FadeRectangle {
-                    anchors.bottom: parent.bottom
-                    anchors.left: parent.left
-                    anchors.right: parent.right
-
-                    opacity: controlBar.opacity
-
-                    gradient: Gradient {
-                        GradientStop { position: 0; color: "transparent" }
-                        GradientStop { position: .64; color: Qt.rgba(0, 0, 0, .8) }
-                        GradientStop { position: 1; color: "black" }
-                    }
-
-                    visible: rootPlayer.displayFadeRectangles && !(controlBar.background && controlBar.background.visible)
                 }
             }
         }
@@ -1014,9 +997,7 @@ FocusScope {
             anchors.fill: parent
 
             opacity: {
-                if (MainCtx.hasEmbededVideo && !MainCtx.pinVideoControls && !rootPlayer.displayFadeRectangles) {
-                    return 0.6
-                } else if (MainCtx.intfMainWindow.visibility === Window.FullScreen && MainCtx.hasEmbededVideo) {
+                if (MainCtx.intfMainWindow.visibility === Window.FullScreen && MainCtx.hasEmbededVideo) {
                     return MainCtx.pinOpacity
                 } else {
                     return 1.0
@@ -1025,7 +1006,7 @@ FocusScope {
 
             tintColor: windowTheme.bg.primary
 
-            visible: MainCtx.pinVideoControls || (MainCtx.hasEmbededVideo && !rootPlayer.displayFadeRectangles)
+            visible: MainCtx.pinVideoControls
         }
     }
 
@@ -1336,12 +1317,10 @@ FocusScope {
         background: Rectangle {
             id: controlBarBackground
 
-            visible: !MainCtx.hasEmbededVideo || MainCtx.pinVideoControls || !rootPlayer.displayFadeRectangles
+            visible: !MainCtx.hasEmbededVideo || MainCtx.pinVideoControls
 
             opacity: {
-                if (MainCtx.hasEmbededVideo && !MainCtx.pinVideoControls && !rootPlayer.displayFadeRectangles) {
-                    return 0.6
-                } else if ((Window.visibility === Window.FullScreen) && MainCtx.hasEmbededVideo) {
+                if ((Window.visibility === Window.FullScreen) && MainCtx.hasEmbededVideo) {
                     return MainCtx.pinOpacity
                 } else if (AcrylicController.enabled || !MainCtx.hasEmbededVideo) {
                     return 0.7
