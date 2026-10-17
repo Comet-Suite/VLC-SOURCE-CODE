@@ -317,7 +317,8 @@ void WindowManager::maximize( TopWindow &rWindow )
                                rWindow.getTop() + rWindow.getHeight() );
 
     // maximise the window within the current screen (multiple screens allowed)
-    SkinsRect workArea = OSFactory::instance( getIntf() )->getWorkArea();
+    OSFactory *pFactory = OSFactory::instance( getIntf() );
+    SkinsRect workArea = pFactory->getWorkArea( rWindow.getOSWindow() );
 
     // Move the window
     startMove( rWindow );

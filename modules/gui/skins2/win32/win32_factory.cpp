@@ -456,6 +456,18 @@ SkinsRect Win32Factory::getWorkArea() const
     return  SkinsRect( r.left, r.top, r.right, r.bottom );
 }
 
+SkinsRect Win32Factory::getWorkArea( OSWindow *pWindow ) const
+{
+    Win32Window *pWin = (Win32Window*)pWindow;
+    HMONITOR hmon = MonitorFromWindow( pWin->getHandle(),
+                                       MONITOR_DEFAULTTONEAREST );
+    MONITORINFO mi;
+    mi.cbSize = sizeof( MONITORINFO );
+    if( hmon && GetMonitorInfo( hmon, &mi ) )
+        return SkinsRect( mi.rcWork.left, mi.rcWork.top,
+                          mi.rcWork.right, mi.rcWork.bottom );
+    return getWorkArea();
+}
 
 void Win32Factory::getMousePos( int &rXPos, int &rYPos ) const
 {
