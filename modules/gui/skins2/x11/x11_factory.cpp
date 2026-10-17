@@ -364,12 +364,78 @@ SkinsRect X11Factory::getWorkArea() const
 }
 
 
+SkinsRect X11Factory::getWorkArea( OSWindow *pWindow ) const
+{
+    Display *pDpy = m_pDisplay->getDisplay();
+    Window root = DefaultRootWindow( pDpy );
+
+    int monX = 0, monY = 0;
+    int monW = getScreenWidth(), monH = getScreenHeight();
+    
+    // Reusing existing monitor detection instead of Xinerama again
+    getMonitorInfo( pWindow, &monX, &monY, &monW, &monH );
+
+    int workLeft   = monX;
+    int workTop    = monY;
+    int workRight  = monX + monW;
+    int workBottom = monY + monH;
+
+    Atom strutPartial = XInternAtom( pDpy, "_NET_WM_STRUT_PARTIAL", True );
+    Atom clientList   = XInternAtom( pDpy, "_NET_CLIENT_LIST", True );
+    int scrW = getScreenWidth();
+    int scrH = getScreenHeight();
+
+    if( strutPartial != None && clientList != None )
+    {
+        Atom type;
+        int fmt;
+        unsigned long n, after;
+        unsigned char *data = NULL;
+
+        if( XGetWindowProperty( pDpy, root, clientList, 0, (~0L), False,
+                                XA_WINDOW, &type, &fmt, &n, &after, &data ) == Success )
+        {
+            for( unsigned long i = 0; i < n; i++ )
+            {
+                Window w = ((Window*)data)[i];
+                Atom t2; int f2; unsigned long n2, a2;
+                unsigned char *sd = NULL;
+
+                if( XGetWindowProperty( pDpy, w, strutPartial, 0, 12, False,
+                                        XA_CARDINAL, &t2, &f2, &n2, &a2, &sd ) == Success )
+                {
+                    if( sd && f2 == 32 && n2 == 12 )
+                    {
+                        long *s = (long*)sd;
+                        if( s[0] > 0 && (int)s[0] > workLeft &&
+                            (int)s[4] < workBottom && (int)s[5] > workTop )
+                            workLeft = s[0];
+                        if( s[1] > 0 && scrW - (int)s[1] < workRight &&
+                            (int)s[6] < workBottom && (int)s[7] > workTop )
+                            workRight = scrW - s[1];
+                        if( s[2] > 0 && (int)s[2] > workTop &&
+                            (int)s[8] < workRight && (int)s[9] > workLeft )
+                            workTop = s[2];
+                        if( s[3] > 0 && scrH - (int)s[3] < workBottom &&
+                            (int)s[10] < workRight && (int)s[11] > workLeft )
+                            workBottom = scrH - s[3];
+                    }
+                    if( sd ) XFree( sd );
+                }
+            }
+            if( data ) XFree( data );
+        }
+    }
+
+    return SkinsRect( workLeft, workTop, workRight, workBottom );
+}
+
+
 void X11Factory::getMousePos( int &rXPos, int &rYPos ) const
 {
     Window rootReturn, childReturn;
     int winx, winy;
     unsigned int xmask;
-
     Display *pDisplay = m_pDisplay->getDisplay();
     Window root = DefaultRootWindow( pDisplay );
     XQueryPointer( pDisplay, root, &rootReturn, &childReturn,
