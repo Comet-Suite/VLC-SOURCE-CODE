@@ -676,7 +676,7 @@ static void vlc_clock_input_reset(vlc_clock_t *clock)
         has_other_clock = true;
     }
 
-    if (!has_other_clock)
+    if (!has_other_clock || context->start_time.system == VLC_TICK_INVALID)
     {
         context_reset(context);
         return;
