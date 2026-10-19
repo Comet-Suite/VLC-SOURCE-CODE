@@ -66,6 +66,7 @@ typedef struct
 {
     /* Program context */
     input_source_t *source;
+    struct vlc_input_es_out *out;
 
     /* Program ID */
     int i_id;
@@ -1583,12 +1584,15 @@ ClockListenerUpdate(void *opaque, vlc_tick_t ck_system,
                     vlc_tick_t ck_stream, double rate, bool discontinuity)
 {
     es_out_pgrm_t *pgrm = opaque;
+    es_out_sys_t *p_sys = PRIV(&pgrm->out->out);
+    vlc_mutex_assert(&p_sys->lock);
     assert(pgrm->clocks.input != NULL);
     vlc_clock_Lock(pgrm->clocks.input);
 
     if (discontinuity)
     {
-        const vlc_tick_t current_date = vlc_tick_now();
+        const vlc_tick_t current_date = EsOutIsPaused(p_sys)
+                                      ? p_sys->i_pause_date : vlc_tick_now();
         vlc_clock_main_SetFirstPcr(pgrm->clocks.main, current_date, ck_stream);
     }
 
@@ -1817,6 +1821,7 @@ static es_out_pgrm_t *EsOutProgramAdd(es_out_sys_t *p_sys, input_source_t *sourc
 
     /* Init */
     p_pgrm->source = source;
+    p_pgrm->out = &p_sys->out;
     p_pgrm->i_id = i_group;
     p_pgrm->i_es = 0;
     p_pgrm->b_selected = false;
