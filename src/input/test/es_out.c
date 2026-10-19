@@ -597,7 +597,8 @@ static vlc_tick_t ConvertToSystem(struct vlc_clock_t *clock, vlc_tick_t ts)
     return system;
 }
 
-static void test_pcr_while_paused(vlc_tick_t pts_delay, vlc_tick_t last_pcr)
+static void test_pcr_while_paused(vlc_tick_t pts_delay, vlc_tick_t last_pcr,
+                                  bool discontinuity)
 {
     can_pace_control = true;
     mock_now = VLC_TICK_FROM_SEC(100);
@@ -661,16 +662,32 @@ static void test_pcr_while_paused(vlc_tick_t pts_delay, vlc_tick_t last_pcr)
     assert(!es_out_GetBuffering(out));
     assert(dec->flush_count == flush_count);
 
+    /* In this part, we also check that discontinuity are accounting for
+     * the pause date. In that case, we know from previous part it won't
+     * trigger a PCR_RESET to continue sending PCRs, so we try to create
+     * a huge PCR jump to trigger the discontinuity detection. */
+    vlc_tick_t pcr = seek_ts + last_pcr + VLC_TICK_FROM_MS(100);
+    if (discontinuity)
+    {
+        pcr += VLC_TICK_FROM_SEC(100);
+        es_out_SetPCR(&out->out, pcr);
+    }
+
+    /* Now resume playback 3s later */
+    mock_now += VLC_TICK_FROM_SEC(3);
     es_out_SetPauseState(out, false, false, mock_now);
 
     /* We've finished reproducing the scenario above, so now we need to
      * check that the reported times to the decoders are correct. */
 
     const vlc_tick_t resume_date = mock_now;
-    const vlc_tick_t system = ConvertToSystem(dec->clock, seek_ts);
+    const vlc_tick_t origin = discontinuity ? pcr : seek_ts;
+    const vlc_tick_t start_date = discontinuity ? resume_date + pts_delay
+                                                : resume_date;
+    const vlc_tick_t system = ConvertToSystem(dec->clock, origin);
 
-    assert(system >= resume_date);
-    assert(system <= resume_date + pts_delay);
+    assert(system >= start_date);
+    assert(system <= start_date + pts_delay);
 
     es_out_Del(&out->out, video_track);
 
@@ -689,7 +706,8 @@ int main(void)
 
     /* We need to test the situation at end of buffering and after the
      * end of buffering has landed. */
-    test_pcr_while_paused(VLC_TICK_FROM_MS(300), VLC_TICK_FROM_MS(300));
-    test_pcr_while_paused(VLC_TICK_FROM_MS(300), VLC_TICK_FROM_MS(500));
+    test_pcr_while_paused(VLC_TICK_FROM_MS(300), VLC_TICK_FROM_MS(300), false);
+    test_pcr_while_paused(VLC_TICK_FROM_MS(300), VLC_TICK_FROM_MS(500), false);
+    test_pcr_while_paused(VLC_TICK_FROM_MS(300), VLC_TICK_FROM_MS(300), true);
     return 0;
 }
