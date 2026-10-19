@@ -470,6 +470,32 @@ static void test_clock_prev_context_paused(struct vlc_logger *logger,
     destroy_fixture_simple(&f);
 }
 
+
+static void test_clock_output_start_paused(struct vlc_logger *logger)
+{
+    fprintf(stderr, "%s:\n", __func__);
+    struct clock_fixture_simple f = init_fixture_simple(logger, false, 0, 0);
+    vlc_clock_main_Lock(f.main);
+
+    const vlc_tick_t pause_date = VLC_TICK_FROM_SEC(10);
+    const vlc_tick_t seek_date = pause_date + VLC_TICK_FROM_SEC(2);
+    const vlc_tick_t resume_date = seek_date + VLC_TICK_FROM_SEC(3);
+    const vlc_tick_t ts = VLC_TICK_FROM_SEC(100);
+
+    vlc_clock_main_ChangePause(f.main, pause_date, true);
+    vlc_clock_Start(f.input, pause_date, ts);
+    vlc_clock_Start(f.slave, seek_date, ts);
+    vlc_clock_main_ChangePause(f.main, resume_date, false);
+
+    vlc_tick_t result =
+        vlc_clock_ConvertToSystem(f.slave, resume_date, ts, 1., NULL);
+    fprintf(stderr, "%" PRId64 " = %" PRId64 "\n", result, resume_date);
+    assert(result == resume_date);
+    vlc_clock_main_Unlock(f.main);
+
+    destroy_fixture_simple(&f);
+}
+
 int main(void)
 {
     libvlc_instance_t *libvlc = libvlc_new(0, NULL);
@@ -558,6 +584,7 @@ int main(void)
     test_clock_prev_context_paused(logger, false, true);
     test_clock_prev_context_paused(logger, true, false);
     test_clock_prev_context_paused(logger, true, true);
+    test_clock_output_start_paused(logger);
 
     libvlc_release(libvlc);
 }
