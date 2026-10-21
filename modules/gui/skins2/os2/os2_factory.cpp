@@ -390,9 +390,8 @@ void OS2Factory::getMonitorInfo( int numScreen, int* p_x, int* p_y,
 }
 
 
-SkinsRect OS2Factory::getWorkArea( GenericWindow *pWindow ) const
+SkinsRect OS2Factory::getWorkArea() const
 {
-    (void)pWindow;
     // TODO : calculate Desktop Workarea excluding WarpCenter
 
     // Fill a Rect object
