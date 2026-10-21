@@ -107,7 +107,7 @@ public:
                                  int* width, int* height ) const;
 
     /// Get the work area (screen area without taskbars)
-    virtual SkinsRect getWorkArea() const;
+    virtual SkinsRect getWorkArea( GenericWindow *pWindow ) const;
 
     /// Get the position of the mouse
     virtual void getMousePos( int &rXPos, int &rYPos ) const;
