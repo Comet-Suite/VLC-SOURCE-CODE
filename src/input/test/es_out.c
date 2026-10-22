@@ -39,6 +39,7 @@
 #include <vlc_list.h>
 
 #include <limits.h>
+#include <time.h>
 
 #include "../src/libvlc.h"
 #include "../lib/libvlc_internal.h"
@@ -58,6 +59,18 @@ struct vlc_input_decoder_t {
 };
 
 static struct vlc_list opened_decoders;
+
+static vlc_tick_t mock_now = VLC_TICK_INVALID;
+
+vlc_tick_t vlc_tick_now(void)
+{
+    if (mock_now != VLC_TICK_INVALID)
+        return mock_now;
+
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    return vlc_tick_from_timespec(&ts);
+}
 
 VLC_EXPORT vlc_input_decoder_t *
 vlc_input_decoder_Create(vlc_object_t *, const es_format_t *, const char *es_id,
@@ -574,11 +587,94 @@ static void test_preroll_rate(float rate)
     can_pace_control = false;
 }
 
+static vlc_tick_t ConvertToSystem(struct vlc_clock_t *clock, vlc_tick_t ts)
+{
+    vlc_clock_Lock(clock);
+    vlc_tick_t system = vlc_clock_ConvertToSystem(clock, mock_now, ts, 1.f, NULL);
+    vlc_clock_Unlock(clock);
+    return system;
+}
+
+static void test_pcr_while_paused(vlc_tick_t pts_delay, vlc_tick_t last_pcr)
+{
+    can_pace_control = true;
+    mock_now = VLC_TICK_FROM_SEC(100);
+
+    struct test_ctx ctx;
+    test_ctx_Init(&ctx, 1.f, pts_delay);
+    struct vlc_input_es_out *out = ctx.out;
+
+    es_out_id_t *video_track = AddVideoTrack(out);
+    SendBlock(out, video_track);
+
+    /* Finish the buffering */
+    for (vlc_tick_t pcr = 0;
+         pcr <= pts_delay;
+         pcr += VLC_TICK_FROM_MS(100))
+    {
+        es_out_SetPCR(&out->out, VLC_TICK_0 + pcr);
+    }
+
+    struct vlc_input_decoder_t *dec =
+        vlc_list_first_entry_or_null(&opened_decoders,
+                                     struct vlc_input_decoder_t, node);
+    assert(dec != NULL && dec->started);
+    assert(dec->clock != NULL);
+
+    /* In this test, we need to:
+     * - finish the buffering, mainly to prepare the test
+     * - pause the playback
+     * - "seek" by resetting the PCR
+     * - send new PCR again
+     * - restart the playback */
+    mock_now += VLC_TICK_FROM_SEC(1);
+    es_out_SetPauseState(out, true, true, mock_now);
+
+    mock_now += VLC_TICK_FROM_SEC(1);
+    es_out_Control(&out->out, ES_OUT_RESET_PCR);
+
+    const vlc_tick_t seek_ts = VLC_TICK_0 + VLC_TICK_FROM_SEC(10);
+    SendBlock(out, video_track);
+
+    for (vlc_tick_t pcr = 0;
+         pcr <= last_pcr;
+         pcr += VLC_TICK_FROM_MS(100))
+    {
+        es_out_SetPCR(&out->out, seek_ts + pcr);
+    }
+
+    ConvertToSystem(dec->clock, seek_ts);
+
+    mock_now += VLC_TICK_FROM_SEC(3);
+    es_out_SetPauseState(out, false, false, mock_now);
+
+    /* We've finished reproducing the scenario above, so now we need to
+     * check that the reported times to the decoders are correct. */
+
+    const vlc_tick_t resume_date = mock_now;
+    const vlc_tick_t system = ConvertToSystem(dec->clock, seek_ts);
+
+    assert(system >= resume_date);
+    assert(system <= resume_date + pts_delay);
+
+    es_out_Del(&out->out, video_track);
+
+    test_ctx_Destroy(&ctx);
+
+    mock_now = VLC_TICK_INVALID;
+    can_pace_control = false;
+}
+
 int main(void)
 {
     test_playback();
     test_multiple_programs();
     test_preroll_rate(0.25f);
     test_preroll_rate(2.f);
+
+    /* We need to test the situation at end of buffering and after the
+     * end of buffering has landed. */
+    test_pcr_while_paused(VLC_TICK_FROM_MS(300), VLC_TICK_FROM_MS(300));
+    test_pcr_while_paused(VLC_TICK_FROM_MS(300), VLC_TICK_FROM_MS(500));
     return 0;
 }
