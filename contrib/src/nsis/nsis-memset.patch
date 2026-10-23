@@ -1,0 +1,20 @@
+--- nsis/Source/exehead/SConscript.orig	2026-11-04 09:50:08.669465500 +0100
++++ nsis/Source/exehead/SConscript	2026-11-04 09:50:19.613663600 +0100
+@@ -7,6 +7,7 @@ files = Split("""
+ 	plugin.c
+ 	Ui.c
+ 	util.c
++	memset.c
+ 	#Source/crc32.c
+ """)
+ 
+--- nsis/Contrib/nsDialogs/SConscript.orig	2026-11-04 09:49:47.985204500 +0100
++++ nsis/Contrib/nsDialogs/SConscript	2026-11-04 09:50:03.174862700 +0100
+@@ -6,6 +6,7 @@ files = Split("""
+ 	nsDialogs.c
+ 	nsDialogs.def
+ 	rtl.c
++	memset.c
+ """)
+ 
+ resources = Split("""
