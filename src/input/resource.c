@@ -78,9 +78,15 @@ struct input_resource_t
      */
     vlc_mutex_t    lock_hold;
 
-    /* You need lock+lock_hold to write to the following variables and
-     * only lock or lock_hold to read them */
+    /* You need lock+lock_hold to write to the following variables and to
+     * vout_resource.started, and only lock or lock_hold to read them */
     struct vlc_list vout_rscs;
+
+    /* Protected by lock_hold: the date of the last signal of a video decoder,
+     * and the condition signaled when it changes, when a vout starts, or when
+     * a wait is cancelled */
+    vlc_tick_t      video_decoder_date;
+    vlc_cond_t      wait_started_vout;
 
     bool            b_aout_busy;
     audio_output_t *p_aout;
@@ -322,6 +328,8 @@ input_resource_t *input_resource_New( vlc_object_t *p_parent )
     p_resource->p_parent = p_parent;
     vlc_mutex_init( &p_resource->lock );
     vlc_mutex_init( &p_resource->lock_hold );
+    p_resource->video_decoder_date = VLC_TICK_INVALID;
+    vlc_cond_init( &p_resource->wait_started_vout );
     return p_resource;
 }
 
@@ -373,8 +381,12 @@ static void input_resource_PutVoutLocked(input_resource_t *p_resource,
 
     if (vout_rsc->started)
     {
-        vout_StopDisplay(vout_rsc->vout);
+        /* Stopped before its display, so that SPU decoders don't take it */
+        vlc_mutex_lock(&p_resource->lock_hold);
         vout_rsc->started = false;
+        vlc_mutex_unlock(&p_resource->lock_hold);
+
+        vout_StopDisplay(vout_rsc->vout);
     }
 
     if (vout_rsc == resource_GetFirstVoutRsc(p_resource))
@@ -496,7 +508,9 @@ vout_thread_t *input_resource_RequestVout(input_resource_t *p_resource,
         if (vout_rsc->started && vout_state != NULL)
             *vout_state = INPUT_RESOURCE_VOUT_STOPPED;
 
+        vlc_mutex_lock(&p_resource->lock_hold);
         vout_rsc->started = false;
+        vlc_mutex_unlock(&p_resource->lock_hold);
         input_resource_PutVoutLocked(p_resource, dcfg.vout, NULL);
         vlc_mutex_unlock(&p_resource->lock);
         return NULL;
@@ -504,7 +518,11 @@ vout_thread_t *input_resource_RequestVout(input_resource_t *p_resource,
 
     if (!vout_rsc->started)
     {
+        vlc_mutex_lock(&p_resource->lock_hold);
         vout_rsc->started = true;
+        vlc_cond_broadcast(&p_resource->wait_started_vout);
+        vlc_mutex_unlock(&p_resource->lock_hold);
+
         if (vout_state != NULL)
             *vout_state = INPUT_RESOURCE_VOUT_STARTED;
 
@@ -535,6 +553,69 @@ vout_thread_t *input_resource_HoldVout( input_resource_t *p_resource )
     vlc_mutex_unlock( &p_resource->lock_hold );
 
     return p_vout;
+}
+
+static vout_thread_t *HoldStartedVoutLocked(input_resource_t *p_resource)
+{
+    /* Like input_resource_HoldVout(), only use the first vout: the other ones
+     * are closed as soon as their video decoder goes away */
+    struct vout_resource *vout_rsc = resource_GetFirstVoutRsc(p_resource);
+
+    if (vout_rsc == NULL || !vout_rsc->started)
+        return NULL;
+    return vout_Hold(vout_rsc->vout);
+}
+
+vout_thread_t *input_resource_WaitStartedVout(input_resource_t *p_resource,
+                                const struct input_resource_vout_wait *wait,
+                                vlc_tick_t timeout)
+{
+    vlc_mutex_lock(&p_resource->lock_hold);
+
+    vout_thread_t *vout;
+    while ((vout = HoldStartedVoutLocked(p_resource)) == NULL
+        && !wait->cancelled)
+    {
+        /* A video track can be created after the caller, and a video decoder
+         * starts its vout only with its first picture */
+        vlc_tick_t deadline =
+            __MAX(wait->since, p_resource->video_decoder_date) + timeout;
+        if (vlc_tick_now() >= deadline)
+            break;
+
+        vlc_cond_timedwait(&p_resource->wait_started_vout,
+                           &p_resource->lock_hold, deadline);
+    }
+
+    vlc_mutex_unlock(&p_resource->lock_hold);
+
+    return vout;
+}
+
+void input_resource_ResetVoutWait(input_resource_t *p_resource,
+                                  struct input_resource_vout_wait *wait)
+{
+    vlc_mutex_lock(&p_resource->lock_hold);
+    wait->since = vlc_tick_now();
+    wait->cancelled = false;
+    vlc_mutex_unlock(&p_resource->lock_hold);
+}
+
+void input_resource_CancelVoutWait(input_resource_t *p_resource,
+                                   struct input_resource_vout_wait *wait)
+{
+    vlc_mutex_lock(&p_resource->lock_hold);
+    wait->cancelled = true;
+    vlc_cond_broadcast(&p_resource->wait_started_vout);
+    vlc_mutex_unlock(&p_resource->lock_hold);
+}
+
+void input_resource_SignalVideoDecoder(input_resource_t *p_resource)
+{
+    vlc_mutex_lock(&p_resource->lock_hold);
+    p_resource->video_decoder_date = vlc_tick_now();
+    vlc_cond_broadcast(&p_resource->wait_started_vout);
+    vlc_mutex_unlock(&p_resource->lock_hold);
 }
 
 vout_thread_t *input_resource_HoldDummyVout( input_resource_t *p_resource )
