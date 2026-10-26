@@ -56,6 +56,7 @@ struct vlc_input_decoder_t {
     vlc_clock_t *clock;
     bool drained;
     bool started;
+    unsigned flush_count;
 };
 
 static struct vlc_list opened_decoders;
@@ -105,6 +106,7 @@ vlc_input_decoder_New(vlc_object_t *parent,
     dec->clock = cfg->clock;
     dec->drained = false;
     dec->started = false;
+    dec->flush_count = 0;
     vlc_list_append(&dec->node, &opened_decoders);
     return dec;
 }
@@ -184,7 +186,7 @@ void vlc_input_decoder_Drain(vlc_input_decoder_t *owner)
 
 void vlc_input_decoder_Flush(vlc_input_decoder_t *owner)
 {
-    (void)owner;
+    owner->flush_count++;
 }
 
 size_t vlc_input_decoder_GetFifoSize(vlc_input_decoder_t *owner)
@@ -642,10 +644,23 @@ static void test_pcr_while_paused(vlc_tick_t pts_delay, vlc_tick_t last_pcr)
     {
         es_out_SetPCR(&out->out, seek_ts + pcr);
     }
+    /* pcr is now seek_ts + last_pcr */
 
     ConvertToSystem(dec->clock, seek_ts);
 
+    /* In this part, we also check that the input keeps demuxing even
+     * while being paused when a decoder continue to ask for more data.
+     * flush count allows detecting this, since the es_out would trigger
+     * a PCR_RESET to accommodate for the late PCR if incorrectly
+     * accounted. */
+    const unsigned flush_count = dec->flush_count;
     mock_now += VLC_TICK_FROM_SEC(3);
+    SendBlock(out, video_track);
+    es_out_SetPCR(&out->out, seek_ts + last_pcr + VLC_TICK_FROM_MS(100));
+
+    assert(!es_out_GetBuffering(out));
+    assert(dec->flush_count == flush_count);
+
     es_out_SetPauseState(out, false, false, mock_now);
 
     /* We've finished reproducing the scenario above, so now we need to
