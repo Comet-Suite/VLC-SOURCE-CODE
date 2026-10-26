@@ -326,7 +326,6 @@ static void DXGI_CreateSwapchainDComp(dxgi_swapchain *display,
     DXGI_SWAP_CHAIN_DESC1 scd;
     FillSwapChainDesc(display, width, height, &scd);
     scd.Scaling = DXGI_SCALING_STRETCH;
-    scd.SwapEffect = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
     scd.AlphaMode = DXGI_ALPHA_MODE_IGNORE;
 
     ComPtr<IDXGIFactory2> dxgifactory;
