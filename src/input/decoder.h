@@ -122,6 +122,12 @@ void vlc_input_decoder_StopWait( vlc_input_decoder_t * );
 bool vlc_input_decoder_IsEmpty( vlc_input_decoder_t * );
 
 /**
+ * This function stops the subpictures of a SPU decoder from waiting for a vout,
+ * until the next flush: they are dropped if no vout is started.
+ */
+void vlc_input_decoder_CancelVoutWait( vlc_input_decoder_t * );
+
+/**
  * This function forces the display of the next picture
  */
 void vlc_input_decoder_FrameNext( vlc_input_decoder_t *p_dec );

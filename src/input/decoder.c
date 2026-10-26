@@ -121,6 +121,7 @@ struct decoder_video
     enum vlc_vout_order vout_order;
     bool started;
     bool drained;
+    bool resource_signaled; /* see input_resource_SignalVideoDecoder() */
 
     /* pool to use when the decoder doesn't use its own */
     struct picture_pool_t *out_pool;
@@ -149,6 +150,7 @@ struct decoder_spu
     vout_thread_t *vout;
     ssize_t channel;
     int64_t order;
+    struct input_resource_vout_wait vout_wait; /* protected by the input resource */
 };
 
 struct vlc_input_decoder_t
@@ -277,7 +279,7 @@ struct vlc_input_decoder_t
 #define DECODER_BOGUS_VIDEO_DELAY                ((vlc_tick_t)(DEFAULT_PTS_DELAY * 30))
 
 /* */
-#define DECODER_SPU_VOUT_WAIT_DURATION   VLC_TICK_FROM_MS(200)
+#define DECODER_SPU_VOUT_TIMEOUT         VLC_TICK_FROM_SEC(6)
 #define BLOCK_FLAG_CORE_PRIVATE_RELOADED (1 << BLOCK_FLAG_CORE_PRIVATE_SHIFT)
 
 #define decoder_Notify(decoder_priv, event, ...) \
@@ -1013,20 +1015,16 @@ static subpicture_t *ModuleThread_NewSpuBuffer( decoder_t *p_dec,
     assert( p_owner->cat == SPU_ES );
     vout_thread_t *p_vout = NULL;
     subpicture_t *p_subpic;
-    int i_attempts = 30;
 
-    while( i_attempts-- )
-    {
-        p_vout = input_resource_HoldVout( p_owner->p_resource );
-        if( p_vout )
-            break;
-
-        vlc_tick_sleep( DECODER_SPU_VOUT_WAIT_DURATION );
-    }
+    /* Subpictures can only be shown by a started vout: wait for one only as
+     * long as a video decoder may start it */
+    p_vout = input_resource_WaitStartedVout( p_owner->p_resource,
+                                             &p_owner->spu.vout_wait,
+                                             DECODER_SPU_VOUT_TIMEOUT );
 
     if( !p_vout )
     {
-        msg_Warn( p_dec, "no vout found, dropping subpicture" );
+        msg_Dbg( p_dec, "no vout found, dropping subpicture" );
         if( p_owner->spu.vout )
         {
             vlc_fifo_Lock( p_owner->p_fifo );
@@ -2247,6 +2245,7 @@ CreateDecoder( vlc_object_t *p_parent, const struct vlc_input_decoder_cfg *cfg )
             p_owner->video.vout = NULL;
             p_owner->video.started = false;
             p_owner->video.drained = false;
+            p_owner->video.resource_signaled = false;
             vlc_mutex_init( &p_owner->video.mouse_lock );
             p_owner->video.mouse_event = NULL;
             p_owner->video.mouse_opaque = NULL;
@@ -2269,6 +2268,8 @@ CreateDecoder( vlc_object_t *p_parent, const struct vlc_input_decoder_cfg *cfg )
             p_owner->spu.vout = NULL;
             p_owner->spu.channel = VOUT_SPU_CHANNEL_INVALID;
             p_owner->spu.order = 0;
+            input_resource_ResetVoutWait( p_owner->p_resource,
+                                          &p_owner->spu.vout_wait );
             p_dec->cbs = &dec_spu_cbs;
             break;
         default:
@@ -2367,6 +2368,11 @@ static void DeleteDecoder( vlc_input_decoder_t *p_owner, enum es_format_category
 
                 vout_Release(vout);
             }
+
+            /* Let SPU decoders wait for the vout of a decoder replacing this
+             * one */
+            if (p_owner->video.resource_signaled)
+                input_resource_SignalVideoDecoder(p_owner->p_resource);
             break;
         }
         case SPU_ES:
@@ -2447,6 +2453,14 @@ decoder_New( vlc_object_t *p_parent, const struct vlc_input_decoder_cfg *cfg )
     }
 
     assert( p_dec->fmt_in->i_cat != UNKNOWN_ES );
+
+    /* A video decoder starts its vout only with its first picture: signal it
+     * now, so that SPU decoders already wait for that vout */
+    if( cfg->sout == NULL && p_dec->cbs == &dec_video_cbs )
+    {
+        input_resource_SignalVideoDecoder( p_owner->p_resource );
+        p_owner->video.resource_signaled = true;
+    }
 
     /* Do not delay sout creation for SPU or DATA. */
     if( cfg->sout && cfg->fmt->b_packetized &&
@@ -2537,6 +2551,8 @@ void vlc_input_decoder_Delete( vlc_input_decoder_t *p_owner )
     /* Make sure we aren't waiting/decoding anymore */
     vlc_cond_signal( &p_owner->wait_request );
     vlc_fifo_Unlock( p_owner->p_fifo );
+
+    vlc_input_decoder_CancelVoutWait( p_owner );
 
     if( !vlc_input_decoder_IsSynchronous( p_owner ) )
         vlc_join( p_owner->thread, NULL );
@@ -2768,6 +2784,13 @@ void vlc_input_decoder_Drain( vlc_input_decoder_t *p_owner )
     vlc_fifo_Unlock( p_owner->p_fifo );
 }
 
+void vlc_input_decoder_CancelVoutWait( vlc_input_decoder_t *p_owner )
+{
+    if( p_owner->cat == SPU_ES )
+        input_resource_CancelVoutWait( p_owner->p_resource,
+                                       &p_owner->spu.vout_wait );
+}
+
 void vlc_input_decoder_Flush( vlc_input_decoder_t *p_owner )
 {
     vlc_fifo_Lock( p_owner->p_fifo );
@@ -2840,6 +2863,12 @@ void vlc_input_decoder_Flush( vlc_input_decoder_t *p_owner )
 
     vlc_fifo_Unlock( p_owner->p_fifo );
 
+    /* The stream restarts (seek, or reset after a drain): new subpictures can
+     * wait for a vout again, during the whole timeout */
+    if( cat == SPU_ES )
+        input_resource_ResetVoutWait( p_owner->p_resource,
+                                      &p_owner->spu.vout_wait );
+
     if (vlc_input_decoder_IsSynchronous(p_owner))
     {
         /* With a synchronous decoder,there is no decoder thread which
@@ -2895,7 +2924,16 @@ void vlc_input_decoder_ChangePause( vlc_input_decoder_t *p_owner,
     p_owner->pause_date = i_date;
     p_owner->frames_countdown = 0;
     vlc_fifo_Signal( p_owner->p_fifo );
+
+    /* A video decoder that did not start its vout yet resumes, like after a
+     * track change while paused: SPU decoders can wait for that vout again */
+    bool signal_resource = !b_paused && p_owner->cat == VIDEO_ES
+                        && p_owner->video.resource_signaled
+                        && !p_owner->video.started;
     vlc_fifo_Unlock( p_owner->p_fifo );
+
+    if( signal_resource )
+        input_resource_SignalVideoDecoder( p_owner->p_resource );
 }
 
 void vlc_input_decoder_ChangeRate( vlc_input_decoder_t *owner, float rate )

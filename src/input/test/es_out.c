@@ -174,6 +174,11 @@ void vlc_input_decoder_Flush(vlc_input_decoder_t *owner)
     (void)owner;
 }
 
+void vlc_input_decoder_CancelVoutWait(vlc_input_decoder_t *owner)
+{
+    (void)owner;
+}
+
 size_t vlc_input_decoder_GetFifoSize(vlc_input_decoder_t *owner)
 {
     (void)owner;
