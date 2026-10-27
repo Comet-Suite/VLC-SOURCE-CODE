@@ -284,7 +284,6 @@ int InitAudioDec( vlc_object_t *obj )
         p_dec->fmt_out.audio.i_rate = p_dec->fmt_in->audio.i_rate;
     if( p_dec->fmt_out.audio.i_rate )
         date_Init( &p_sys->end_date, p_dec->fmt_out.audio.i_rate, 1 );
-    p_dec->fmt_out.audio.i_chan_mode = p_dec->fmt_in->audio.i_chan_mode;
 
     p_dec->pf_decode = DecodeAudio;
     p_dec->pf_flush  = Flush;
