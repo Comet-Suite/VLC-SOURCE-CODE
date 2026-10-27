@@ -186,9 +186,6 @@ static int NewPicture(Dav1dPicture *img, void *cookie)
         v->lighting.MaxFALL = cll->max_frame_average_light_level;
     }
 
-    v->projection_mode = dec->fmt_in->video.projection_mode;
-    v->multiview_mode = dec->fmt_in->video.multiview_mode;
-    v->pose = dec->fmt_in->video.pose;
     dec->fmt_out.i_codec = FindVlcChroma(img);
     if (unlikely(dec->fmt_out.i_codec == 0))
         return -1;
