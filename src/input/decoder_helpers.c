@@ -55,31 +55,19 @@ void decoder_Init( decoder_t *p_dec, es_format_t *restrict fmt_in, const es_form
     switch( p_fmt->i_cat )
     {
         case VIDEO_ES:
-            p_dec->fmt_out.video.i_sar_den   = p_fmt->video.i_sar_den;
-            p_dec->fmt_out.video.i_sar_num   = p_fmt->video.i_sar_num;
-            p_dec->fmt_out.video.i_frame_rate      = p_fmt->video.i_frame_rate;
-            p_dec->fmt_out.video.i_frame_rate_base = p_fmt->video.i_frame_rate_base;
-            p_dec->fmt_out.video.orientation = p_fmt->video.orientation;
-            p_dec->fmt_out.video.primaries   = p_fmt->video.primaries;
-            p_dec->fmt_out.video.transfer    = p_fmt->video.transfer;
-            p_dec->fmt_out.video.space       = p_fmt->video.space;
-            p_dec->fmt_out.video.color_range = p_fmt->video.color_range;
-            p_dec->fmt_out.video.chroma_location = p_fmt->video.chroma_location;
-            p_dec->fmt_out.video.mastering   = p_fmt->video.mastering;
-            p_dec->fmt_out.video.lighting    = p_fmt->video.lighting;
-            p_dec->fmt_out.video.dovi        = p_fmt->video.dovi;
-            p_dec->fmt_out.video.multiview_mode    = p_fmt->video.multiview_mode;
-            p_dec->fmt_out.video.b_multiview_right_eye_first = p_fmt->video.b_multiview_right_eye_first;
-            p_dec->fmt_out.video.projection_mode   = p_fmt->video.projection_mode;
-            p_dec->fmt_out.video.pose              = p_fmt->video.pose;
-            p_dec->fmt_out.video.i_cubemap_padding = p_fmt->video.i_cubemap_padding;
+            p_dec->fmt_out.video = p_fmt->video;
+            p_dec->fmt_out.video.i_chroma = 0;
+            p_dec->fmt_out.video.i_height = p_dec->fmt_out.video.i_width = 0;
+            p_dec->fmt_out.video.p_palette = NULL;
             break;
         case AUDIO_ES:
-            p_dec->fmt_out.audio.i_rate              = p_fmt->audio.i_rate;
-            p_dec->fmt_out.audio.i_physical_channels = p_fmt->audio.i_physical_channels;
-            p_dec->fmt_out.audio.i_chan_mode         = p_fmt->audio.i_chan_mode;
-            p_dec->fmt_out.audio.channel_type        = p_fmt->audio.channel_type;
-            p_dec->fmt_out.audio.i_channels          = p_fmt->audio.i_channels;
+            p_dec->fmt_out.audio = p_fmt->audio;
+            p_dec->fmt_out.audio.i_format = 0;
+            p_dec->fmt_out.audio.i_bytes_per_frame = 0;
+            p_dec->fmt_out.audio.i_frame_length = 0;
+            p_dec->fmt_out.audio.i_bitspersample = 0;
+            p_dec->fmt_out.audio.i_blockalign = 0;
+            replay_gain_Merge( &p_dec->fmt_out.audio_replay_gain, &p_fmt->audio_replay_gain );
             break;
         case SPU_ES:
         case DATA_ES:

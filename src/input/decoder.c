@@ -2286,12 +2286,6 @@ CreateDecoder( vlc_object_t *p_parent, const struct vlc_input_decoder_cfg *cfg )
 
     assert( p_dec->fmt_in->i_cat == p_dec->fmt_out.i_cat && fmt->i_cat == p_dec->fmt_in->i_cat);
 
-    /* Copy ourself the input replay gain */
-    if( fmt->i_cat == AUDIO_ES )
-    {
-        replay_gain_Merge( &p_dec->fmt_out.audio_replay_gain, &fmt->audio_replay_gain );
-    }
-
     /* */
     vlc_mutex_init(&p_owner->subdecs.lock);
     p_owner->cc.selected_codec = cfg->cc_decoder == 708 ?
