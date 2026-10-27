@@ -181,7 +181,6 @@ static int Open( vlc_object_t *p_this )
     }
 
     p_dec->fmt_out.i_codec = HAVE_FPU ? VLC_CODEC_FL32 : VLC_CODEC_S16N;
-    p_dec->fmt_out.audio.i_chan_mode = p_dec->fmt_in->audio.i_chan_mode;
 
     /* Set the faad config */
     cfg = NeAACDecGetCurrentConfiguration( p_sys->hfaad );
