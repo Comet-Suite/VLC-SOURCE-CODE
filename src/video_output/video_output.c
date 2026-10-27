@@ -1602,7 +1602,9 @@ static bool UpdateCurrentPicture(vout_thread_sys_t *sys)
 
     if (sys->displayed.current == NULL)
     {
-        sys->displayed.current = PreparePicture(sys, true, false);
+        /* While paused the clock does not run, so no picture is late: the
+         * first one after a flush, the picture of a seek, must be shown. */
+        sys->displayed.current = PreparePicture(sys, true, sys->pause.is_on);
         return sys->displayed.current != NULL;
     }
 
