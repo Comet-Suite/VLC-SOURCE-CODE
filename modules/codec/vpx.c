@@ -279,10 +279,6 @@ static int Decode(decoder_t *dec, block_t *block)
         v->color_range = img->range == VPX_CR_FULL_RANGE ? COLOR_RANGE_FULL : COLOR_RANGE_LIMITED;
     }
 
-    dec->fmt_out.video.projection_mode = dec->fmt_in->video.projection_mode;
-    dec->fmt_out.video.multiview_mode = dec->fmt_in->video.multiview_mode;
-    dec->fmt_out.video.pose = dec->fmt_in->video.pose;
-
     if (decoder_UpdateVideoFormat(dec))
         return VLCDEC_SUCCESS;
     picture_t *pic = decoder_NewPicture(dec);
