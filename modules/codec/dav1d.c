@@ -526,11 +526,6 @@ static int OpenDecoder(vlc_object_t *p_this)
 
     dec->p_sys = p_sys;
 
-    if (dec->fmt_in->video.i_sar_num > 0 && dec->fmt_in->video.i_sar_den > 0) {
-        dec->fmt_out.video.i_sar_num = dec->fmt_in->video.i_sar_num;
-        dec->fmt_out.video.i_sar_den = dec->fmt_in->video.i_sar_den;
-    }
-
     if (sequence_hdr != NULL)
     {
         // we have the proper chroma, make sure we can use it
