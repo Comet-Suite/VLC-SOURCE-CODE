@@ -270,7 +270,7 @@ static int Decode(decoder_t *dec, block_t *block)
         dec->fmt_out.video.i_sar_den = 1;
     }
 
-    if(dec->fmt_in->video.primaries == COLOR_PRIMARIES_UNDEF &&
+    if(v->primaries == COLOR_PRIMARIES_UNDEF &&
        img->cs >= 0 && img->cs < ARRAY_SIZE(vpx_color_mapping_table))
     {
         v->primaries = vpx_color_mapping_table[img->cs].primaries;
