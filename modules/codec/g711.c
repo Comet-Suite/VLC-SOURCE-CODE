@@ -188,10 +188,7 @@ static int DecoderOpen( vlc_object_t *p_this )
     p_dec->fmt_out.i_codec = VLC_CODEC_S16N;
     p_dec->fmt_out.audio.i_format = VLC_CODEC_S16N;
     p_dec->fmt_out.audio.i_rate = p_dec->fmt_in->audio.i_rate;
-    if( p_dec->fmt_in->audio.i_physical_channels )
-        p_dec->fmt_out.audio.i_physical_channels =
-                                       p_dec->fmt_in->audio.i_physical_channels;
-    else
+    if( !p_dec->fmt_out.audio.i_physical_channels )
         p_dec->fmt_out.audio.i_physical_channels =
                               pi_channels_maps[p_dec->fmt_in->audio.i_channels];
     aout_FormatPrepare( &p_dec->fmt_out.audio );
