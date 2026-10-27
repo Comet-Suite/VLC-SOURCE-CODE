@@ -382,6 +382,7 @@ libqt_plugin_la_SOURCES = \
 	widgets/native/qvlcframe.hpp \
 	widgets/native/searchlineedit.cpp widgets/native/searchlineedit.hpp \
 	widgets/native/viewblockingrectangle.cpp widgets/native/viewblockingrectangle.hpp \
+	widgets/native/backdropblenditem.cpp widgets/native/backdropblenditem.hpp \
 	widgets/native/doubleclickignoringitem.hpp
 
 # Meta-object compilation
@@ -538,7 +539,8 @@ nodist_libqt_plugin_la_SOURCES = \
 	widgets/native/navigation_attached.moc.cpp \
 	widgets/native/mlfolderseditor.moc.cpp \
 	widgets/native/searchlineedit.moc.cpp \
-	widgets/native/viewblockingrectangle.moc.cpp
+	widgets/native/viewblockingrectangle.moc.cpp \
+	widgets/native/backdropblenditem.moc.cpp
 
 nodist_libqt_plugin_la_SOURCES += \
 	dialogs/extended/ui_equalizer.h \
@@ -1476,7 +1478,8 @@ libqt_plugin_la_SHADER_FRAG = shaders/FadingEdge.frag \
 
 libqt_plugin_la_SHADER_VERT = shaders/FadingEdgeX.vert \
                               shaders/FadingEdgeY.vert \
-                              shaders/SubTexture.vert
+                              shaders/SubTexture.vert \
+                              shaders/BackdropBlend.vert
 
 libqt_plugin_la_SHADER = $(libqt_plugin_la_SHADER_FRAG) $(libqt_plugin_la_SHADER_VERT)
 
