@@ -966,8 +966,6 @@ static int OpenGeneric( vlc_object_t *p_this, bool b_encode )
     /* Initialise the thread properties */
     if(!b_encode)
     {
-        p_dec->fmt_out.video = p_dec->fmt_in->video;
-        p_dec->fmt_out.audio = p_dec->fmt_in->audio;
         p_dec->fmt_out.i_codec = 0;
 
         /* set default aspect of 1, if parser did not set it */
