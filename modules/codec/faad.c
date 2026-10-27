@@ -140,8 +140,6 @@ static int Open( vlc_object_t *p_this )
         msg_Dbg( p_dec, "using version " FAAD2_VERSION " - %s", vinfo[0] );
 
     /* Misc init */
-    p_dec->fmt_out.audio.channel_type = p_dec->fmt_in->audio.channel_type;
-
     if( p_dec->fmt_in->i_extra > 0 )
     {
         /* We have a decoder config so init the handle */
