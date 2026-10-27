@@ -383,6 +383,10 @@ static int AddStream( sout_mux_t *p_mux, sout_input_t *p_input )
                 case VLC_CODEC_MULAW:
                     p_wf->wFormatTag = WAVE_FORMAT_MULAW;
                     break;
+                case VLC_CODEC_OPUS:
+                    p_wf->wFormatTag = WAVE_FORMAT_OPUS;
+                    p_wf->nBlockAlign= 1500; /* maximum bytes per frame */
+                    break;
                     /* raw codec */
                 case VLC_CODEC_U8:
                     p_wf->wFormatTag = WAVE_FORMAT_PCM;
