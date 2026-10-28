@@ -75,6 +75,8 @@ void decoder_Init( decoder_t *p_dec, es_format_t *restrict fmt_in, const es_form
             p_dec->fmt_out.video.i_cubemap_padding = p_fmt->video.i_cubemap_padding;
             break;
         case AUDIO_ES:
+            p_dec->fmt_out.audio.i_physical_channels = p_fmt->audio.i_physical_channels;
+            break;
         case SPU_ES:
         case DATA_ES:
             break;
