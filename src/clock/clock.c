@@ -405,7 +405,6 @@ static void vlc_clock_main_reset(vlc_clock_main_t *main_clock,
     AvgResetAndFill(&main_clock->coeff_avg, ctx->coeff);
 
     main_clock->wait_sync_ref_priority = UINT_MAX;
-    main_clock->pause_date = VLC_TICK_INVALID;
     vlc_cond_broadcast(&main_clock->cond);
 
     if (!switch_contexts)
@@ -1090,9 +1089,7 @@ void vlc_clock_main_ChangePause(vlc_clock_main_t *main_clock, vlc_tick_t now,
         return;
     }
 
-    /* Reset was called before resume from Pause */
-    if (main_clock->pause_date == VLC_TICK_INVALID)
-        return;
+    assert(main_clock->pause_date != VLC_TICK_INVALID);
 
     struct vlc_clock_context *ctx = main_clock->context;
     /**
