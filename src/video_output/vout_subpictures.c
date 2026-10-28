@@ -102,12 +102,15 @@ struct spu_private_t {
     spu_t spu;
 
     vlc_mutex_t  lock;            /* lock to protect all following fields */
+    /* also written with textlock held: the text renderer reads it under
+     * textlock only, to fetch the input attachments when it is loaded */
     input_thread_t *input;
 
     spu_channel_vector channels;
 
     int channel;             /**< number of subpicture channels registered */
-    filter_t *text;                              /**< text renderer module */
+    filter_t *text;          /**< text renderer module, locked by textlock */
+    bool text_loaded;  /**< text renderer load attempted, locked by textlock */
     vlc_mutex_t textlock;
     filter_t *scale_yuvp;                     /**< scaling module for YUVP */
     filter_t *scale;                    /**< scaling module (all but YUVP) */
@@ -427,6 +430,11 @@ static subpicture_region_t *SpuRenderText(spu_t *spu,
         return NULL;
 
     vlc_mutex_lock(&sys->textlock);
+    if (!sys->text_loaded)
+    {
+        sys->text = SpuRenderCreateAndLoadText(spu);
+        sys->text_loaded = true;
+    }
     filter_t *text = sys->text;
     if(unlikely(text == NULL))
     {
@@ -1988,10 +1996,11 @@ spu_t *spu_Create(vlc_object_t *object, vout_thread_t *vout)
     sys->prerender.chroma_list[SPU_CHROMALIST_COUNT] = 0;
     sys->prerender.live = true;
 
-    /* Load text and scale module */
-    sys->text = SpuRenderCreateAndLoadText(spu);
+    sys->text = NULL;
+    sys->text_loaded = false;
     vlc_mutex_init(&sys->textlock);
 
+    /* Load scale modules */
     /* XXX spu->p_scale is used for all conversion/scaling except yuvp to
      * yuva/rgba */
     sys->scale = SpuRenderCreateAndLoadScale(VLC_OBJECT(spu),
@@ -2003,7 +2012,7 @@ spu_t *spu_Create(vlc_object_t *object, vout_thread_t *vout)
                                                   VLC_CODEC_YUVP, VLC_CODEC_YUVA, false);
 
 
-    if (!sys->source_chain || !sys->filter_chain || !sys->text || !sys->scale
+    if (!sys->source_chain || !sys->filter_chain || !sys->scale
      || !sys->scale_yuvp)
     {
         sys->vout = NULL;
@@ -2035,12 +2044,12 @@ void spu_Attach(spu_t *spu, input_thread_t *input)
     if (sys->input != input) {
         SetHighlights(spu, NULL);
 
-        sys->input = input;
-
         vlc_mutex_lock(&sys->textlock);
+        sys->input = input;
         if (sys->text)
             vlc_filter_Delete(sys->text);
         sys->text = SpuRenderCreateAndLoadText(spu);
+        sys->text_loaded = true;
         vlc_mutex_unlock(&sys->textlock);
     }
     vlc_mutex_unlock(&sys->lock);
@@ -2054,7 +2063,9 @@ void spu_Detach(spu_t *spu)
     spu_private_t *sys = container_of(spu, spu_private_t, spu);
     vlc_mutex_lock(&sys->lock);
     spu_PrerenderPause(sys);
+    vlc_mutex_lock(&sys->textlock);
     sys->input = NULL;
+    vlc_mutex_unlock(&sys->textlock);
     vlc_mutex_unlock(&sys->lock);
 }
 
