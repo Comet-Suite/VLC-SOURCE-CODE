@@ -280,6 +280,11 @@ static vlc_tick_t context_stream_to_system(const struct vlc_clock_context *ctx,
 static void context_resume(struct vlc_clock_context *ctx,
                            vlc_tick_t delay)
 {
+    vlc_clock_t *clock;
+    vlc_list_foreach(clock, &ctx->using_clocks, node)
+        if (clock->last_conversion != VLC_TICK_INVALID)
+            clock->last_conversion += delay;
+
     /**
      * Only apply a delay if the clock has a reference point to avoid
      * messing up the timings if the stream was paused then seeked
@@ -1115,6 +1120,9 @@ void vlc_clock_main_ChangePause(vlc_clock_main_t *main_clock, vlc_tick_t now,
 
     const vlc_tick_t delay = now - main_clock->pause_date;
 
+    struct vlc_clock_context *ctx;
+    vlc_list_foreach(ctx, &main_clock->prev_contexts, node)
+        context_resume(ctx, delay);
     context_resume(main_clock->context, delay);
 
     if (main_clock->first_pcr.system != VLC_TICK_INVALID)
