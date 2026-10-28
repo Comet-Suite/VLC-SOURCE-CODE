@@ -85,6 +85,8 @@ static int load_decoder(void *func, bool forced, va_list ap)
             p_dec->fmt_out.video.i_cubemap_padding = p_dec->fmt_in->video.i_cubemap_padding;
             break;
         case AUDIO_ES:
+            p_dec->fmt_out.audio.i_physical_channels = p_dec->fmt_in->audio.i_physical_channels;
+            break;
         case SPU_ES:
         case DATA_ES:
         case UNKNOWN_ES:
