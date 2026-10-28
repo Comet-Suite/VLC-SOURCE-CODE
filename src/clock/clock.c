@@ -277,6 +277,25 @@ static vlc_tick_t context_stream_to_system(const struct vlc_clock_context *ctx,
             + ctx->start_time.system;
 }
 
+static void context_resume(struct vlc_clock_context *ctx,
+                           vlc_tick_t delay)
+{
+    /**
+     * Only apply a delay if the clock has a reference point to avoid
+     * messing up the timings if the stream was paused then seeked
+     */
+    if (ctx->last.system != VLC_TICK_INVALID)
+    {
+        ctx->last.system += delay;
+        if (ctx->start_time.system == VLC_TICK_INVALID)
+            ctx->offset += delay;
+    }
+    if (ctx->start_time.system != VLC_TICK_INVALID)
+        ctx->start_time.system += delay;
+    if (ctx->wait_sync_ref.system != VLC_TICK_INVALID)
+        ctx->wait_sync_ref.system += delay;
+}
+
 static void
 vlc_clock_remove_current_context(vlc_clock_t *clock,
                                  const struct vlc_clock_context *next)
@@ -1091,24 +1110,12 @@ void vlc_clock_main_ChangePause(vlc_clock_main_t *main_clock, vlc_tick_t now,
 
     assert(main_clock->pause_date != VLC_TICK_INVALID);
 
-    struct vlc_clock_context *ctx = main_clock->context;
-    /**
-     * Only apply a delay if the clock has a reference point to avoid
-     * messing up the timings if the stream was paused then seeked
-     */
     const vlc_tick_t delay = now - main_clock->pause_date;
-    if (ctx->last.system != VLC_TICK_INVALID)
-    {
-        ctx->last.system += delay;
-        if (ctx->start_time.system == VLC_TICK_INVALID)
-            ctx->offset += delay;
-    }
+
+    context_resume(main_clock->context, delay);
+
     if (main_clock->first_pcr.system != VLC_TICK_INVALID)
         main_clock->first_pcr.system += delay;
-    if (ctx->start_time.system != VLC_TICK_INVALID)
-        ctx->start_time.system += delay;
-    if (ctx->wait_sync_ref.system != VLC_TICK_INVALID)
-        ctx->wait_sync_ref.system += delay;
     main_clock->pause_date = VLC_TICK_INVALID;
     vlc_cond_broadcast(&main_clock->cond);
 }
