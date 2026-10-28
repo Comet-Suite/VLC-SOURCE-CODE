@@ -86,6 +86,7 @@ static int load_decoder(void *func, bool forced, va_list ap)
             break;
         case AUDIO_ES:
             p_dec->fmt_out.audio.i_physical_channels = p_dec->fmt_in->audio.i_physical_channels;
+            p_dec->fmt_out.audio.i_chan_mode         = p_dec->fmt_in->audio.i_chan_mode;
             break;
         case SPU_ES:
         case DATA_ES:
