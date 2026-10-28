@@ -73,6 +73,11 @@ static int load_decoder(void *func, bool forced, va_list ap)
             p_dec->fmt_out.video.mastering   = p_dec->fmt_in->video.mastering;
             p_dec->fmt_out.video.lighting    = p_dec->fmt_in->video.lighting;
             p_dec->fmt_out.video.dovi        = p_dec->fmt_in->video.dovi;
+            p_dec->fmt_out.video.multiview_mode    = p_dec->fmt_in->video.multiview_mode;
+            p_dec->fmt_out.video.b_multiview_right_eye_first = p_dec->fmt_in->video.b_multiview_right_eye_first;
+            p_dec->fmt_out.video.projection_mode   = p_dec->fmt_in->video.projection_mode;
+            p_dec->fmt_out.video.pose              = p_dec->fmt_in->video.pose;
+            p_dec->fmt_out.video.i_cubemap_padding = p_dec->fmt_in->video.i_cubemap_padding;
             break;
         case AUDIO_ES:
         case SPU_ES:
