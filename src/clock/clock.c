@@ -278,7 +278,8 @@ static vlc_tick_t context_stream_to_system(const struct vlc_clock_context *ctx,
 }
 
 static void
-vlc_clock_remove_current_context(vlc_clock_t *clock)
+vlc_clock_remove_current_context(vlc_clock_t *clock,
+                                 const struct vlc_clock_context *next)
 {
     vlc_clock_main_t *main_clock = clock->owner;
     struct vlc_clock_context *ctx = clock->context;
@@ -291,12 +292,16 @@ vlc_clock_remove_current_context(vlc_clock_t *clock)
 
     /* Free the context if it is not used anymore. Don't free the main context
      * that should stay alive even when no clocks are referencing it.  */
-    if (vlc_list_is_empty(&ctx->using_clocks) && ctx != main_clock->context)
+    struct vlc_clock_context *prev;
+    vlc_list_foreach(prev, &main_clock->prev_contexts, node)
     {
-        /* Remove the context from the list of previous contexts */
-        vlc_list_remove(&ctx->node);
-        free(ctx);
-        removed = true;
+        if (prev == next || !vlc_list_is_empty(&prev->using_clocks))
+            break;
+
+        if (prev == ctx)
+            removed = true;
+        vlc_list_remove(&prev->node);
+        free(prev);
     }
     clock->context = NULL;
 
@@ -321,7 +326,9 @@ vlc_clock_switch_context(vlc_clock_t *clock, struct vlc_clock_context *ctx)
     if (clock->context == ctx)
         return;
 
-    vlc_clock_remove_current_context(clock);
+    vlc_clock_remove_current_context(clock, ctx);
+    if (ctx == NULL)
+        return;
     vlc_clock_attach_context(clock, ctx);
 
     if (main_clock->logger != NULL && clock->track_str_id != NULL)
@@ -405,21 +412,15 @@ static void vlc_clock_main_reset(vlc_clock_main_t *main_clock,
         return;
 
     struct vlc_clock_context *ctx_it;
-    vlc_list_foreach(ctx_it, &main_clock->prev_contexts, node)
+    while ((ctx_it = vlc_list_first_entry_or_null(&main_clock->prev_contexts,
+                                                  struct vlc_clock_context,
+                                                  node)) != NULL)
     {
-        while (!vlc_list_is_empty(&ctx_it->using_clocks))
-        {
-            vlc_clock_t *clock_it =
-                vlc_list_first_entry_or_null(&ctx_it->using_clocks,
-                                             vlc_clock_t, node);
-            bool last = clock_it->node.next == &ctx_it->using_clocks;
-            vlc_clock_switch_context(clock_it, ctx);
-            if (last)
-            {
-                /* ctx_it has been freed, do not read it again */
-                break;
-            }
-        }
+        vlc_clock_t *clock_it =
+            vlc_list_first_entry_or_null(&ctx_it->using_clocks,
+                                         vlc_clock_t, node);
+        assert(clock_it != NULL);
+        vlc_clock_switch_context(clock_it, ctx);
     }
 }
 
@@ -1385,8 +1386,7 @@ void vlc_clock_Delete(vlc_clock_t *clock)
     vlc_clock_main_t *main_clock = clock->owner;
     vlc_mutex_lock(&main_clock->lock);
 
-    if (clock->context != NULL)
-        vlc_clock_remove_current_context(clock);
+    vlc_clock_switch_context(clock, NULL);
 
     if (clock == main_clock->input_master)
     {
