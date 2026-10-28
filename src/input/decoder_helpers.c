@@ -65,6 +65,7 @@ static int load_decoder(void *func, bool forced, va_list ap)
     switch( p_dec->fmt_in->i_cat )
     {
         case VIDEO_ES:
+            p_dec->fmt_out.video.orientation = p_dec->fmt_in->video.orientation;
             p_dec->fmt_out.video.primaries   = p_dec->fmt_in->video.primaries;
             p_dec->fmt_out.video.transfer    = p_dec->fmt_in->video.transfer;
             p_dec->fmt_out.video.space       = p_dec->fmt_in->video.space;
