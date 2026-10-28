@@ -98,9 +98,9 @@ HRESULT WINAPI CopyMediaType( AM_MEDIA_TYPE *pmtTarget,
     return S_OK;
 }
 
-int GetFourCCFromMediaType( const AM_MEDIA_TYPE &media_type )
+vlc_fourcc_t GetFourCCFromMediaType( const AM_MEDIA_TYPE &media_type )
 {
-    int i_fourcc = 0;
+    vlc_fourcc_t i_fourcc = 0;
 
     if( media_type.majortype == MEDIATYPE_Video )
     {
@@ -181,6 +181,11 @@ int GetFourCCFromMediaType( const AM_MEDIA_TYPE &media_type )
             else if( media_type.subtype == MEDIASUBTYPE_MJPG )
                 i_fourcc = VLC_CODEC_MJPG;
 
+            else if( media_type.subtype == MEDIASUBTYPE_H264 ||
+                     media_type.subtype == MEDIASUBTYPE_h264 ||
+                     media_type.subtype == MEDIASUBTYPE_x264 ||
+                     media_type.subtype == MEDIASUBTYPE_X264 )
+                i_fourcc = VLC_CODEC_H264;
         }
     }
     else if( media_type.majortype == MEDIATYPE_Audio )
@@ -507,7 +512,7 @@ STDMETHODIMP CapturePin::QueryAccept( const AM_MEDIA_TYPE *pmt )
         return S_FALSE;
     }
 
-    int i_fourcc = GetFourCCFromMediaType(*pmt);
+    vlc_fourcc_t i_fourcc = GetFourCCFromMediaType(*pmt);
     if( !i_fourcc )
     {
         msg_Dbg( p_input, "CapturePin::QueryAccept "
