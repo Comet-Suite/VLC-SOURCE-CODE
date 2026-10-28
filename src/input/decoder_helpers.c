@@ -55,6 +55,8 @@ void decoder_Init( decoder_t *p_dec, es_format_t *restrict fmt_in, const es_form
     switch( p_fmt->i_cat )
     {
         case VIDEO_ES:
+            p_dec->fmt_out.video.i_sar_den   = p_fmt->video.i_sar_den;
+            p_dec->fmt_out.video.i_sar_num   = p_fmt->video.i_sar_num;
             p_dec->fmt_out.video.i_frame_rate      = p_fmt->video.i_frame_rate;
             p_dec->fmt_out.video.i_frame_rate_base = p_fmt->video.i_frame_rate_base;
             p_dec->fmt_out.video.orientation = p_fmt->video.orientation;
