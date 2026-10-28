@@ -63,6 +63,11 @@ void decoder_Init( decoder_t *p_dec, es_format_t *restrict fmt_in, const es_form
             p_dec->fmt_out.video.mastering   = p_fmt->video.mastering;
             p_dec->fmt_out.video.lighting    = p_fmt->video.lighting;
             p_dec->fmt_out.video.dovi        = p_fmt->video.dovi;
+            p_dec->fmt_out.video.multiview_mode    = p_fmt->video.multiview_mode;
+            p_dec->fmt_out.video.b_multiview_right_eye_first = p_fmt->video.b_multiview_right_eye_first;
+            p_dec->fmt_out.video.projection_mode   = p_fmt->video.projection_mode;
+            p_dec->fmt_out.video.pose              = p_fmt->video.pose;
+            p_dec->fmt_out.video.i_cubemap_padding = p_fmt->video.i_cubemap_padding;
             break;
         case AUDIO_ES:
         case SPU_ES:
