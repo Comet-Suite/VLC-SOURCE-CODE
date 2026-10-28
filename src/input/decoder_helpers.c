@@ -65,6 +65,8 @@ static int load_decoder(void *func, bool forced, va_list ap)
     switch( p_dec->fmt_in->i_cat )
     {
         case VIDEO_ES:
+            p_dec->fmt_out.video.i_sar_den   = p_dec->fmt_in->video.i_sar_den;
+            p_dec->fmt_out.video.i_sar_num   = p_dec->fmt_in->video.i_sar_num;
             p_dec->fmt_out.video.i_frame_rate      = p_dec->fmt_in->video.i_frame_rate;
             p_dec->fmt_out.video.i_frame_rate_base = p_dec->fmt_in->video.i_frame_rate_base;
             p_dec->fmt_out.video.orientation = p_dec->fmt_in->video.orientation;
