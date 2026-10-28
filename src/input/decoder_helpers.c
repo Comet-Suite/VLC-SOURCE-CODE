@@ -51,6 +51,27 @@ void decoder_Init( decoder_t *p_dec, es_format_t *restrict fmt_in, const es_form
     es_format_Copy( fmt_in, p_fmt );
     p_dec->fmt_in = fmt_in;
     es_format_Init( &p_dec->fmt_out, p_fmt->i_cat, 0 );
+    // copy input metadata into the output
+    switch( p_fmt->i_cat )
+    {
+        case VIDEO_ES:
+            p_dec->fmt_out.video.primaries   = p_fmt->video.primaries;
+            p_dec->fmt_out.video.transfer    = p_fmt->video.transfer;
+            p_dec->fmt_out.video.space       = p_fmt->video.space;
+            p_dec->fmt_out.video.color_range = p_fmt->video.color_range;
+            p_dec->fmt_out.video.chroma_location = p_fmt->video.chroma_location;
+            p_dec->fmt_out.video.mastering   = p_fmt->video.mastering;
+            p_dec->fmt_out.video.lighting    = p_fmt->video.lighting;
+            p_dec->fmt_out.video.dovi        = p_fmt->video.dovi;
+            break;
+        case AUDIO_ES:
+        case SPU_ES:
+        case DATA_ES:
+            break;
+        case UNKNOWN_ES:
+        default:
+            vlc_assert_unreachable();
+    }
 }
 
 int decoder_LoadModule(decoder_t *dec, bool packetizer,
