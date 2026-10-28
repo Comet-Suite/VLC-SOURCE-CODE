@@ -45,6 +45,7 @@ check_PROGRAMS = \
 	test_libvlc_media_list_player \
 	test_libvlc_media_player \
 	test_libvlc_video_callback \
+	test_libvlc_text_renderer \
 	test_libvlc_media_player_record \
 	test_libvlc_media_discoverer \
 	test_libvlc_renderer_discoverer \
@@ -203,6 +204,8 @@ test_libvlc_media_player_SOURCES = libvlc/media_player.c
 test_libvlc_media_player_LDADD = $(LIBVLCCORE) $(LIBVLC)
 test_libvlc_video_callback_SOURCES = libvlc/video_callback.c
 test_libvlc_video_callback_LDADD = $(LIBVLCCORE) $(LIBVLC)
+test_libvlc_text_renderer_SOURCES = libvlc/text_renderer.c
+test_libvlc_text_renderer_LDADD = $(LIBVLCCORE) $(LIBVLC)
 test_libvlc_media_player_record_SOURCES = libvlc/media_player_record.c
 test_libvlc_media_player_record_LDADD = $(LIBVLCCORE) $(LIBVLC)
 test_libvlc_media_discoverer_SOURCES = libvlc/media_discoverer.c

@@ -117,6 +117,15 @@ vlc_tests += {
 }
 
 vlc_tests += {
+    'name' : 'test_libvlc_text_renderer',
+    'sources' : files('text_renderer.c'),
+    'suite' : ['libvlc'],
+    'link_with' : [libvlc, libvlccore],
+    'module_depends': ['demux_mock', 'rawvideo', 'vmem', 'wdummy', 'tdummy',
+                      'adummy', 'swscale', 'yuvp']
+}
+
+vlc_tests += {
     'name' : 'test_libvlc_media_player_record',
     'sources' : files('media_player_record.c'),
     'suite' : ['libvlc'],
