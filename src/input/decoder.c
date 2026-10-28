@@ -1017,9 +1017,6 @@ static subpicture_t *ModuleThread_NewSpuBuffer( decoder_t *p_dec,
 
     while( i_attempts-- )
     {
-        if( p_owner->error )
-            break;
-
         p_vout = input_resource_HoldVout( p_owner->p_resource );
         if( p_vout )
             break;
