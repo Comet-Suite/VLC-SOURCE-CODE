@@ -107,6 +107,6 @@ Widgets.IconToolButton {
     }
 
     function forceUnlock () {
-        popup.close()
+        popup?.close()
     }
 }
