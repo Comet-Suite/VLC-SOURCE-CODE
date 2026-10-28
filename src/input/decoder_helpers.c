@@ -61,6 +61,26 @@ static int load_decoder(void *func, bool forced, va_list ap)
     int (*activate)(vlc_object_t *) = func;
     int ret;
 
+    // copy input metadata into the output
+    switch( p_dec->fmt_in->i_cat )
+    {
+        case VIDEO_ES:
+            p_dec->fmt_out.video.primaries   = p_dec->fmt_in->video.primaries;
+            p_dec->fmt_out.video.transfer    = p_dec->fmt_in->video.transfer;
+            p_dec->fmt_out.video.space       = p_dec->fmt_in->video.space;
+            p_dec->fmt_out.video.color_range = p_dec->fmt_in->video.color_range;
+            p_dec->fmt_out.video.chroma_location = p_dec->fmt_in->video.chroma_location;
+            p_dec->fmt_out.video.mastering   = p_dec->fmt_in->video.mastering;
+            p_dec->fmt_out.video.lighting    = p_dec->fmt_in->video.lighting;
+            p_dec->fmt_out.video.dovi        = p_dec->fmt_in->video.dovi;
+            break;
+        case AUDIO_ES:
+        case SPU_ES:
+        case DATA_ES:
+        case UNKNOWN_ES:
+            break;
+    }
+
     ret = activate(obj);
     if (ret != VLC_SUCCESS)
         vlc_objres_clear(obj);
