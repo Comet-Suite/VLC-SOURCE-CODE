@@ -1165,6 +1165,19 @@ static void EsOutChangePosition(es_out_sys_t *p_sys,
 
     input_SendEventCache( p_sys->p_input, 0.0 );
 
+    es_out_pgrm_t *pgrm;
+    vlc_list_foreach(pgrm, &p_sys->programs, node)
+    {
+        input_clock_Reset(pgrm->p_input_clock);
+        if (pgrm->clocks.input != NULL)
+        {
+            vlc_clock_Lock(pgrm->clocks.input);
+            pgrm->i_last_pcr = VLC_TICK_INVALID;
+            vlc_clock_Reset(pgrm->clocks.input);
+            vlc_clock_Unlock(pgrm->clocks.input);
+        }
+    }
+
     foreach_es_then_es_slaves(p_es)
     {
         if( p_es->p_dec != NULL )
@@ -1179,19 +1192,6 @@ static void EsOutChangePosition(es_out_sys_t *p_sys,
             }
         }
         p_es->i_pts_level = VLC_TICK_INVALID;
-    }
-
-    es_out_pgrm_t *pgrm;
-    vlc_list_foreach(pgrm, &p_sys->programs, node)
-    {
-        input_clock_Reset(pgrm->p_input_clock);
-        if (pgrm->clocks.input != NULL)
-        {
-            vlc_clock_Lock(pgrm->clocks.input);
-            pgrm->i_last_pcr = VLC_TICK_INVALID;
-            vlc_clock_Reset(pgrm->clocks.input);
-            vlc_clock_Unlock(pgrm->clocks.input);
-        }
     }
 
     p_sys->b_buffering = true;
