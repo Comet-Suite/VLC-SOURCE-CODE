@@ -21,7 +21,12 @@ index 5cebfb89..4f68da11 100644
  
 +    # Glslang 15.0.0 moved some code around, add also linking to glslang, while
 +    # this is not needed for older versions, it will still work.
-+    glslang_deps += cxx.find_library('glslang', required: not cxx.find_library('glslang-default-resource-limits', required: false).found(), static: static)
++    # glslang::* symbols are provided by libglslang itself and are not available
++    # transitively via glslang-default-resource-limits since glslang 15.0.0, so
++    # libglslang must always be linked explicitly. Use a non-static lookup so a
++    # shared libglslang (e.g. from the Flatpak SDK) is accepted when no static
++    # libglslang.a is available.
++    glslang_deps += cxx.find_library('glslang', required: true)
 +
      if static
        glslang_deps += [
