@@ -214,6 +214,11 @@ SDDirectory::read() const
     for ( const InputItemPtr& m : children )
     {
         const char* mrl = m.get()->psz_uri;
+        auto fileName = utils::fileName( mrl );
+        if ( fileName[0] == '.' &&
+             strcasecmp( fileName.c_str(), ".nomedia" ) != 0 &&
+             fileName.compare( 0, 2, ".." ) != 0 )
+            continue;
         enum input_item_type_e type = m->i_type;
         if ( type == ITEM_TYPE_DIRECTORY )
         {
