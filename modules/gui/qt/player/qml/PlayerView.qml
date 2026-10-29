@@ -82,7 +82,7 @@ FocusScope {
         rootPlayer.Navigation.defaultKeyAction(event)
 
         //unhandled keys are forwarded as hotkeys
-        if (!event.accepted || controlBar.state !== "visible")
+        if (!event.accepted || toolbarVisibility.state !== "visible")
             MainCtx.sendHotkey(event.key, event.modifiers);
     }
 
@@ -304,9 +304,9 @@ FocusScope {
                 Rectangle {
                     anchors.fill: parent
 
-                    visible: rootPlayer.displayFadeRectangles && playerToolbarVisibilityFSM.isVisible
+                    visible: rootPlayer.displayFadeRectangles && toolbarVisibility.fadeVisible
 
-                    opacity: topBar.opacity //topbar and controlbar should have the same opacity
+                    opacity: toolbarVisibility.fadeOpacity
 
                     gradient: Gradient {
                         GradientStop { position: 0; color: Qt.rgba(0, 0, 0, .8) }
@@ -912,6 +912,20 @@ FocusScope {
         }
     }
 
+    FadeControllerStateGroup {
+        id: toolbarVisibility
+        //initial state value is "", using a binding avoid animation on startup
+        Binding on state {
+            when: playerToolbarVisibilityFSM.started
+            value: (playerToolbarVisibilityFSM.isVisible || rootPlayer._controlsUnderVideo) ? "visible" : "hidden"
+        }
+
+        onStateChanged: {
+            if (state === "visible")
+                controlBar.showChapterMarks()
+        }
+    }
+
     TopBar {
         id: topBar
 
@@ -930,11 +944,12 @@ FocusScope {
 
         // NOTE: With pinned controls, the top controls are hidden when switching to
         //       fullScreen. Except when resume is visible
-        visible: (MainCtx.pinVideoControls === false
-                  ||
-                  MainCtx.intfMainWindow.visibility !== Window.FullScreen
-                  ||
-                  resumeVisible)
+        visible: toolbarVisibility.fadeVisible &&
+            (MainCtx.pinVideoControls === false ||
+            MainCtx.intfMainWindow.visibility !== Window.FullScreen ||
+            resumeVisible)
+
+        opacity: toolbarVisibility.fadeOpacity
 
         focus: true
         title: Player.title
@@ -965,12 +980,6 @@ FocusScope {
             return controlBar
         }
 
-        //initial state value is "", using a binding avoid animation on startup
-        Binding on state {
-            when: playerToolbarVisibilityFSM.started
-            value: (playerToolbarVisibilityFSM.isVisible || rootPlayer._controlsUnderVideo) ? "visible" : "hidden"
-        }
-
         onTogglePlaylistVisibility: playlistVisibility.togglePlaylistVisibility()
 
         onRequestLockUnlockAutoHide: (lock) => {
@@ -982,10 +991,6 @@ FocusScope {
                MainPlaylistController.stop()
             }
             MainCtx.playerView = false
-        }
-
-        FadeControllerStateGroup {
-            target: topBar
         }
 
         // TODO: Make TopBar a Control and use background
@@ -1231,14 +1236,14 @@ FocusScope {
                  && MainCtx.hasEmbededVideo
                  && !(MainCtx.pinVideoControls && !Player.fullscreen)
                  && (interactiveAutoHideTimer.running === true
-                     || controlBar.state !== "hidden" || toggleControlBarButton.hovered)
+                     || toolbarVisibility.state !== "hidden" || toggleControlBarButton.hovered)
         focus: true
         anchors {
-            bottom: controlBar.state === "hidden" ? parent.bottom : controlBar.top
+            bottom: toolbarVisibility.state === "hidden" ? parent.bottom : controlBar.top
             horizontalCenter: parent.horizontalCenter
         }
         iconSize: VLCStyle.icon_large
-        iconTxt: controlBar.state === "hidden" ? VLCIcons.expand_inverted : VLCIcons.expand
+        iconTxt: toolbarVisibility.state === "hidden" ? VLCIcons.expand_inverted : VLCIcons.expand
 
         Navigation.parentItem: rootPlayer
         Navigation.upItem: playlistVisibility.isPlaylistVisible ? playlistpopup : (MainCtx.hasEmbededVideo ? playerSpecializationLoader : topBar)
@@ -1269,6 +1274,9 @@ FocusScope {
             right: parent.right
         }
 
+        opacity: toolbarVisibility.fadeOpacity
+        visible: toolbarVisibility.fadeVisible
+
         hoverEnabled: true
 
         focus: true
@@ -1285,11 +1293,6 @@ FocusScope {
         showRemainingTime: (textPosition !== ControlBar.TimeTextPosition.AboveSlider)
                            || !playlistVisibility.isPlaylistVisible
 
-        onStateChanged: {
-            if (state === "visible")
-                showChapterMarks()
-        }
-
         Navigation.parentItem: rootPlayer
         Navigation.upItem: {
             if (playlistVisibility.isPlaylistVisible)
@@ -1299,12 +1302,6 @@ FocusScope {
             if (!MainCtx.hasEmbededVideo)
                 return playerSpecializationLoader
             return topBar
-        }
-
-        //initial state value is "", using a binding avoid animation on startup
-        Binding on state {
-            when: playerToolbarVisibilityFSM.started
-            value: (playerToolbarVisibilityFSM.isVisible || rootPlayer._controlsUnderVideo) ? "visible" : "hidden"
         }
 
         onRequestLockUnlockAutoHide: (lock) => rootPlayer.lockUnlockAutoHide(lock)
@@ -1330,10 +1327,6 @@ FocusScope {
             }
 
             color: windowTheme.bg.primary
-        }
-
-        FadeControllerStateGroup {
-            target: controlBar
         }
     }
 
