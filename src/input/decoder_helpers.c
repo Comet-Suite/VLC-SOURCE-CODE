@@ -82,10 +82,16 @@ int decoder_LoadModule(decoder_t *dec, bool packetizer,
         option = use_varoption ? "codec" : NULL;
     }
 
+    char *list = NULL;
     if (option != NULL)
-        dec->p_module = module_need_var(dec, type, option);
-    else
-        dec->p_module = module_need(dec, type, NULL, false);
+    {
+        list = var_InheritString(dec, option);
+        if (unlikely(list == NULL))
+            return VLC_EINVAL;
+    }
+
+    dec->p_module = module_need(dec, type, list, false);
+    free(list);
 
     return dec->p_module == NULL ? VLC_ENOENT : VLC_SUCCESS;
 }
