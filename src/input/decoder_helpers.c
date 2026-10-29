@@ -53,6 +53,20 @@ void decoder_Init( decoder_t *p_dec, es_format_t *restrict fmt_in, const es_form
     es_format_Init( &p_dec->fmt_out, p_fmt->i_cat, 0 );
 }
 
+static int load_decoder(void *func, bool forced, va_list ap)
+{
+    decoder_t *p_dec = va_arg(ap, decoder_t *);
+    vlc_object_t *obj = &p_dec->obj;
+    int (*activate)(vlc_object_t *) = func;
+    int ret;
+
+    obj->force = forced;
+    ret = activate(obj);
+    if (ret != VLC_SUCCESS)
+        vlc_objres_clear(obj);
+    return ret;
+}
+
 int decoder_LoadModule(decoder_t *dec, bool packetizer,
                        bool use_varoption)
 {
@@ -90,7 +104,15 @@ int decoder_LoadModule(decoder_t *dec, bool packetizer,
             return VLC_EINVAL;
     }
 
-    dec->p_module = module_need(dec, type, list, false);
+    const bool b_force_backup = dec->obj.force; /* FIXME: remove this */
+    dec->p_module = vlc_module_load(dec->obj.logger, type, list, false,
+                                    load_decoder, dec);
+    if (dec->p_module != NULL) {
+        var_Create(dec, "module-name", VLC_VAR_STRING);
+        var_SetString(dec, "module-name", module_get_object(dec->p_module));
+    }
+
+    dec->obj.force = b_force_backup;
     free(list);
 
     return dec->p_module == NULL ? VLC_ENOENT : VLC_SUCCESS;
