@@ -81,8 +81,6 @@ modules:
       - ln -sf /usr/bin/qmake /app/contrib/bin/qmake6
       - PATH=$PWD/extras/tools/build/bin:$PATH BUILDCC=/usr/bin/gcc ./configure --prefix=/app --enable-merge-ffmpeg
       - PATH=$PWD/extras/tools/build/bin:$PATH make install -j $FLATPAK_BUILDER_N_JOBS
-    cleanup:
-      - /share/macosx
     post-install:
       - mv /app/bin/vlc /app/bin/vlc.bin
       - mv vlc.sh /app/bin/vlc
