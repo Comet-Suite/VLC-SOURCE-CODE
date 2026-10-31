@@ -974,10 +974,23 @@ static int Demux( demux_t *p_demux )
     if( p_frame->i_dts != VLC_TICK_INVALID && p_track->p_es != NULL )
         p_track->i_pcr = p_frame->i_dts;
 
+    /* A sparse track (subtitles) lags the others by up to several seconds and
+     * advances in jumps; letting it drive the PCR pins the clock to its last
+     * cue and makes every cue look like a discontinuity to the core, which
+     * then never paces the demuxer. Leave SPU tracks out while an audio or
+     * video track has an ES. */
+    bool b_av_tracks = false;
+    for( unsigned i = 0; i < p_sys->i_tracks; i++ )
+        if( p_sys->tracks[i].p_es != NULL &&
+            ( p_sys->tracks[i].es_format.i_cat == AUDIO_ES ||
+              p_sys->tracks[i].es_format.i_cat == VIDEO_ES ) )
+            b_av_tracks = true;
+
     vlc_tick_t i_ts_max = VLC_TICK_MIN;
     for( unsigned i = 0; i < p_sys->i_tracks; i++ )
     {
-        if( p_sys->tracks[i].p_es != NULL )
+        if( p_sys->tracks[i].p_es != NULL &&
+            !( b_av_tracks && p_sys->tracks[i].es_format.i_cat == SPU_ES ) )
             i_ts_max = __MAX( i_ts_max, p_sys->tracks[i].i_pcr );
     }
 
@@ -985,6 +998,7 @@ static int Demux( demux_t *p_demux )
     for( unsigned i = 0; i < p_sys->i_tracks; i++ )
     {
         if( p_sys->tracks[i].p_es != NULL &&
+                !( b_av_tracks && p_sys->tracks[i].es_format.i_cat == SPU_ES ) &&
                 p_sys->tracks[i].i_pcr != VLC_TICK_INVALID &&
                 p_sys->tracks[i].i_pcr + VLC_TICK_FROM_SEC(10)>= i_ts_max )
             i_ts_min = __MIN( i_ts_min, p_sys->tracks[i].i_pcr );
