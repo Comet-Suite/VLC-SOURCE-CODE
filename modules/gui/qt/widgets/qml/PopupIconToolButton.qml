@@ -58,7 +58,7 @@ Widgets.IconToolButton {
 
     // Events
 
-    onClicked: popup.open()
+    onClicked: popup.visible ? popup.close() : popup.open()
 
     // Children
 
@@ -76,6 +76,7 @@ Widgets.IconToolButton {
         padding: VLCStyle.margin_small
 
         focus: true
+        closePolicy: T.Popup.CloseOnEscape | T.Popup.CloseOnPressOutsideParent
 
         // This popup should not exceed the boundaries of the scene.
         // Setting margins to >=0 makes it sure that this is satisfied.

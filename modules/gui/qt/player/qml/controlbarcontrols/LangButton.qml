@@ -17,6 +17,7 @@
  *****************************************************************************/
 
 import QtQuick
+import QtQuick.Templates as T
 
 
 import VLC.Widgets as Widgets
@@ -53,7 +54,7 @@ Widgets.IconToolButton {
 
     // Events
 
-    onClicked: menuLoader.item.open()
+    onClicked: menuLoader.item.visible ? menuLoader.item.close() : menuLoader.item.open()
 
     // Children
 
@@ -63,13 +64,18 @@ Widgets.IconToolButton {
         sourceComponent: TracksMenu {
             id: menu
 
-            parent: root._parentItem
+            parent: root
 
-            x: 0
-            y: (parent.positionSliderY - height)
+            readonly property rect _viewRect: root.mapFromItem(root._parentItem,
+                Qt.rect(0, 0, root._parentItem.width, root._parentItem.positionSliderY))
+
+            width: Math.min(preferredWidth ?? _viewRect.width, _viewRect.width)
+            x: _viewRect.x
+            y: _viewRect.y + _viewRect.height - height
             z: 1
 
             focus: true
+            closePolicy: T.Popup.CloseOnEscape | T.Popup.CloseOnPressOutsideParent
 
             colorContext.palette: root.colorContext.palette
 

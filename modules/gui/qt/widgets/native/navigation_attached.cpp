@@ -31,8 +31,8 @@ NavigationAttached::NavigationAttached(QObject *parent)
 }
 
 
-void NavigationAttached::defaultNavigationGeneric(QJSValue& jsCallback, QQuickItem* directionItem,
-                                        void (NavigationAttached::* defaultNavFn)(void),
+bool NavigationAttached::defaultNavigationGeneric(QJSValue& jsCallback, QQuickItem* directionItem,
+                                        bool (NavigationAttached::* defaultNavFn)(void),
                                         Qt::FocusReason reason)
 {
     if (jsCallback.isCallable()) {
@@ -41,7 +41,7 @@ void NavigationAttached::defaultNavigationGeneric(QJSValue& jsCallback, QQuickIt
         // if the function returns nothing or true, the action has been handled, stop the traversal
         // if the function returns a false explictly, continue traversal
         if (!ret.isBool() || ret.toBool())
-            return;
+            return true;
     }
 
 
@@ -54,52 +54,55 @@ void NavigationAttached::defaultNavigationGeneric(QJSValue& jsCallback, QQuickIt
         {
             directionItem->forceActiveFocus(reason);
             directionItem->setProperty("focusReason", reason); // Control's focus reason sometimes is not adjusted with `forceActiveFocus()`, Qt bug?
+            return true;
         }
         else if (nextItem)
         {
-            (nextItem->*defaultNavFn)();
+            return (nextItem->*defaultNavFn)();
         }
     }
     else if (m_parentItem)
     {
         NavigationAttached* parentNav = qobject_cast<NavigationAttached*>(qmlAttachedPropertiesObject<NavigationAttached>(m_parentItem));
-        (parentNav->*defaultNavFn)();
+        return (parentNav->*defaultNavFn)();
     }
+
+    return false;
 }
 
-void NavigationAttached::defaultNavigationUp()
+bool NavigationAttached::defaultNavigationUp()
 {
-    defaultNavigationGeneric(m_upAction, m_upItem,
+    return defaultNavigationGeneric(m_upAction, m_upItem,
                              &NavigationAttached::defaultNavigationUp,
                              Qt::BacktabFocusReason);
 }
 
 
-void NavigationAttached::defaultNavigationDown()
+bool NavigationAttached::defaultNavigationDown()
 {
-    defaultNavigationGeneric(m_downAction, m_downItem,
+    return defaultNavigationGeneric(m_downAction, m_downItem,
                              &NavigationAttached::defaultNavigationDown,
                              Qt::TabFocusReason);
 }
 
-void NavigationAttached::defaultNavigationLeft()
+bool NavigationAttached::defaultNavigationLeft()
 {
-    defaultNavigationGeneric(m_leftAction, m_leftItem,
+    return defaultNavigationGeneric(m_leftAction, m_leftItem,
                              &NavigationAttached::defaultNavigationLeft,
                              Qt::BacktabFocusReason);
 }
 
 
-void NavigationAttached::defaultNavigationRight()
+bool NavigationAttached::defaultNavigationRight()
 {
-    defaultNavigationGeneric(m_rightAction, m_rightItem,
+    return defaultNavigationGeneric(m_rightAction, m_rightItem,
                              &NavigationAttached::defaultNavigationRight,
                              Qt::TabFocusReason);
 }
 
-void NavigationAttached::defaultNavigationCancel()
+bool NavigationAttached::defaultNavigationCancel()
 {
-    defaultNavigationGeneric(m_cancelAction, m_cancelItem,
+    return defaultNavigationGeneric(m_cancelAction, m_cancelItem,
                              &NavigationAttached::defaultNavigationCancel,
                              Qt::BacktabFocusReason);
 }
@@ -120,20 +123,15 @@ void NavigationAttached::defaultKeyAction(QObject* event)
 
 
     if ( KeyHelper::matchDown(&fakeEvent) ) {
-        event->setProperty("accepted", true);
-        defaultNavigationDown();
+        event->setProperty("accepted", defaultNavigationDown());
     } else if ( KeyHelper::matchUp(&fakeEvent) ) {
-        event->setProperty("accepted", true);
-        defaultNavigationUp();
+        event->setProperty("accepted", defaultNavigationUp());
     } else if ( KeyHelper::matchRight(&fakeEvent) ) {
-        event->setProperty("accepted", true);
-        defaultNavigationRight();
+        event->setProperty("accepted", defaultNavigationRight());
     } else if ( KeyHelper::matchLeft(&fakeEvent) ) {
-        event->setProperty("accepted", true);
-        defaultNavigationLeft();
+        event->setProperty("accepted", defaultNavigationLeft());
     } else if ( KeyHelper::matchCancel(&fakeEvent) ) {
-        event->setProperty("accepted", true);
-        defaultNavigationCancel();
+        event->setProperty("accepted", defaultNavigationCancel());
     }
 }
 
