@@ -31,6 +31,7 @@
 #include <vlc_input_item.h>
 #include <vlc_fs.h>
 #include <vlc_input.h>
+#include <vlc_access.h>
 #include <vlc_threads.h>
 #include <vlc_cxx_helpers.hpp>
 
@@ -205,7 +206,35 @@ SDDirectory::read() const
     input_item_AddOption( media.get(), "show-hiddenfiles", VLC_INPUT_OPTION_TRUSTED );
     input_item_AddOption( media.get(), "ignore-filetypes=''", VLC_INPUT_OPTION_TRUSTED );
     input_item_AddOption( media.get(), "sub-autodetect-fuzzy=2", VLC_INPUT_OPTION_TRUSTED );
-    auto status = requestMetadataSync( media.get(), &children );
+
+    bool status = false;
+    if ( m_fs.isNetworkFileSystem() == false )
+    {
+        auto obj = vlc::wrap_cptr( vlc_object_create<vlc_object_t>( m_fs.libvlc() ),
+                                   &vlc_object_delete<vlc_object_t> );
+        if ( !obj )
+            throw std::bad_alloc();
+        obj->logger = nullptr;
+
+        auto stream = vlc::wrap_cptr( vlc_access_NewMRL( obj.get(), m_mrl.c_str() ),
+                                      &vlc_stream_Delete );
+        if ( stream && stream->pf_readdir != nullptr )
+        {
+            auto node = vlc::wrap_cptr( input_item_node_Create( media.get() ),
+                                        &input_item_node_Delete );
+            if ( !node )
+                throw std::bad_alloc();
+
+            if ( vlc_stream_ReadDir( stream.get(), node.get() ) == VLC_SUCCESS )
+            {
+                for ( int i = 0; i < node->i_children; ++i )
+                    children.emplace_back( node->pp_children[i]->p_item );
+                status = true;
+            }
+        }
+    }
+    else
+        status = requestMetadataSync( media.get(), &children );
 
     if ( status == false )
         throw medialibrary::fs::errors::System(
