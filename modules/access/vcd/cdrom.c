@@ -1272,6 +1272,7 @@ static int CdTextParse( vlc_meta_t ***ppp_tracks, int *pi_tracks,
 {
     char *pppsz_info[128][0x10];
     int i_track_last = -1;
+    bool b_latin1 = false;
     if( i_buffer < 4 )
         return -1;
 
@@ -1290,6 +1291,12 @@ static int CdTextParse( vlc_meta_t ***ppp_tracks, int *pi_tracks,
         const int i_extension_flag = ( p_block[1] >> 7)& 0x01;
         if( i_extension_flag )
             continue;
+
+        /* Block 0 size info starts with the text charset; ASCII is read
+         * as its ISO-8859-1 superset to fix broken declarations */
+        if( i_pack_type == 0x8f && i_track_number == 0 &&
+            ((p_block[3] >> 4) & 0x07) == 0 )
+            b_latin1 = p_block[4] == 0x00 || p_block[4] == 0x01;
 
         //const int i_sequence_number = p_block[2];
         //const int i_charater_position = (p_block[3] >> 0) &0x0f;
@@ -1333,7 +1340,16 @@ static int CdTextParse( vlc_meta_t ***ppp_tracks, int *pi_tracks,
         {
             /* */
             if( pppsz_info[i][j] )
-                EnsureUTF8( pppsz_info[i][j] );
+            {
+                char *psz_utf8 = b_latin1 ? FromLatin1( pppsz_info[i][j] ) : NULL;
+                if( psz_utf8 )
+                {
+                    free( pppsz_info[i][j] );
+                    pppsz_info[i][j] = psz_utf8;
+                }
+                else
+                    EnsureUTF8( pppsz_info[i][j] );
+            }
 
             /* */
             const char *psz_default = pppsz_info[0][j];
