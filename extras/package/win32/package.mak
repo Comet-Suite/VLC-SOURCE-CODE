@@ -126,13 +126,8 @@ endif
 
 $(win32_destdir)/NSIS/nsProcess.dll: extras/package/win32/NSIS/nsProcess/nsProcess.c extras/package/win32/NSIS/nsProcess/nsis/pluginapi.c
 	mkdir -p "$(win32_destdir)/NSIS/"
-if HAVE_ARM64
-	i686-w64-mingw32-gcc $^ -shared -o $@ -static-libgcc -D_UNICODE=1 -DUNICODE=1
-	i686-w64-mingw32-strip $@
-else
 	$(CC) $^ -D_WIN32_IE=0x0601 -shared -o $@ -static-libgcc -D_UNICODE=1 -DUNICODE=1
 	$(STRIP) $@
-endif
 
 package-win32-src: package-win-strip
 if HAVE_MAKENSIS

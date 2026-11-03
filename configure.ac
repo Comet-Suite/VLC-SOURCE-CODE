@@ -5170,7 +5170,7 @@ AS_IF([test "${SYS}" = "mingw32"], [
     dnl
     nsis_major_required="3"
     nsis_version_ok="no"
-    AC_PATH_PROG([MAKENSIS], [makensis], [no])
+    AC_PATH_PROG([MAKENSIS], [makensis], [no], ["${CONTRIB_DIR}/../bin:$PATH"])
     AS_IF([test "$MAKENSIS" != "no"], [
         # Check version
         AC_MSG_CHECKING([makensis version])
