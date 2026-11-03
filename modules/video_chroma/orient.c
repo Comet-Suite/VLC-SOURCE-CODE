@@ -196,7 +196,7 @@ static picture_t *Filter(filter_t *filter, picture_t *src)
         for (int i = 0; i < src->i_planes; i++)
             sys->plane(dst->p[i].p_pixels, dst->p[i].i_pitch,
                        src->p[i].p_pixels, src->p[i].i_pitch,
-                       src->p[i].i_visible_pitch / src->p[i].i_pixel_pitch,
+                       src->p[i].i_visible_pitch >> sys->plane_size_order[i],
                        src->p[i].i_visible_lines, sys->plane_size_order[i]);
 
         picture_CopyProperties(dst, src);
