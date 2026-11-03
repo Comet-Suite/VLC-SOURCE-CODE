@@ -262,6 +262,16 @@ if [ -n "$WIXPATH" ]; then
     CONTRIBFLAGS="$CONTRIBFLAGS --enable-wix"
 fi
 
+if [ "$INSTALLER" = "n" ] || [ "$INSTALLER" = "r" ] || [ "$INSTALLER" = "u" ]; then
+    CONTRIBFLAGS="--enable-nsis $CONTRIBFLAGS"
+    MCONFIGFLAGS="$MCONFIGFLAGS -Dnsis=enabled"
+elif [ "$PACKAGE" = "yes" ]; then
+    CONTRIBFLAGS="--enable-nsis $CONTRIBFLAGS"
+else
+    CONTRIBFLAGS="--disable-nsis $CONTRIBFLAGS"
+fi
+
+
 case $LICENSE in
     l)
         # LGPL v3 + ad-clauses
@@ -586,10 +596,6 @@ if [ -n "$BUILD_MESON" ]; then
 
     if [ -n "$WITH_PDB" ]; then
         VLC_LDFLAGS="$VLC_LDFLAGS -Wl,-pdb="
-    fi
-
-    if [ "$INSTALLER" = "n" ] || [ "$INSTALLER" = "r" ] || [ "$INSTALLER" = "u" ]; then
-        MCONFIGFLAGS="$MCONFIGFLAGS -Dnsis=enabled"
     fi
 
     BUILD_PATH="$( pwd -P )"
