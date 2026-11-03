@@ -293,8 +293,7 @@ static int Open(filter_t *filter)
 
     if (ORIENT_IS_SWAP(transform)) /* Cannot transform non-square samples */
         for (unsigned i = 0; i < chroma->plane_count; i++)
-            if (chroma->p[i].w.num * chroma->p[i].h.den
-             != chroma->p[i].h.num * chroma->p[i].w.den)
+            if (chroma->p[i].w.den != chroma->p[i].h.den)
                 return VLC_ENOTSUP;
 
     vlc_CPU_functions_init_once("video transform", &transforms);
