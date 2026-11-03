@@ -309,30 +309,23 @@ static int Open(filter_t *filter)
             return VLC_ENOTSUP;
     }
 
+    unsigned char plane_size_order[PICTURE_PLANE_MAX];
+    for (size_t i=0; i < chroma->plane_count; ++i)
+    {
+        size_t size = chroma->pixel_size * chroma->p[i].w.num;
+        if (size != 1 && size != 2 && size != 4 && size != 8)
+            return VLC_ENOTSUP;
+        plane_size_order[i] = stdc_trailing_zeros(size);
+    }
+
     filter_sys_t *sys = vlc_obj_malloc(VLC_OBJECT(filter), sizeof(*sys));
     if (unlikely(sys == NULL))
         return VLC_ENOMEM;
 
-    int order = stdc_trailing_zeros(chroma->pixel_size);
-
     sys->transform = transform;
     sys->plane = descriptions[transform];
-    memset(sys->plane_size_order, order, sizeof (sys->plane_size_order));
-
-    /* Deal with weird packed formats */
-    switch (src->i_chroma) {
-        case VLC_CODEC_NV12:
-        case VLC_CODEC_NV21:
-        case VLC_CODEC_NV16:
-        case VLC_CODEC_NV61:
-        case VLC_CODEC_NV24:
-        case VLC_CODEC_NV42:
-        case VLC_CODEC_P010:
-        case VLC_CODEC_P016:
-            /* Double-size samples on second plane */
-            sys->plane_size_order[1]++;
-            break;
-    }
+    memcpy(sys->plane_size_order, plane_size_order,
+           chroma->plane_count * sizeof (*plane_size_order));
 
     static const struct vlc_filter_operations filter_ops =
     {
