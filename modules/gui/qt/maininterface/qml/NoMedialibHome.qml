@@ -43,10 +43,10 @@ FocusScope {
 
         property real spacing: VLCStyle.margin_large
 
-        implicitWidth: orientation === Qt.Vertical ? Math.max(cone.implicitWidth, button.implicitWidth)
-                                                   : cone.implicitWidth + spacing + button.implicitWidth
-        implicitHeight: orientation === Qt.Vertical ? cone.implicitHeight + spacing + button.implicitHeight
-                                                    : cone.implicitHeight
+        implicitWidth: orientation === Qt.Vertical ? Math.max(cone.width, button.implicitWidth)
+                                                   : cone.width + spacing + button.implicitWidth
+        implicitHeight: orientation === Qt.Vertical ? cone.height + spacing + button.implicitHeight
+                                                    : cone.height
 
         states: [
             State {
@@ -103,7 +103,10 @@ FocusScope {
 
             property real _eDPR: MainCtx.effectiveDevicePixelRatio(Window.window)
 
-            sourceSize: Qt.size(0, orientation === Qt.Vertical ? VLCStyle.colWidth(1)
+            width: implicitWidth / _eDPR
+            height: implicitHeight / _eDPR
+
+            sourceSize: Qt.size(0, orientation === Qt.Vertical ? VLCStyle.colWidth(1) * _eDPR
                                                                : button.implicitHeight * 1.618 * _eDPR) // 1.618 = golden ratio approximation
 
             source: MainCtx.useXmasCone() ? "qrc:///logo/vlc48-xmas.png" // TODO: new xmas cone designs
