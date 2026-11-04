@@ -40,7 +40,7 @@ ToolTipExt {
     property point _pos
 
     Component.onCompleted: {
-        if (pointingTooltip.popupType !== undefined) {
+        if (pointingTooltip.popupType !== undefined && !Qt.platform.pluginName.startsWith("wayland")) {
             console.assert(typeof pointingTooltip.popupType === "number")
             pointingTooltip.popupType = 1 // Popup.Window
         }
