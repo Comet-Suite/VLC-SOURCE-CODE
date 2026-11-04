@@ -8,6 +8,8 @@
 @HAVE_WIN64_TRUE@ @HAVE_ARM64_FALSE@ CPU "amd64"
 @HAVE_WIN64_TRUE@ @HAVE_ARM64_TRUE@  CPU "x86"  ; use x86 until arm64 is supported
 
+Unicode true
+
 !include LogicLib.nsh
 
 Function GetOptions
