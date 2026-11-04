@@ -24,11 +24,14 @@
 
 #import "library/VLCLibraryCollectionViewDelegate.h"
 #import "library/VLCLibraryCollectionViewFlowLayout.h"
+#import "library/VLCLibraryCollectionViewSwipeView.h"
 
 #import "views/VLCUIUnits.h"
 
 NSString * const VLCLibraryCollectionViewItemAdjustmentBigger = @"VLCLibraryCollectionViewItemAdjustmentBigger";
 NSString * const VLCLibraryCollectionViewItemAdjustmentSmaller = @"VLCLibraryCollectionViewItemAdjustmentSmaller";
+
+static const unsigned short VLCLibraryCollectionViewEscapeKeyCode = 53;
 
 @implementation VLCLibraryCollectionView
 
@@ -43,6 +46,10 @@ NSString * const VLCLibraryCollectionViewItemAdjustmentSmaller = @"VLCLibraryCol
 
 - (void)keyDown:(NSEvent *)event
 {
+    if (event.keyCode == VLCLibraryCollectionViewEscapeKeyCode &&
+        [VLCLibraryCollectionViewSwipeView closeActionsInCollectionView:self]) {
+        return;
+    }
     if (![self.collectionViewLayout isKindOfClass:VLCLibraryCollectionViewFlowLayout.class] ||
         ![self.delegate isKindOfClass:VLCLibraryCollectionViewDelegate.class] ||
         !(event.modifierFlags & NSEventModifierFlagCommand)) {
