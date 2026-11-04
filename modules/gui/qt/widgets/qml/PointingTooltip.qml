@@ -39,6 +39,13 @@ ToolTipExt {
     property point pos
     property point _pos
 
+    Component.onCompleted: {
+        if (pointingTooltip.popupType !== undefined) {
+            console.assert(typeof pointingTooltip.popupType === "number")
+            pointingTooltip.popupType = 1 // Popup.Window
+        }
+    }
+
     // We do not want to respect `pos` until it becomes relevant:
     onAboutToShow: {
         _pos = Qt.binding(() => { return pointingTooltip.pos })
