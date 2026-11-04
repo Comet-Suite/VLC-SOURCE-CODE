@@ -158,6 +158,9 @@ Widgets.PageExt {
 
             focus: true
 
+            visible: flickable._hasMedias === (continueWatchingRow.visible || favoritesRow.visible
+                                               || newVideoRow.visible || newMusicRow.visible)
+
             orientation: flickable._hasMedias ? Qt.Horizontal : Qt.Vertical
 
             anchors.centerIn: flickable._hasMedias ? undefined : parent
