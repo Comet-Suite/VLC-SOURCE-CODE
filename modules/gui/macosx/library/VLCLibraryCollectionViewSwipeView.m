@@ -32,6 +32,7 @@ static const CGFloat VLCCollectionSwipeIntentDistance = 4.;
 static const CGFloat VLCCollectionSwipeMinimumHorizontalRatio = 1.5;
 static const NSUInteger VLCCollectionSwipePendingEventLimit = 8;
 static const CGFloat VLCCollectionSwipeSettleProgressThreshold = 0.5;
+static const CGFloat VLCCollectionSwipeActivationFraction = 0.5;
 static const NSTimeInterval VLCCollectionSwipeSettleDuration = 0.18;
 
 typedef NS_ENUM(NSUInteger, VLCCollectionScrollState) {
@@ -65,6 +66,8 @@ static NSMapTable<NSCollectionView *, VLCLibraryCollectionViewSwipeView *> *open
     NSPoint _pendingScrollDelta;
     CGFloat _swipeOpenOffset;
     CGFloat _swipeRestOffset;
+    CGFloat _swipeMaximumDistance;
+    BOOL _swipeAllowsFullSwipe;
     BOOL _refreshingActions;
     BOOL _hasBeenInWindow;
 }
@@ -173,6 +176,18 @@ static NSMapTable<NSCollectionView *, VLCLibraryCollectionViewSwipeView *> *open
     return MIN(preferredWidth, MAX(0., maximumWidth));
 }
 
+- (NSButton *)outermostButtonForEdge:(NSRectEdge)edge
+{
+    const BOOL rightToLeft = self.userInterfaceLayoutDirection == NSUserInterfaceLayoutDirectionRightToLeft;
+    return (edge == NSMinXEdge) != rightToLeft ? self.leadingButtons.firstObject : self.trailingButtons.lastObject;
+}
+
+- (CGFloat)fullSwipeThresholdForActionWidth:(CGFloat)actionWidth
+{
+    const CGFloat availableTravel = NSWidth(self.bounds) - actionWidth;
+    return actionWidth + availableTravel * VLCCollectionSwipeActivationFraction;
+}
+
 - (void)layoutButtonsForEdge:(NSRectEdge)edge inView:(NSView *)view reveal:(CGFloat)reveal
 {
     NSArray<NSButton *> * const buttons = [self buttonsForEdge:edge];
@@ -181,16 +196,27 @@ static NSMapTable<NSCollectionView *, VLCLibraryCollectionViewSwipeView *> *open
     }
 
     const CGFloat actionWidth = [self actionWidthForEdge:edge];
-    const CGFloat buttonWidth = actionWidth / buttons.count;
+    const CGFloat expandedWidth = MAX(actionWidth, reveal);
     const CGFloat height = NSHeight(self.bounds);
-    const CGFloat viewX = edge == NSMinXEdge ? 0. : reveal - actionWidth;
-    view.frame = NSMakeRect(viewX, 0., actionWidth, height);
+    const BOOL leftEdge = edge == NSMinXEdge;
+    const CGFloat viewX = leftEdge ? 0. : reveal - expandedWidth;
+    view.frame = NSMakeRect(viewX, 0., expandedWidth, height);
     const NSRect exposedRect = NSMakeRect(-viewX, 0., reveal, height);
 
+    CGFloat expansion = 0.;
+    if (reveal > actionWidth) {
+        const CGFloat extraDistance = [self fullSwipeThresholdForActionWidth:actionWidth] - actionWidth;
+        expansion = MIN(1., (reveal - actionWidth) / extraDistance);
+    }
+    const CGFloat innerWidth = (actionWidth / buttons.count) * (1. - expansion);
+    const CGFloat outerWidth = expandedWidth - (buttons.count - 1) * innerWidth;
     const BOOL rightToLeft = self.userInterfaceLayoutDirection == NSUserInterfaceLayoutDirectionRightToLeft;
+    NSButton * const outermostButton = [self outermostButtonForEdge:edge];
     [buttons enumerateObjectsUsingBlock:^(NSButton *button, NSUInteger index, BOOL * __unused stop) {
         const NSUInteger physicalIndex = rightToLeft ? buttons.count - index - 1 : index;
-        button.frame = NSMakeRect(physicalIndex * buttonWidth, 0., buttonWidth, height);
+        const CGFloat extraOffset = leftEdge && physicalIndex > 0 ? outerWidth - innerWidth : 0.;
+        const CGFloat buttonWidth = button == outermostButton ? outerWidth : innerWidth;
+        button.frame = NSMakeRect(physicalIndex * innerWidth + extraOffset, 0., buttonWidth, height);
         const BOOL exposed = NSIntersectsRect(button.frame, exposedRect);
         button.accessibilityHidden = !exposed;
         button.refusesFirstResponder = !exposed;
@@ -446,16 +472,30 @@ static NSMapTable<NSCollectionView *, VLCLibraryCollectionViewSwipeView *> *open
     _swipeOpenOffset = revealsLeftEdge ? width : -width;
     const CGFloat restingProgress = restingOffset / _swipeOpenOffset;
     _swipeRestOffset = restingProgress >= VLCCollectionSwipeSettleProgressThreshold ? _swipeOpenOffset : 0.;
+    // A closing swipe or an interruption of an expanded drawer cannot commit an action.
+    _swipeAllowsFullSwipe = delta * _swipeOpenOffset > 0. &&
+        fabs(offset) <= width + VLCCollectionSwipeOffsetTolerance &&
+        [self outermostButtonForEdge:edge].enabled;
+    _swipeMaximumDistance = _swipeAllowsFullSwipe ? NSWidth(self.bounds) : MAX(width, fabs(offset));
     _scrollState = VLCCollectionScrollSwiping;
     [self registerOpenActions];
     [self moveSwipeFromOffset:offset byDelta:delta];
     return YES;
 }
 
+- (NSButton *)fullSwipeButtonAtOffset:(CGFloat)offset
+{
+    if (!_swipeAllowsFullSwipe || fabs(offset) < [self fullSwipeThresholdForActionWidth:fabs(_swipeOpenOffset)]) {
+        return nil;
+    }
+    NSButton * const button = [self outermostButtonForEdge:_swipeOpenOffset > 0. ? NSMinXEdge : NSMaxXEdge];
+    return button.enabled ? button : nil;
+}
+
 - (void)moveSwipeFromOffset:(CGFloat)offset byDelta:(CGFloat)delta
 {
-    const CGFloat minimum = MIN(0., _swipeOpenOffset);
-    const CGFloat maximum = MAX(0., _swipeOpenOffset);
+    const CGFloat minimum = _swipeOpenOffset < 0. ? -_swipeMaximumDistance : 0.;
+    const CGFloat maximum = _swipeOpenOffset > 0. ? _swipeMaximumDistance : 0.;
     [self setContentOffset:MIN(maximum, MAX(minimum, offset + delta)) animated:NO];
 }
 
@@ -464,6 +504,16 @@ static NSMapTable<NSCollectionView *, VLCLibraryCollectionViewSwipeView *> *open
     _scrollState = VLCCollectionScrollConsumed;
     const CGFloat offset = _contentLeadingConstraint.constant;
     const CGFloat openOffset = _swipeOpenOffset;
+    NSButton * const button = cancelled ? nil : [self fullSwipeButtonAtOffset:offset];
+    if (button != nil) {
+        [button performClick:self];
+        // The button's handler can close the drawer or cause this card to be reused.
+        if (_scrollState == VLCCollectionScrollConsumed && _contentLeadingConstraint.constant == offset) {
+            [self setContentOffset:openOffset animated:YES];
+        }
+        return;
+    }
+
     const CGFloat progress = offset / openOffset;
     const CGFloat nearestOffset = progress >= VLCCollectionSwipeSettleProgressThreshold ? openOffset : 0.;
     const CGFloat finalOffset = cancelled ? _swipeRestOffset : nearestOffset;

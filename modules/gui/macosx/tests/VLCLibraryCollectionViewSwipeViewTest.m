@@ -63,6 +63,7 @@
 @property NSWindow *window;
 @property NSUInteger actionCount;
 @property (weak) NSButton *lastActionSender;
+@property (weak) VLCLibraryCollectionViewSwipeView *swipeViewToCloseOnAction;
 @end
 
 @implementation VLCLibraryCollectionViewSwipeViewTest
@@ -103,6 +104,7 @@
 {
     self.actionCount++;
     self.lastActionSender = sender;
+    [self.swipeViewToCloseOnAction closeActionsAnimated:NO];
 }
 
 - (void)hostView:(NSView *)view
@@ -421,9 +423,9 @@
     XCTAssertGreaterThan(openOffset, 40.);
 
     [self scrollHorizontally:12. phase:NSEventPhaseBegan inView:view];
-    XCTAssertEqualWithAccuracy(NSMinX(view.contentView.frame), openOffset, .5);
+    XCTAssertEqualWithAccuracy(NSMinX(view.contentView.frame), openOffset + 12., .5);
     [self scrollHorizontally:-9. phase:NSEventPhaseChanged inView:view];
-    XCTAssertEqualWithAccuracy(NSMinX(view.contentView.frame), openOffset - 9., .5);
+    XCTAssertEqualWithAccuracy(NSMinX(view.contentView.frame), openOffset + 3., .5);
     [self scrollHorizontally:0. phase:NSEventPhaseCancelled inView:view];
     XCTAssertEqualWithAccuracy(NSMinX(view.contentView.frame), openOffset, .5);
 
@@ -465,6 +467,138 @@
         XCTAssertTrue(NSEqualRects(view.contentView.frame, view.bounds));
     }
     XCTAssertEqual(self.actionCount, (NSUInteger)0);
+}
+
+- (void)testFullSwipeExpandsAndActivatesTheOutermostButtonOnceOnEachEdge
+{
+    NSArray<NSNumber *> * const directions = @[@(NSUserInterfaceLayoutDirectionLeftToRight),
+                                               @(NSUserInterfaceLayoutDirectionRightToLeft)];
+    for (NSNumber * const direction in directions) {
+        VLCLibraryCollectionViewSwipeView * const view = [self swipeViewWithSize:NSMakeSize(240., 160.)];
+        view.userInterfaceLayoutDirection = (NSUserInterfaceLayoutDirection)direction.integerValue;
+        NSArray<NSButton *> * const leading = @[[self buttonWithTitle:@"Queue"], [self buttonWithTitle:@"Play"]];
+        NSArray<NSButton *> * const trailing = @[[self buttonWithTitle:@"Favorite"], [self buttonWithTitle:@"Add to Playlist"]];
+        [view setLeadingButtons:leading trailingButtons:trailing];
+        CGFloat const cardWidth = NSWidth(view.bounds);
+        CGFloat const centerY = NSMidY(view.bounds);
+
+        for (NSNumber * const edgeValue in @[@(NSMinXEdge), @(NSMaxXEdge)]) {
+            const NSRectEdge edge = edgeValue.unsignedIntegerValue;
+            const BOOL leftEdge = edge == NSMinXEdge;
+            const CGFloat sign = leftEdge ? 1. : -1.;
+            [view closeActionsAnimated:NO];
+            [self openActionsOnEdge:edge inView:view];
+            CGFloat const normalWidth = fabs(NSMinX(view.contentView.frame));
+            CGFloat const outerX = leftEdge ? 8. : cardWidth - 8.;
+            CGFloat const innerX = leftEdge ? normalWidth - 8. : cardWidth - normalWidth + 8.;
+            NSView * const outer = [view hitTest:NSMakePoint(outerX, centerY)];
+            NSView * const inner = [view hitTest:NSMakePoint(innerX, centerY)];
+            XCTAssertTrue([outer isKindOfClass:NSButton.class]);
+            XCTAssertTrue([inner isKindOfClass:NSButton.class]);
+            XCTAssertNotEqual(outer, inner);
+            CGFloat const normalButtonWidth = NSWidth(outer.frame);
+            CGFloat const threshold = (normalWidth + cardWidth) / 2.;
+            NSUInteger const previousCount = self.actionCount;
+            [view closeActionsAnimated:NO];
+
+            [self scrollHorizontally:sign * (threshold - 2.) phase:NSEventPhaseBegan inView:view];
+            XCTAssertGreaterThan(NSWidth(outer.frame), normalButtonWidth);
+            XCTAssertGreaterThan(NSWidth(inner.frame), 0.);
+            [self scrollHorizontally:sign * 2. phase:NSEventPhaseChanged inView:view];
+            XCTAssertEqualWithAccuracy(NSWidth(outer.frame), threshold, .5);
+            XCTAssertEqualWithAccuracy(NSWidth(inner.frame), 0., .5);
+            XCTAssertTrue(inner.hiddenOrHasHiddenAncestor);
+            XCTAssertEqual(self.actionCount, previousCount);
+            [self scrollHorizontally:0. phase:NSEventPhaseEnded inView:view];
+            XCTAssertEqual(self.actionCount, previousCount + 1);
+            XCTAssertEqual(self.lastActionSender, (NSButton *)outer);
+            XCTAssertEqualWithAccuracy(NSMinX(view.contentView.frame), sign * normalWidth, .5);
+
+            [self scrollHorizontally:0. phase:NSEventPhaseEnded inView:view];
+            VLCSwipeTestEvent * const momentum = [self eventWithHorizontal:sign * cardWidth
+                                                                  vertical:0.
+                                                                     phase:NSEventPhaseNone];
+            momentum.momentum = NSEventPhaseChanged;
+            [view scrollWheel:momentum];
+            XCTAssertEqual(self.actionCount, previousCount + 1);
+        }
+    }
+}
+
+- (void)testFullSwipeDoesNotActivateAfterRetreatCancellationReverseOrMomentum
+{
+    VLCLibraryCollectionViewSwipeView * const view = [self swipeViewWithSize:NSMakeSize(240., 160.)];
+    [view setLeadingButtons:@[] trailingButtons:@[[self buttonWithTitle:@"Add to Playlist"]]];
+    [self openActionsOnEdge:NSMaxXEdge inView:view];
+    CGFloat const normalOffset = NSMinX(view.contentView.frame);
+    CGFloat const cardWidth = NSWidth(view.bounds);
+    CGFloat const threshold = (fabs(normalOffset) + cardWidth) / 2.;
+    [view closeActionsAnimated:NO];
+
+    [self scrollHorizontally:-(threshold + 2.) phase:NSEventPhaseBegan inView:view];
+    [self scrollHorizontally:4. phase:NSEventPhaseChanged inView:view];
+    [self scrollHorizontally:0. phase:NSEventPhaseEnded inView:view];
+    XCTAssertEqual(self.actionCount, (NSUInteger)0);
+    XCTAssertEqualWithAccuracy(NSMinX(view.contentView.frame), normalOffset, .5);
+
+    [view closeActionsAnimated:NO];
+    [self scrollHorizontally:-cardWidth phase:NSEventPhaseBegan inView:view];
+    [self scrollHorizontally:0. phase:NSEventPhaseCancelled inView:view];
+    XCTAssertEqual(self.actionCount, (NSUInteger)0);
+    XCTAssertFalse(view.actionsVisible);
+
+    [self openActionsOnEdge:NSMaxXEdge inView:view];
+    [self scrollHorizontally:cardWidth phase:NSEventPhaseBegan inView:view];
+    [self scrollHorizontally:-cardWidth phase:NSEventPhaseChanged inView:view];
+    [self scrollHorizontally:0. phase:NSEventPhaseEnded inView:view];
+    XCTAssertEqual(self.actionCount, (NSUInteger)0);
+    XCTAssertEqualWithAccuracy(NSMinX(view.contentView.frame), normalOffset, .5);
+
+    [self scrollHorizontally:cardWidth phase:NSEventPhaseBegan inView:view];
+    [self scrollHorizontally:0. phase:NSEventPhaseEnded inView:view];
+    XCTAssertFalse(view.actionsVisible);
+
+    [self scrollHorizontally:-(threshold - 2.) phase:NSEventPhaseBegan inView:view];
+    VLCSwipeTestEvent * const momentum = [self eventWithHorizontal:-cardWidth
+                                                          vertical:0.
+                                                             phase:NSEventPhaseNone];
+    momentum.momentum = NSEventPhaseChanged;
+    [view scrollWheel:momentum];
+    XCTAssertEqualWithAccuracy(NSMinX(view.contentView.frame), -(threshold - 2.), .5);
+    [self scrollHorizontally:0. phase:NSEventPhaseEnded inView:view];
+    XCTAssertEqual(self.actionCount, (NSUInteger)0);
+    XCTAssertEqualWithAccuracy(NSMinX(view.contentView.frame), normalOffset, .5);
+}
+
+- (void)testFullSwipeHonorsDisabledActionsAndHandlersThatCloseTheDrawer
+{
+    VLCLibraryCollectionViewSwipeView * const view = [self swipeViewWithSize:NSMakeSize(240., 160.)];
+    NSButton * const favorite = [self buttonWithTitle:@"Favorite"];
+    NSButton * const secondaryAction = [self buttonWithTitle:@"Add to Playlist"];
+    [view setLeadingButtons:@[] trailingButtons:@[favorite, secondaryAction]];
+    CGFloat const cardWidth = NSWidth(view.bounds);
+
+    secondaryAction.enabled = NO;
+    [self scrollHorizontally:-cardWidth phase:NSEventPhaseBegan inView:view];
+    [self scrollHorizontally:0. phase:NSEventPhaseEnded inView:view];
+    XCTAssertEqual(self.actionCount, (NSUInteger)0);
+    [view closeActionsAnimated:NO];
+
+    secondaryAction.enabled = YES;
+    [self scrollHorizontally:-cardWidth phase:NSEventPhaseBegan inView:view];
+    secondaryAction.enabled = NO;
+    [self scrollHorizontally:0. phase:NSEventPhaseEnded inView:view];
+    XCTAssertEqual(self.actionCount, (NSUInteger)0);
+    [view closeActionsAnimated:NO];
+
+    secondaryAction.enabled = YES;
+    self.swipeViewToCloseOnAction = view;
+    [self scrollHorizontally:-cardWidth phase:NSEventPhaseBegan inView:view];
+    [self scrollHorizontally:0. phase:NSEventPhaseEnded inView:view];
+    XCTAssertEqual(self.actionCount, (NSUInteger)1);
+    XCTAssertEqual(self.lastActionSender, secondaryAction);
+    XCTAssertFalse(view.actionsVisible);
+    XCTAssertTrue(NSEqualRects(view.contentView.frame, view.bounds));
 }
 
 - (void)testRebindingAndResizeIgnoreTheRemainingEventsOfAGesture
