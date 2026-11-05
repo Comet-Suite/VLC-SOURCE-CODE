@@ -36,11 +36,15 @@ T.ToolButton {
 
     property color color: (control.checked) ? theme.accent : theme.fg.primary
 
-    property color backgroundColor: theme.bg.primary
+    property color backgroundColor: (!control.flat || (control.enabled && (control.down || control.hovered)))
+                                    ? theme.bg.primary
+                                    : Qt.alpha(theme.bg.primary, 0.0)
 
     property real radius: VLCStyle.button_radius
 
     // Settings
+
+    flat: true
 
     padding: 0
 
@@ -100,7 +104,10 @@ T.ToolButton {
 
         color: control.backgroundColor
 
-        border.color: visualFocus ? theme.visualFocus : theme.border
+        border.color: visualFocus ? theme.visualFocus
+                    : (!control.flat || (control.enabled && (control.down || control.hovered)))
+                    ? theme.border
+                    : Qt.alpha(theme.border, 0.0)
 
         radius: control.radius
     }
