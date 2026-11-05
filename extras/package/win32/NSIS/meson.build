@@ -26,23 +26,7 @@ nsProcess_link_args = ['-static-libgcc']
 nsProcess_sources = files('nsProcess/nsProcess.c', 'nsProcess/nsis/pluginapi.c')
 nsProcess_src = []
 nsProcess_obj = []
-if host_machine.cpu_family() != 'x86'
-    # nsProcess.dll needs to be a 32-bit DLL
-    # with clang we can link a i686 DLL via -target i686-w64-mingw32
-    if cc.has_link_argument(['--target=i686-w64-mingw32'], required: nsis_required)
-        nsProcess_link_args += '--target=i686-w64-mingw32'
-
-        x86_compiler = generator(find_program('i686-w64-mingw32-gcc'),
-          output: ['@BASENAME@.obj'],
-          arguments: ['@INPUT@', '-c', '-o', '@OUTPUT@', nsProcess_cargs])
-
-        nsProcess_obj += x86_compiler.process(nsProcess_sources)
-    endif
-else
-    # TODO always use this mode when we switch to a native .exe installer
-    # for each architecture
-    nsProcess_src = nsProcess_sources
-endif
+nsProcess_src = nsProcess_sources
 nsProcess = shared_library('nsProcess',
                            nsProcess_src,
                            c_args: nsProcess_cargs,

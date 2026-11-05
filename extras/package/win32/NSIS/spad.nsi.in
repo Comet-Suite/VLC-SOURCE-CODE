@@ -4,6 +4,12 @@
 ; and http://msdn.microsoft.com/en-us/library/bb776851%28VS.85%29.aspx           ;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+@HAVE_WIN64_FALSE@                   CPU "x86"
+@HAVE_WIN64_TRUE@ @HAVE_ARM64_FALSE@ CPU "amd64"
+@HAVE_WIN64_TRUE@ @HAVE_ARM64_TRUE@  CPU "arm64"
+
+Unicode true
+
 !include LogicLib.nsh
 
 Function GetOptions
