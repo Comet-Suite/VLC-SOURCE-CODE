@@ -52,6 +52,22 @@
 }
 @end
 
+@interface VLCSwipeHapticRecorder : NSObject <NSHapticFeedbackPerformer>
+@property NSUInteger count;
+@property NSHapticFeedbackPattern pattern;
+@property NSHapticFeedbackPerformanceTime performanceTime;
+@end
+
+@implementation VLCSwipeHapticRecorder
+- (void)performFeedbackPattern:(NSHapticFeedbackPattern)pattern
+               performanceTime:(NSHapticFeedbackPerformanceTime)performanceTime
+{
+    self.count++;
+    self.pattern = pattern;
+    self.performanceTime = performanceTime;
+}
+@end
+
 @interface VLCSwipeFocusableButton : NSButton
 @end
 
@@ -61,6 +77,7 @@
 
 @interface VLCLibraryCollectionViewSwipeViewTest : VLCAppKitMockingTestCase
 @property NSWindow *window;
+@property (strong) VLCSwipeHapticRecorder *hapticFeedback;
 @property NSUInteger actionCount;
 @property (weak) NSButton *lastActionSender;
 @property (weak) VLCLibraryCollectionViewSwipeView *swipeViewToCloseOnAction;
@@ -75,6 +92,11 @@
     [self replaceClassMethod:@selector(isSwipeTrackingFromScrollEventsEnabled)
                      onClass:NSEvent.class
                    withBlock:^BOOL(id __unused cls) { return YES; }];
+    VLCSwipeHapticRecorder * const recorder = VLCSwipeHapticRecorder.new;
+    [self replaceClassMethod:@selector(defaultPerformer)
+                     onClass:NSHapticFeedbackManager.class
+                   withBlock:^id<NSHapticFeedbackPerformer>(id __unused cls) { return recorder; }];
+    self.hapticFeedback = recorder;
 }
 
 - (void)tearDown
@@ -599,6 +621,50 @@
     XCTAssertEqual(self.lastActionSender, secondaryAction);
     XCTAssertFalse(view.actionsVisible);
     XCTAssertTrue(NSEqualRects(view.contentView.frame, view.bounds));
+}
+
+- (void)testFullSwipeRequestsHapticFeedbackOnEachOutwardThresholdCrossing
+{
+    VLCSwipeHapticRecorder * const feedback = self.hapticFeedback;
+    VLCLibraryCollectionViewSwipeView * const view = [self swipeViewWithSize:NSMakeSize(240., 160.)];
+    NSButton * const favorite = [self buttonWithTitle:@"Favorite"];
+    [view setLeadingButtons:@[] trailingButtons:@[favorite]];
+    [self openActionsOnEdge:NSMaxXEdge inView:view];
+    CGFloat const cardWidth = NSWidth(view.bounds);
+    CGFloat const threshold = (fabs(NSMinX(view.contentView.frame)) + cardWidth) / 2.;
+    [view closeActionsAnimated:NO];
+
+    [self scrollHorizontally:-(threshold - 2.) phase:NSEventPhaseBegan inView:view];
+    XCTAssertEqual(feedback.count, (NSUInteger)0);
+    [self scrollHorizontally:-4. phase:NSEventPhaseChanged inView:view];
+    XCTAssertEqual(feedback.count, (NSUInteger)1);
+    XCTAssertEqual(feedback.pattern, NSHapticFeedbackPatternAlignment);
+    XCTAssertEqual(feedback.performanceTime, NSHapticFeedbackPerformanceTimeNow);
+
+    [self scrollHorizontally:-4. phase:NSEventPhaseChanged inView:view];
+    [self scrollHorizontally:3. phase:NSEventPhaseChanged inView:view];
+    XCTAssertEqual(feedback.count, (NSUInteger)1);
+    [self scrollHorizontally:5. phase:NSEventPhaseChanged inView:view];
+    XCTAssertEqual(feedback.count, (NSUInteger)1);
+    [self scrollHorizontally:-4. phase:NSEventPhaseChanged inView:view];
+    XCTAssertEqual(feedback.count, (NSUInteger)2);
+    XCTAssertEqual(feedback.pattern, NSHapticFeedbackPatternAlignment);
+    XCTAssertEqual(feedback.performanceTime, NSHapticFeedbackPerformanceTimeNow);
+    XCTAssertEqual(self.actionCount, (NSUInteger)0);
+    [self scrollHorizontally:0. phase:NSEventPhaseEnded inView:view];
+    XCTAssertEqual(feedback.count, (NSUInteger)2);
+    XCTAssertEqual(self.actionCount, (NSUInteger)1);
+
+    [self scrollHorizontally:cardWidth phase:NSEventPhaseBegan inView:view];
+    [self scrollHorizontally:-cardWidth phase:NSEventPhaseChanged inView:view];
+    [self scrollHorizontally:0. phase:NSEventPhaseEnded inView:view];
+    XCTAssertEqual(feedback.count, (NSUInteger)2);
+
+    [view closeActionsAnimated:NO];
+    favorite.enabled = NO;
+    [self scrollHorizontally:-cardWidth phase:NSEventPhaseBegan inView:view];
+    [self scrollHorizontally:0. phase:NSEventPhaseEnded inView:view];
+    XCTAssertEqual(feedback.count, (NSUInteger)2);
 }
 
 - (void)testRebindingAndResizeIgnoreTheRemainingEventsOfAGesture

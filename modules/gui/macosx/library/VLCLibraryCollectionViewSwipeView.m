@@ -496,7 +496,13 @@ static NSMapTable<NSCollectionView *, VLCLibraryCollectionViewSwipeView *> *open
 {
     const CGFloat minimum = _swipeOpenOffset < 0. ? -_swipeMaximumDistance : 0.;
     const CGFloat maximum = _swipeOpenOffset > 0. ? _swipeMaximumDistance : 0.;
+    const BOOL wasArmed = [self fullSwipeButtonAtOffset:offset] != nil;
     [self setContentOffset:MIN(maximum, MAX(minimum, offset + delta)) animated:NO];
+    if (_scrollState == VLCCollectionScrollSwiping && !wasArmed &&
+        [self fullSwipeButtonAtOffset:_contentLeadingConstraint.constant] != nil) {
+        [NSHapticFeedbackManager.defaultPerformer performFeedbackPattern:NSHapticFeedbackPatternAlignment
+                                                         performanceTime:NSHapticFeedbackPerformanceTimeNow];
+    }
 }
 
 - (void)finishSwipeCancelled:(BOOL)cancelled
