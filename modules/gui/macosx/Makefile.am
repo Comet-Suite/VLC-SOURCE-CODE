@@ -472,6 +472,8 @@ libmacosx_plugin_la_SOURCES = \
 	gui/macosx/playqueue/VLCPlayQueueTableView.m \
 	gui/macosx/preferences/VLCHotkeyChangeWindow.h \
 	gui/macosx/preferences/VLCHotkeyChangeWindow.m \
+	gui/macosx/preferences/VLCHotkeyPreferencesController.h \
+	gui/macosx/preferences/VLCHotkeyPreferencesController.m \
 	gui/macosx/preferences/VLCMediaLibraryFolderManagementController.h \
 	gui/macosx/preferences/VLCMediaLibraryFolderManagementController.m \
 	gui/macosx/preferences/VLCSimplePrefsController.h \

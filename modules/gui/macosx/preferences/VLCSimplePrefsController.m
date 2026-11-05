@@ -27,6 +27,7 @@
 
 #import "VLCSimplePrefsController.h"
 #import "VLCMediaLibraryFolderManagementController.h"
+#import "VLCHotkeyPreferencesController.h"
 
 #ifdef HAVE_SPARKLE
 #import <Sparkle/Sparkle.h>                        //for o_intf_last_updateLabel
@@ -142,18 +143,13 @@ static NSString* VLCHotkeysSettingToolbarIdentifier = @"Hotkeys Settings Item Id
     BOOL _videoSettingChanged;
     BOOL _osdSettingChanged;
     BOOL _inputSettingChanged;
-    BOOL _hotkeyChanged;
 
     NSOpenPanel *_selectFolderPanel;
-    NSArray *_hotkeyDescriptions;
-    NSArray *_hotkeyNames;
-    NSArray *_hotkeysNonUseableKeys;
-    NSMutableArray *_hotkeySettings;
-    NSString *_keyInTransition;
     VLCMediaLibraryFolderManagementController *_mediaLibraryManagementController;
 
     intf_thread_t *p_intf;
 }
+@property (nonatomic, strong) IBOutlet VLCHotkeyPreferencesController *hotkeyPreferencesController;
 @end
 
 @implementation VLCSimplePrefsController
@@ -196,11 +192,7 @@ static NSString* VLCHotkeysSettingToolbarIdentifier = @"Hotkeys Settings Item Id
     [self.window setCollectionBehavior: NSWindowCollectionBehaviorFullScreenAuxiliary];
     [self.window setHidesOnDeactivate:YES];
 
-    [_hotkeys_listbox setTarget:self];
-    [_hotkeys_listbox setDoubleAction:@selector(hotkeyTableDoubleClick:)];
-
-    /* setup useful stuff */
-    _hotkeysNonUseableKeys = [NSArray arrayWithObjects:@"Command-c", @"Command-x", @"Command-v", @"Command-a", @"Command-," , @"Command-h", @"Command-Alt-h", @"Command-Shift-o", @"Command-o", @"Command-d", @"Command-n", @"Command-s", @"Command-l", @"Command-r", @"Command-3", @"Command-m", @"Command-w", @"Command-Shift-w", @"Command-Shift-c", @"Command-Shift-p", @"Command-i", @"Command-e", @"Command-Shift-e", @"Command-b", @"Command-Shift-m", @"Command-Ctrl-m", @"Command-?", @"Command-Alt-?", @"Command-Shift-f", nil];
+    [_hotkeyPreferencesController setupControls];
 
     // Workaround for Mac OS X Lion, which does not apply the same constraints when set in IB
     NSView *clipView = _contentView.superview;
@@ -350,16 +342,6 @@ create_toolbar_item(NSString *itemIdent, NSString *name, NSString *desc, NSStrin
     [_audio_visualLabel setStringValue: _NS("Visualization")];
     [_audio_autosavevol_yesButtonCell setTitle: _NS("Keep audio level between sessions")];
     [_audio_autosavevol_noButtonCell setTitle: _NS("Always reset audio start level to:")];
-
-    /* hotkeys */
-    [_hotkeys_change_win setTitle: _NS("Change Hotkey")];
-    [_hotkeys_change_cancelButton setTitle: _NS("Cancel")];
-    [_hotkeys_change_okButton setTitle: _NS("OK")];
-    [_hotkeys_change_clearButton setTitle: _NS("Clear")];
-    [_hotkeysLabel setStringValue: _NS("Double-click an action to change the associated hotkey:")];
-    [[[_hotkeys_listbox tableColumnWithIdentifier: @"action"] headerCell] setStringValue: _NS("Action")];
-    [[[_hotkeys_listbox tableColumnWithIdentifier: @"shortcut"] headerCell] setStringValue: _NS("Shortcut")];
-    [_hotkeys_mediakeysCheckbox setTitle: _NS("Control playback with media keys")];
 
     /* input */
     [_input_recordBox setTitle: _NS("Record directory or filename")];
@@ -797,42 +779,7 @@ create_toolbar_item(NSString *itemIdent, NSString *name, NSString *desc, NSStrin
     [self setupButton:_osd_outline_colorPopup forIntList: "freetype-outline-color"];
     [self setupButton:_osd_outline_thicknessPopup forIntList: "freetype-outline-thickness"];
 
-    /********************
-     * hotkeys settings *
-     ********************/
-    _hotkeySettings = [[NSMutableArray alloc] init];
-    NSMutableArray *tempArray_desc = [[NSMutableArray alloc] init];
-    NSMutableArray *tempArray_names = [[NSMutableArray alloc] init];
-
-    /* Get the main Module */
-    module_t *p_main = module_get_main();
-    assert(p_main);
-    unsigned confsize;
-    module_config_t *p_config;
-
-    p_config = module_config_get (p_main, &confsize);
-
-    for (size_t i = 0; i < confsize; i++) {
-        module_config_t *p_item = p_config + i;
-
-        if (p_item->i_type == CONFIG_ITEM_KEY
-           && strncmp(p_item->psz_name, "global-", 7) != 0
-           && !EMPTY_STR(p_item->psz_text)) {
-            [tempArray_desc addObject: NSTR(p_item->psz_text)];
-            [tempArray_names addObject: toNSStr(p_item->psz_name)];
-            if (p_item->value.psz)
-                [_hotkeySettings addObject: toNSStr(p_item->value.psz)];
-            else
-                [_hotkeySettings addObject: [NSString string]];
-        }
-    }
-    module_config_free (p_config);
-
-    _hotkeyDescriptions = [[NSArray alloc] initWithArray:tempArray_desc copyItems: YES];
-    _hotkeyNames = [[NSArray alloc] initWithArray:tempArray_names copyItems: YES];
-
-    [_hotkeys_listbox reloadData];
-    [self setupButton:_hotkeys_mediakeysCheckbox forBoolValue: "macosx-mediakeys"];
+    [_hotkeyPreferencesController resetControls];
 }
 
 #pragma mark -
@@ -1083,18 +1030,7 @@ static inline void save_string_list(intf_thread_t * __unused p_intf, id object, 
         _osdSettingChanged = NO;
     }
 
-    /********************
-     * hotkeys settings *
-     ********************/
-    if (_hotkeyChanged) {
-        NSUInteger hotKeyCount = [_hotkeySettings count];
-        for (NSUInteger i = 0; i < hotKeyCount; i++)
-            config_PutPsz([[_hotkeyNames objectAtIndex:i] UTF8String], [[_hotkeySettings objectAtIndex:i]UTF8String]);
-        _hotkeyChanged = NO;
-
-        config_PutInt("macosx-mediakeys", [_hotkeys_mediakeysCheckbox state]);
-    }
-
+    [_hotkeyPreferencesController saveChangedSettings];
     fixIntfSettings();
 
     /* okay, let's save our changes to vlcrc */
@@ -1404,115 +1340,9 @@ static inline void save_string_list(intf_thread_t * __unused p_intf, id object, 
 #pragma mark -
 #pragma mark Hotkey actions
 
-- (void)hotkeyTableDoubleClick:(id)object
-{
-    // -1 is header
-    if ([_hotkeys_listbox clickedRow] >= 0)
-        [self hotkeySettingChanged:_hotkeys_listbox];
-}
-
-- (IBAction)hotkeySettingChanged:(id)sender
-{
-    if (sender == _hotkeys_listbox) {
-        [_hotkeys_changeLabel setStringValue: [NSString stringWithFormat: _NS("Press new keys for\n\"%@\""),
-                                               [_hotkeyDescriptions objectAtIndex:[_hotkeys_listbox selectedRow]]]];
-        [_hotkeys_change_keysLabel setStringValue: OSXStringKeyToString([_hotkeySettings objectAtIndex:[_hotkeys_listbox selectedRow]])];
-        [_hotkeys_change_takenLabel setStringValue: @""];
-        [_hotkeys_change_win setInitialFirstResponder: [_hotkeys_change_win contentView]];
-        [_hotkeys_change_win makeFirstResponder: [_hotkeys_change_win contentView]];
-        [NSApp runModalForWindow:_hotkeys_change_win];
-    } else if (sender == _hotkeys_change_cancelButton) {
-        [NSApp stopModal];
-        [_hotkeys_change_win close];
-    } else if (sender == _hotkeys_change_okButton) {
-        NSInteger i_returnValue;
-        if (! _keyInTransition) {
-            [NSApp stopModal];
-            [_hotkeys_change_win close];
-            NSAssert(1, @"internal error prevented the hotkey switch");
-            return;
-        }
-
-        _hotkeyChanged = YES;
-
-        i_returnValue = [_hotkeySettings indexOfObject: _keyInTransition];
-        if (i_returnValue != NSNotFound)
-            [_hotkeySettings replaceObjectAtIndex: i_returnValue withObject: [NSString string]];
-        NSString *tempString;
-        tempString = [_keyInTransition stringByReplacingOccurrencesOfString:@"-" withString:@"+"];
-        i_returnValue = [_hotkeySettings indexOfObject: tempString];
-        if (i_returnValue != NSNotFound)
-            [_hotkeySettings replaceObjectAtIndex: i_returnValue withObject: [NSString string]];
-
-        [_hotkeySettings replaceObjectAtIndex: [_hotkeys_listbox selectedRow] withObject:_keyInTransition];
-
-        [NSApp stopModal];
-        [_hotkeys_change_win close];
-
-        [_hotkeys_listbox reloadData];
-    } else if (sender == _hotkeys_change_clearButton) {
-        [_hotkeySettings replaceObjectAtIndex: [_hotkeys_listbox selectedRow] withObject: [NSString string]];
-        _hotkeyChanged = YES;
-        [NSApp stopModal];
-        [_hotkeys_change_win close];
-        [_hotkeys_listbox reloadData];
-    }
-}
-
 - (void)showHotkeySettings
 {
-    [self showSettingsForCategory:_hotkeysView];
-}
-
-- (NSUInteger)numberOfRowsInTableView:(NSTableView *)aTableView
-{
-    return [_hotkeySettings count];
-}
-
-- (id)tableView:(NSTableView *)aTableView objectValueForTableColumn:(NSTableColumn *)aTableColumn row:(int)rowIndex
-{
-    NSString * identifier = [aTableColumn identifier];
-
-    if ([identifier isEqualToString: @"action"])
-        return [_hotkeyDescriptions objectAtIndex:rowIndex];
-    else if ([identifier isEqualToString: @"shortcut"])
-        return OSXStringKeyToString([_hotkeySettings objectAtIndex:rowIndex]);
-    else {
-        msg_Err(p_intf, "unknown TableColumn identifier (%s)!", [identifier UTF8String]);
-        return NULL;
-    }
-}
-
-- (BOOL)changeHotkeyTo: (NSString *)theKey
-{
-    NSInteger i_returnValue, i_returnValue2;
-    i_returnValue = [_hotkeysNonUseableKeys indexOfObject: theKey];
-
-    if (i_returnValue != NSNotFound || [theKey isEqualToString:@""]) {
-        [_hotkeys_change_keysLabel setStringValue: _NS("Invalid combination")];
-        [_hotkeys_change_takenLabel setStringValue: _NS("Regrettably, these keys cannot be assigned as hotkey shortcuts.")];
-        [_hotkeys_change_okButton setEnabled: NO];
-        return NO;
-    } else {
-        [_hotkeys_change_keysLabel setStringValue: OSXStringKeyToString(theKey)];
-
-        i_returnValue = [_hotkeySettings indexOfObject: theKey];
-        i_returnValue2 = [_hotkeySettings indexOfObject: [theKey stringByReplacingOccurrencesOfString:@"-" withString:@"+"]];
-        if (i_returnValue != NSNotFound)
-            [_hotkeys_change_takenLabel setStringValue: [NSString stringWithFormat:
-                                                         _NS("This combination is already taken by \"%@\"."),
-                                                         [_hotkeyDescriptions objectAtIndex:i_returnValue]]];
-        else if (i_returnValue2 != NSNotFound)
-            [_hotkeys_change_takenLabel setStringValue: [NSString stringWithFormat:
-                                                         _NS("This combination is already taken by \"%@\"."),
-                                                         [_hotkeyDescriptions objectAtIndex:i_returnValue2]]];
-        else
-            [_hotkeys_change_takenLabel setStringValue: @""];
-
-        [_hotkeys_change_okButton setEnabled: YES];
-        _keyInTransition = theKey;
-        return YES;
-    }
+    [self showSettingsForCategory:_hotkeyPreferencesController.view];
 }
 
 - (void)showMediaLibrarySettings

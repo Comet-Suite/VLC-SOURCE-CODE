@@ -71,20 +71,6 @@
 @property (readwrite, weak) IBOutlet NSButton *mediaLibraryBanFolderButton;
 @property (readwrite, weak) IBOutlet NSButton *mediaLibraryReloadFolderButton;
 
-// hotkeys pane
-@property (readwrite, strong) IBOutlet NSView *hotkeysView;
-
-@property (readwrite, strong) IBOutlet NSWindow *hotkeys_change_win;
-@property (readwrite, weak) IBOutlet NSTextField *hotkeys_changeLabel;
-@property (readwrite, weak) IBOutlet NSTextField *hotkeys_change_keysLabel;
-@property (readwrite, weak) IBOutlet NSTextField *hotkeys_change_takenLabel;
-@property (readwrite, weak) IBOutlet NSButton *hotkeys_change_cancelButton;
-@property (readwrite, weak) IBOutlet NSButton *hotkeys_change_okButton;
-@property (readwrite, weak) IBOutlet NSButton *hotkeys_change_clearButton;
-@property (readwrite, weak) IBOutlet NSTextField *hotkeysLabel;
-@property (readwrite, weak) IBOutlet NSTableView *hotkeys_listbox;
-@property (readwrite, weak) IBOutlet NSButton *hotkeys_mediakeysCheckbox;
-
 // input pane
 @property (readwrite, strong) IBOutlet NSView *inputView;
 
@@ -253,8 +239,6 @@
 - (IBAction)urlHandlerAction:(id)sender;
 
 /* hotkeys */
-- (IBAction)hotkeySettingChanged:(id)sender;
-- (BOOL)changeHotkeyTo: (NSString *)theKey;
 
 /**
  * Updates right to left UI setting according to currently set language code

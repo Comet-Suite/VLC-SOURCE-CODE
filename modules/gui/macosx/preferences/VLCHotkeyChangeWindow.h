@@ -22,6 +22,12 @@
 
 #import <Cocoa/Cocoa.h>
 
+@protocol VLCHotkeyChangeWindowDelegate <NSObject>
+- (BOOL)changeHotkeyTo:(NSString *)key;
+@end
+
 @interface VLCHotkeyChangeWindow : NSWindow
+
+@property (nonatomic, weak) id<VLCHotkeyChangeWindowDelegate> hotkeyDelegate;
 
 @end

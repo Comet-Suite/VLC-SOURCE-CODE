@@ -6,6 +6,21 @@
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
+        <customObject id="hkc-01-ctl" customClass="VLCHotkeyPreferencesController">
+            <connections>
+                <outlet property="view" destination="2668" id="hkc-01-vie"/>
+                <outlet property="changeWindow" destination="2677" id="hkc-01-win"/>
+                <outlet property="changeLabel" destination="2679" id="hkc-01-lbl"/>
+                <outlet property="changeKeysLabel" destination="2800" id="hkc-01-key"/>
+                <outlet property="changeTakenLabel" destination="2803" id="hkc-01-tkn"/>
+                <outlet property="descriptionLabel" destination="2673" id="hkc-01-dsc"/>
+                <outlet property="changeCancelButton" destination="2792" id="hkc-01-can"/>
+                <outlet property="changeOKButton" destination="2791" id="hkc-01-okk"/>
+                <outlet property="changeClearButton" destination="0Dd-AY-La9" id="hkc-01-clr"/>
+                <outlet property="listbox" destination="2670" id="hkc-01-tbl"/>
+                <outlet property="mediaKeysCheckbox" destination="6Ro-o1-WEd" id="hkc-01-med"/>
+            </connections>
+        </customObject>
         <customObject id="-2" userLabel="File's Owner" customClass="VLCSimplePrefsController">
             <connections>
                 <outlet property="audioView" destination="2330" id="gZc-yc-OH9"/>
@@ -29,17 +44,7 @@
                 <outlet property="audio_volTextField" destination="2336" id="Nl0-aK-ahI"/>
                 <outlet property="cancelButton" destination="2276" id="sME-3c-gc4"/>
                 <outlet property="contentView" destination="HOX-DS-Fgr" id="Gcx-RH-0il"/>
-                <outlet property="hotkeysLabel" destination="2673" id="uXG-oU-1G0"/>
-                <outlet property="hotkeysView" destination="2668" id="0q1-GK-Zyd"/>
-                <outlet property="hotkeys_changeLabel" destination="2679" id="313-9Y-bXf"/>
-                <outlet property="hotkeys_change_cancelButton" destination="2792" id="7lu-ja-pxu"/>
-                <outlet property="hotkeys_change_clearButton" destination="0Dd-AY-La9" id="COr-ly-7f3"/>
-                <outlet property="hotkeys_change_keysLabel" destination="2800" id="f3a-Nj-ecb"/>
-                <outlet property="hotkeys_change_okButton" destination="2791" id="CTo-iG-kmD"/>
-                <outlet property="hotkeys_change_takenLabel" destination="2803" id="IL0-j6-d9h"/>
-                <outlet property="hotkeys_change_win" destination="2677" id="rwN-5b-lyj"/>
-                <outlet property="hotkeys_listbox" destination="2670" id="i2J-F5-aT6"/>
-                <outlet property="hotkeys_mediakeysCheckbox" destination="6Ro-o1-WEd" id="fGa-18-7ey"/>
+                <outlet property="hotkeyPreferencesController" destination="hkc-01-ctl" id="hkc-01-own"/>
                 <outlet property="inputView" destination="2562" id="FPv-Zx-DLZ"/>
                 <outlet property="input_aviLabel" destination="2593" id="Tm7-Yh-wKr"/>
                 <outlet property="input_aviPopup" destination="2594" id="2No-D7-Fgf"/>
@@ -2429,8 +2434,6 @@ Gw
                                     </tableColumn>
                                 </tableColumns>
                                 <connections>
-                                    <outlet property="dataSource" destination="-2" id="C8J-sb-AP6"/>
-                                    <outlet property="delegate" destination="-2" id="wjB-fD-pTb"/>
                                 </connections>
                             </tableView>
                         </subviews>
@@ -2466,7 +2469,6 @@ Gw
                         <font key="font" metaFont="system"/>
                     </buttonCell>
                     <connections>
-                        <action selector="hotkeySettingChanged:" target="-2" id="TcH-tQ-KTD"/>
                     </connections>
                 </button>
             </subviews>
@@ -2573,7 +2575,6 @@ Gw
                             <font key="font" metaFont="system"/>
                         </buttonCell>
                         <connections>
-                            <action selector="hotkeySettingChanged:" target="-2" id="TGw-K2-Tne"/>
                         </connections>
                     </button>
                     <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="2791">
@@ -2583,7 +2584,6 @@ Gw
                             <font key="font" metaFont="system"/>
                         </buttonCell>
                         <connections>
-                            <action selector="hotkeySettingChanged:" target="-2" id="dLE-0s-rau"/>
                         </connections>
                     </button>
                     <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="0Dd-AY-La9">
@@ -2593,7 +2593,6 @@ Gw
                             <font key="font" metaFont="system"/>
                         </buttonCell>
                         <connections>
-                            <action selector="hotkeySettingChanged:" target="-2" id="J2W-Uw-4ip"/>
                         </connections>
                     </button>
                 </subviews>
