@@ -1557,7 +1557,22 @@ static es_out_id_t *EsOutAddSlave( es_out_t *out, const es_format_t *fmt, es_out
     es->p_pgrm = p_pgrm;
     es_format_Copy( &es->fmt, fmt );
     if( es->fmt.i_id < 0 )
-        es->fmt.i_id = p_sys->i_id;
+    {
+        bool id_used;
+        do {
+            es->fmt.i_id = p_sys->i_id;
+            id_used = false;
+            for( int i = 0; i < p_sys->i_es; i++ )
+            {
+                if( p_sys->es[i]->i_id == es->fmt.i_id )
+                {
+                    p_sys->i_id++;
+                    id_used = true;
+                    break;
+                }
+            }
+        } while( id_used );
+    }
     if( !es->fmt.i_original_fourcc )
         es->fmt.i_original_fourcc = es->fmt.i_codec;
 
