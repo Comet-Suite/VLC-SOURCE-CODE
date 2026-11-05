@@ -83,6 +83,36 @@ Item {
             }
         }
 
+        // TODO: Get rid of this when we can get two finger flick on touchpad
+        //       gesture (through `QNativeGestureEvent`). Currently we only
+        //       receive (unlike touch screen) wheel events in this case. It
+        //       would be even better if `DragHandler` starts handling it,
+        //       where in that case just removing this wheel handler would be
+        //       enough.
+        WheelHandler {
+            id: historyWheelHandler
+
+            // `active` is not reliable with xcb platform plugin:
+            enabled: (Qt.platform.pluginName !== "xcb")
+
+            acceptedDevices: PointerDevice.TouchPad
+
+            orientation: Qt.Horizontal
+
+            onWheel: (wheel) => {
+                const delta = wheel.pixelDelta.x
+                if (delta === 0)
+                    return
+
+                historyDragHandler.onXAxisActiveValueChanged(wheel.pixelDelta.x)
+                wheel.accepted = true
+            }
+
+            onActiveChanged: {
+                historyDragHandler.activeChangedHandler(active)
+            }
+        }
+
         DragHandler {
             id: historyDragHandler
 
@@ -119,20 +149,22 @@ Item {
                 }
             }
 
-            onActiveChanged: {
-                if (!active) {
-                    if (historyDragHandler.accumulatedDelta >= threshold) {
-                        if (MainCtx.playerView)
-                            MainCtx.playerView = false
-                        else if (MainCtx.minimalView)
-                            MainCtx.minimalView = false
-                        else
-                            History.previous()
-                    }
-
-                    historyDragHandler.accumulatedDelta = 0.0
-                    accumulatedDelta = 0.0
+            function activeChangedHandler(active : bool) {
+                if (historyDragHandler.accumulatedDelta >= threshold) {
+                    if (MainCtx.playerView)
+                        MainCtx.playerView = false
+                    else if (MainCtx.minimalView)
+                        MainCtx.minimalView = false
+                    else
+                        History.previous()
                 }
+
+                historyDragHandler.accumulatedDelta = 0.0
+                accumulatedDelta = 0.0
+            }
+
+            onActiveChanged: {
+                activeChangedHandler(active)
             }
         }
 
