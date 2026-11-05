@@ -5,8 +5,8 @@ if ENABLE_MACOSX_XCTESTS
 macosx_gui_xctest_frameworks_dir = $(shell $(XCRUN) --sdk macosx --show-sdk-platform-path)/Developer/Library/Frameworks
 macosx_gui_xctest_bundles = VLCMacOSXTests.xctest
 
-check_PROGRAMS += VLCMacOSXTests VLCLibraryFixtureSQL
-TESTS += $(macosx_gui_xctest_bundles)
+check_PROGRAMS += VLCMacOSXTests VLCLibraryFixtureSQL VLCLibraryCollectionSwipeIntegrationTest
+TESTS += $(macosx_gui_xctest_bundles) VLCLibraryCollectionSwipeIntegrationTest$(EXEEXT)
 
 VLCMacOSXTests_SOURCES = \
 	gui/macosx/tests/VLCAppKitMockingTestCase.m \
@@ -120,6 +120,22 @@ VLCLibraryFixtureSQL_OBJCFLAGS = $(AM_OBJCFLAGS) -fobjc-arc -fobjc-exceptions -f
 VLCLibraryFixtureSQL_LDFLAGS = -Wl,-framework,Foundation
 VLCLibraryFixtureSQL_LDADD = -lsqlite3
 
+# Load the production plugin in a separate process because XCTest links
+# some of the same Objective-C classes directly.
+VLCLibraryCollectionSwipeIntegrationTest_SOURCES = gui/macosx/tests/VLCLibraryCollectionSwipeIntegrationTest.m
+VLCLibraryCollectionSwipeIntegrationTest_CPPFLAGS = \
+	$(AM_CPPFLAGS) -I$(srcdir)/gui/macosx \
+	-DVLC_SWIPE_TEST_PLUGIN=\"$(abs_builddir)/.libs/libmacosx_plugin.dylib\" \
+	-DVLC_SWIPE_TEST_CARD_NIB=\"$(abs_builddir)/gui/macosx/UI/VLCMediaItemCollectionViewItem.nib\"
+VLCLibraryCollectionSwipeIntegrationTest_OBJCFLAGS = $(AM_OBJCFLAGS) -fobjc-arc -fmodules
+VLCLibraryCollectionSwipeIntegrationTest_LDFLAGS = \
+	-Wl,-rpath,"$(abs_top_builddir)/src/.libs" \
+	-Wl,-framework,Cocoa -Wl,-framework,QuartzCore
+VLCLibraryCollectionSwipeIntegrationTest_LDADD = $(top_builddir)/src/libvlccore.la
+VLCLibraryCollectionSwipeIntegrationTest_DEPENDENCIES = \
+	$(VLCLibraryCollectionSwipeIntegrationTest_LDADD) \
+	libmacosx_plugin.la gui/macosx/UI/VLCMediaItemCollectionViewItem.nib
+
 VLCMacOSXTests_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(OBJCLD) \
 	$(VLCMacOSXTests_OBJCFLAGS) $(OBJCFLAGS) \
@@ -142,9 +158,10 @@ mostlyclean-local: mostlyclean-local-macosx-xctest
 mostlyclean-local-macosx-xctest:
 	rm -rf $(macosx_gui_xctest_bundles)
 
-check-macosx: VLCMacOSXTests.xctest
+check-macosx: VLCMacOSXTests.xctest VLCLibraryCollectionSwipeIntegrationTest$(EXEEXT)
 	$(MAKE) -C $(top_builddir)/bin ../modules/plugins.dat
 	$(XCTEST_LOG_COMPILER) $<
+	./VLCLibraryCollectionSwipeIntegrationTest$(EXEEXT)
 
 else
 

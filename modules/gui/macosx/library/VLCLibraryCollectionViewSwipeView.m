@@ -425,9 +425,16 @@ static NSMapTable<NSCollectionView *, VLCLibraryCollectionViewSwipeView *> *open
 
 - (BOOL)beginSwipeWithDelta:(CGFloat)delta
 {
-    const CGFloat offset = _contentLeadingConstraint.constant;
+    const CGFloat restingOffset = _contentLeadingConstraint.constant;
+    CGFloat offset = restingOffset;
+    CALayer * const layer = self.contentView.layer;
+    CALayer * const presentationLayer = layer.presentationLayer;
+    if (layer.animationKeys.count > 0 && presentationLayer != nil) {
+        // A new swipe can take over while the card is still settling.
+        offset = NSMinX(presentationLayer.frame) - NSMinX(self.bounds);
+    }
     const BOOL hasReveal = fabs(offset) > VLCCollectionSwipeOffsetTolerance;
-    if (!hasReveal) {
+    if (!hasReveal || !self.actionsVisible) {
         [self refreshActionsBeforeReveal];
     }
     const BOOL revealsLeftEdge = (hasReveal ? offset : delta) > 0.;
@@ -437,7 +444,7 @@ static NSMapTable<NSCollectionView *, VLCLibraryCollectionViewSwipeView *> *open
         return NO;
     }
     _swipeOpenOffset = revealsLeftEdge ? width : -width;
-    const CGFloat restingProgress = offset / _swipeOpenOffset;
+    const CGFloat restingProgress = restingOffset / _swipeOpenOffset;
     _swipeRestOffset = restingProgress >= VLCCollectionSwipeSettleProgressThreshold ? _swipeOpenOffset : 0.;
     _scrollState = VLCCollectionScrollSwiping;
     [self registerOpenActions];
