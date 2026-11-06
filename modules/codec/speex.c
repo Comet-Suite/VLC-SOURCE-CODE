@@ -796,6 +796,12 @@ static int DecodeRtpSpeexPacket( decoder_t *p_dec, block_t *p_speex_bit_block )
         }
 
         const SpeexMode *mode = speex_lib_get_mode((p_sys->rtp_rate / 8000) >> 1);
+        if (mode == NULL)
+        {
+            free(p_sys->header);
+            block_Release(p_speex_bit_block);
+            return VLCDEC_SUCCESS;
+        }
 
         speex_init_header( p_sys->p_header,p_sys->rtp_rate, 1, mode );
         p_sys->p_state = speex_decoder_init( mode );
