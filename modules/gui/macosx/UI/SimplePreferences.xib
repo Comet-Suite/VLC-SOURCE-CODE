@@ -153,8 +153,23 @@
                 <outlet property="updateCheckbox" destination="3556" id="YsJ-GG-xVt"/>
             </connections>
         </customObject>
+        <customObject id="lib-01-ctl" customClass="VLCMediaLibraryFolderManagementController">
+            <connections>
+                <outlet property="addFolderButton" destination="AsR-G7-aHo" id="rWZ-Ns-RgB"/>
+                <outlet property="banFolderButton" destination="Yvu-g1-fLU" id="FIb-RT-Ymv"/>
+                <outlet property="bannedTableColumn" destination="bjG-Ru-jiX" id="4KB-Y9-maP"/>
+                <outlet property="libraryFolderTableView" destination="uR2-Au-IEe" id="5kB-Wd-fSH"/>
+                <outlet property="nameTableColumn" destination="wAS-Qh-rAS" id="2ei-jH-cvI"/>
+                <outlet property="pathTableColumn" destination="QBg-HT-Vvb" id="4AQ-jb-HLf"/>
+                <outlet property="presentTableColumn" destination="kVl-Wj-9vm" id="cmW-Jn-uIQ"/>
+                <outlet property="reloadFolderButton" destination="hvb-5M-TTc" id="HV0-Gc-GLE"/>
+                <outlet property="removeFolderButton" destination="WnC-lv-27l" id="EUb-bH-L13"/>
+                <outlet property="view" destination="eei-wi-f9H" id="Oh4-jV-mOk"/>
+            </connections>
+        </customObject>
         <customObject id="-2" userLabel="File's Owner" customClass="VLCSimplePrefsController">
             <connections>
+                <outlet property="mediaLibraryManagementController" destination="lib-01-ctl" id="lib-01-own"/>
                 <outlet property="interfacePreferencesController" destination="int-01-ctl" id="int-01-own"/>
                 <outlet property="subtitlesPreferencesController" destination="sub-01-ctl" id="sub-01-own"/>
                 <outlet property="inputPreferencesController" destination="inp-01-ctl" id="inp-01-own"/>
@@ -163,16 +178,6 @@
                 <outlet property="cancelButton" destination="2276" id="sME-3c-gc4"/>
                 <outlet property="contentView" destination="HOX-DS-Fgr" id="Gcx-RH-0il"/>
                 <outlet property="hotkeyPreferencesController" destination="hkc-01-ctl" id="hkc-01-own"/>
-                <outlet property="mediaLibraryAddFolderButton" destination="AsR-G7-aHo" id="rWZ-Ns-RgB"/>
-                <outlet property="mediaLibraryBanFolderButton" destination="Yvu-g1-fLU" id="FIb-RT-Ymv"/>
-                <outlet property="mediaLibraryBannedTableColumn" destination="bjG-Ru-jiX" id="4KB-Y9-maP"/>
-                <outlet property="mediaLibraryFolderTableView" destination="uR2-Au-IEe" id="5kB-Wd-fSH"/>
-                <outlet property="mediaLibraryNameTableColumn" destination="wAS-Qh-rAS" id="2ei-jH-cvI"/>
-                <outlet property="mediaLibraryPathTableColumn" destination="QBg-HT-Vvb" id="4AQ-jb-HLf"/>
-                <outlet property="mediaLibraryPresentTableColumn" destination="kVl-Wj-9vm" id="cmW-Jn-uIQ"/>
-                <outlet property="mediaLibraryReloadFolderButton" destination="hvb-5M-TTc" id="HV0-Gc-GLE"/>
-                <outlet property="mediaLibraryRemoveFolderButton" destination="WnC-lv-27l" id="EUb-bH-L13"/>
-                <outlet property="mediaLibraryView" destination="eei-wi-f9H" id="Oh4-jV-mOk"/>
                 <outlet property="resetButton" destination="2277" id="CQQ-49-4Gq"/>
                 <outlet property="saveButton" destination="2275" id="WsL-HB-mfJ"/>
                 <outlet property="scrollView" destination="b28-nA-RR5" id="EGK-oO-Okf"/>

@@ -61,6 +61,30 @@
     return self;
 }
 
+- (void)setupControls
+{
+    [_addFolderButton setTitle:_NS("Add Folder...")];
+    [_banFolderButton setTitle:_NS("Ban Folder")];
+    [_removeFolderButton setTitle:_NS("Remove Folder")];
+    [_reloadFolderButton setTitle:_NS("Reload Folder")];
+    [_nameTableColumn setTitle:_NS("Name")];
+    [_presentTableColumn setTitle:_NS("Present")];
+    [_bannedTableColumn setTitle:_NS("Banned")];
+    [_pathTableColumn setTitle:_NS("Location")];
+
+    _banFolderButton.enabled = _removeFolderButton.enabled = _reloadFolderButton.enabled = NO;
+    _libraryFolderTableView.delegate = self;
+    _libraryFolderTableView.dataSource = self;
+    _addFolderButton.target = self;
+    _addFolderButton.action = @selector(addFolder:);
+    _banFolderButton.target = self;
+    _banFolderButton.action = @selector(banFolder:);
+    _removeFolderButton.target = self;
+    _removeFolderButton.action = @selector(removeFolder:);
+    _reloadFolderButton.target = self;
+    _reloadFolderButton.action = @selector(reloadFolder:);
+}
+
 - (void)dealloc
 {
     [NSNotificationCenter.defaultCenter removeObserver:self];

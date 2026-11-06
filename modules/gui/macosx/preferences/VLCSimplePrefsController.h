@@ -37,18 +37,6 @@
 @property (readwrite, weak) IBOutlet NSButton *resetButton;
 @property (readwrite, weak) IBOutlet NSButton *saveButton;
 
-// library pane
-@property (readwrite, strong) IBOutlet NSView *mediaLibraryView;
-@property (readwrite, weak) IBOutlet NSTableView *mediaLibraryFolderTableView;
-@property (readwrite, weak) IBOutlet NSTableColumn *mediaLibraryNameTableColumn;
-@property (readwrite, weak) IBOutlet NSTableColumn *mediaLibraryPathTableColumn;
-@property (readwrite, weak) IBOutlet NSTableColumn *mediaLibraryPresentTableColumn;
-@property (readwrite, weak) IBOutlet NSTableColumn *mediaLibraryBannedTableColumn;
-@property (readwrite, weak) IBOutlet NSButton *mediaLibraryAddFolderButton;
-@property (readwrite, weak) IBOutlet NSButton *mediaLibraryRemoveFolderButton;
-@property (readwrite, weak) IBOutlet NSButton *mediaLibraryBanFolderButton;
-@property (readwrite, weak) IBOutlet NSButton *mediaLibraryReloadFolderButton;
-
 // URL handler popup window
 @property (readwrite, strong) IBOutlet NSWindow *urlhandler_win;
 

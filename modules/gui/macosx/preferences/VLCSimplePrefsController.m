@@ -66,8 +66,6 @@ static NSString* VLCHotkeysSettingToolbarIdentifier = @"Hotkeys Settings Item Id
 @interface VLCSimplePrefsController() <NSToolbarDelegate, NSWindowDelegate>
 {
 
-    VLCMediaLibraryFolderManagementController *_mediaLibraryManagementController;
-
     intf_thread_t *p_intf;
 }
 @property (nonatomic, strong) IBOutlet VLCHotkeyPreferencesController *hotkeyPreferencesController;
@@ -76,6 +74,7 @@ static NSString* VLCHotkeysSettingToolbarIdentifier = @"Hotkeys Settings Item Id
 @property (nonatomic, strong) IBOutlet VLCInputPreferencesController *inputPreferencesController;
 @property (nonatomic, strong) IBOutlet VLCSubtitlesPreferencesController *subtitlesPreferencesController;
 @property (nonatomic, strong) IBOutlet VLCInterfacePreferencesController *interfacePreferencesController;
+@property (nonatomic, strong) IBOutlet VLCMediaLibraryFolderManagementController *mediaLibraryManagementController;
 @end
 
 @implementation VLCSimplePrefsController
@@ -122,34 +121,7 @@ static NSString* VLCHotkeysSettingToolbarIdentifier = @"Hotkeys Settings Item Id
     NSArray *constraints = [NSLayoutConstraint constraintsWithVisualFormat:@"|[view]|" options:0 metrics:nil views:views];
     [clipView addConstraints:constraints];
 
-    [self setupMediaLibraryControlInterface];
-}
-
-- (void)setupMediaLibraryControlInterface
-{
-    _mediaLibraryManagementController = [[VLCMediaLibraryFolderManagementController alloc] init];
-    _mediaLibraryBanFolderButton.enabled = _mediaLibraryRemoveFolderButton.enabled = _mediaLibraryReloadFolderButton.enabled = NO;
-
-    _mediaLibraryFolderTableView.delegate = _mediaLibraryManagementController;
-    _mediaLibraryFolderTableView.dataSource = _mediaLibraryManagementController;
-    _mediaLibraryManagementController.libraryFolderTableView = _mediaLibraryFolderTableView;
-
-    _mediaLibraryManagementController.nameTableColumn = _mediaLibraryNameTableColumn;
-    _mediaLibraryManagementController.presentTableColumn = _mediaLibraryPresentTableColumn;
-    _mediaLibraryManagementController.bannedTableColumn = _mediaLibraryBannedTableColumn;
-    _mediaLibraryManagementController.pathTableColumn = _mediaLibraryPathTableColumn;
-    _mediaLibraryManagementController.removeFolderButton = _mediaLibraryRemoveFolderButton;
-    _mediaLibraryManagementController.banFolderButton = _mediaLibraryBanFolderButton;
-    _mediaLibraryManagementController.reloadFolderButton = _mediaLibraryReloadFolderButton;
-
-    _mediaLibraryAddFolderButton.target = _mediaLibraryManagementController;
-    _mediaLibraryAddFolderButton.action = @selector(addFolder:);
-    _mediaLibraryBanFolderButton.target = _mediaLibraryManagementController;
-    _mediaLibraryBanFolderButton.action = @selector(banFolder:);
-    _mediaLibraryRemoveFolderButton.target = _mediaLibraryManagementController;
-    _mediaLibraryRemoveFolderButton.action = @selector(removeFolder:);
-    _mediaLibraryReloadFolderButton.target = _mediaLibraryManagementController;
-    _mediaLibraryReloadFolderButton.action = @selector(reloadFolder:);
+    [_mediaLibraryManagementController setupControls];
 }
 
 #define CreateToolbarItem(name, desc, img, sel) \
@@ -257,16 +229,6 @@ create_toolbar_item(NSString *itemIdent, NSString *name, NSString *desc, NSStrin
     [_urlhandler_subtitleLabel setStringValue: _NS("Note that these are system-wide settings.")];
     [_urlhandler_saveButton setTitle: _NS("Save")];
     [_urlhandler_cancelButton setTitle: _NS("Cancel")];
-
-    /* media library */
-    [_mediaLibraryAddFolderButton setTitle:_NS("Add Folder...")];
-    [_mediaLibraryBanFolderButton setTitle:_NS("Ban Folder")];
-    [_mediaLibraryRemoveFolderButton setTitle:_NS("Remove Folder")];
-    [_mediaLibraryReloadFolderButton setTitle:_NS("Reload Folder")];
-    [_mediaLibraryNameTableColumn setTitle:_NS("Name")];
-    [_mediaLibraryPresentTableColumn setTitle:_NS("Present")];
-    [_mediaLibraryBannedTableColumn setTitle:_NS("Banned")];
-    [_mediaLibraryPathTableColumn setTitle:_NS("Location")];
 
     /* generic stuff */
     [_showAllButton setTitle: _NS("Show All")];
@@ -506,7 +468,7 @@ create_toolbar_item(NSString *itemIdent, NSString *name, NSString *desc, NSStrin
 
 - (void)showMediaLibrarySettings
 {
-    [self showSettingsForCategory:_mediaLibraryView];
+    [self showSettingsForCategory:_mediaLibraryManagementController.view];
 }
 
 

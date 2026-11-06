@@ -25,14 +25,18 @@
 
 @interface VLCMediaLibraryFolderManagementController : NSObject <NSTableViewDelegate, NSTableViewDataSource>
 
-@property (readwrite, weak) NSTableView *libraryFolderTableView;
-@property (readwrite, weak) NSTableColumn *nameTableColumn;
-@property (readwrite, weak) NSTableColumn *pathTableColumn;
-@property (readwrite, weak) NSTableColumn *presentTableColumn;
-@property (readwrite, weak) NSTableColumn *bannedTableColumn;
-@property (readwrite, weak) NSButton *removeFolderButton;
-@property (readwrite, weak) NSButton *banFolderButton;
-@property (readwrite, weak) NSButton *reloadFolderButton;
+@property (readwrite, strong) IBOutlet NSView *view;
+@property (readwrite, weak) IBOutlet NSButton *addFolderButton;
+@property (readwrite, weak) IBOutlet NSTableView *libraryFolderTableView;
+@property (readwrite, weak) IBOutlet NSTableColumn *nameTableColumn;
+@property (readwrite, weak) IBOutlet NSTableColumn *pathTableColumn;
+@property (readwrite, weak) IBOutlet NSTableColumn *presentTableColumn;
+@property (readwrite, weak) IBOutlet NSTableColumn *bannedTableColumn;
+@property (readwrite, weak) IBOutlet NSButton *removeFolderButton;
+@property (readwrite, weak) IBOutlet NSButton *banFolderButton;
+@property (readwrite, weak) IBOutlet NSButton *reloadFolderButton;
+
+- (void)setupControls;
 
 - (IBAction)addFolder:(id)sender;
 - (IBAction)removeFolder:(id)sender;
