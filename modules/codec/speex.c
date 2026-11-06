@@ -780,27 +780,24 @@ static int DecodeRtpSpeexPacket( decoder_t *p_dec, block_t *p_speex_bit_block )
     */
     if ( p_sys->bits.buf_size==0 )
     {
+        assert(p_sys->p_header == NULL);
+
         speex_bits_init( &p_sys->bits );
         if( p_sys->bits.buf_size==0 )
-        {
-            block_Release( p_speex_bit_block );
-            return VLCDEC_SUCCESS;
-        }
+            goto error;
 
         p_sys->p_header = calloc(1, sizeof(SpeexHeader));
         if ( !p_sys->p_header )
         {
             msg_Err( p_dec, "Could not allocate a Speex header.");
-            block_Release( p_speex_bit_block );
-            return VLCDEC_SUCCESS;
+            goto error_init;
         }
 
         const SpeexMode *mode = speex_lib_get_mode((p_sys->rtp_rate / 8000) >> 1);
         if (mode == NULL)
         {
-            free(p_sys->header);
-            block_Release(p_speex_bit_block);
-            return VLCDEC_SUCCESS;
+            msg_Err(p_dec, "Invalid rtp rate");
+            goto error_init_header;
         }
 
         speex_init_header( p_sys->p_header,p_sys->rtp_rate, 1, mode );
@@ -808,8 +805,7 @@ static int DecodeRtpSpeexPacket( decoder_t *p_dec, block_t *p_speex_bit_block )
         if ( !p_sys->p_state )
         {
             msg_Err( p_dec, "Could not allocate a Speex decoder." );
-            block_Release( p_speex_bit_block );
-            return VLCDEC_SUCCESS;
+            goto error_init_header;
         }
 
         /*
@@ -829,23 +825,11 @@ static int DecodeRtpSpeexPacket( decoder_t *p_dec, block_t *p_speex_bit_block )
                                &i_speex_frame_size ) )
         {
             msg_Err( p_dec, "Could not determine the frame size." );
-            block_Release( p_speex_bit_block );
-            return VLCDEC_SUCCESS;
+            goto error_init_state;
         }
         p_dec->fmt_out.audio.i_bytes_per_frame = i_speex_frame_size;
 
         date_Init(&p_sys->end_date, p_sys->p_header->rate, 1);
-    }
-
-    /*
-      If the SpeexBits are initialized but there is
-      still no header, an error must be thrown.
-    */
-    if ( !p_sys->p_header )
-    {
-        msg_Err( p_dec, "There is no valid Speex header found." );
-        block_Release( p_speex_bit_block );
-        return VLCDEC_SUCCESS;
     }
 
     if ( date_Get( &p_sys->end_date ) == VLC_TICK_INVALID )
@@ -861,12 +845,8 @@ static int DecodeRtpSpeexPacket( decoder_t *p_dec, block_t *p_speex_bit_block )
     else
         p_aout_buffer = decoder_NewAudioBuffer( p_dec,
             p_sys->p_header->frame_size );
-    if ( !p_aout_buffer )
-    {
-        msg_Err(p_dec, "Oops: No new buffer was returned!");
-        block_Release( p_speex_bit_block );
-        return VLCDEC_SUCCESS;
-    }
+    if (p_aout_buffer == NULL)
+        goto error;
 
     /*
       Read the Speex payload into the SpeexBits buffer.
@@ -898,6 +878,22 @@ static int DecodeRtpSpeexPacket( decoder_t *p_dec, block_t *p_speex_bit_block )
         p_sys->p_header->frame_size ) - p_aout_buffer->i_pts;
 
     decoder_QueueAudio( p_dec, p_aout_buffer );
+    return VLCDEC_SUCCESS;
+
+error_init_state:
+    speex_decoder_destroy(p_sys->p_state);
+    p_sys->p_state = NULL;
+
+error_init_header:
+    speex_header_free(p_sys->p_header);
+    p_sys->p_header = NULL;
+
+error_init:
+    speex_bits_destroy(&p_sys->bits);
+    p_sys->bits.buf_size = 0;
+
+error:
+    block_Release(p_speex_bit_block);
     return VLCDEC_SUCCESS;
 }
 
