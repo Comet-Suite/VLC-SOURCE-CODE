@@ -28,6 +28,7 @@
 #import "VLCSimplePrefsController.h"
 #import "VLCMediaLibraryFolderManagementController.h"
 #import "VLCHotkeyPreferencesController.h"
+#import "VLCPreferencesControlHelper.h"
 
 #ifdef HAVE_SPARKLE
 #import <Sparkle/Sparkle.h>                        //for o_intf_last_updateLabel
@@ -449,53 +450,6 @@ create_toolbar_item(NSString *itemIdent, NSString *name, NSString *desc, NSStrin
 #pragma mark -
 #pragma mark Setup controls
 
-- (void)setupButton: (NSPopUpButton *)object forStringList: (const char *)name
-{
-    module_config_t *p_item;
-
-    [object removeAllItems];
-    p_item = config_FindConfig(name);
-    /* serious problem, if no item found */
-    assert(p_item);
-
-    char **values, **texts;
-    ssize_t count = config_GetPszChoices(name, &values, &texts);
-    if (count < 0) {
-        msg_Err(p_intf, "Cannot get choices for %s", name);
-        return;
-    }
-    for (ssize_t i = 0; i < count && texts; i++) {
-        if (texts[i] == NULL || values[i] == NULL)
-            continue;
-
-        if (strcmp(texts[i], "") != 0) {
-            NSMenuItem *mi = [[NSMenuItem alloc] initWithTitle: toNSStr(texts[i]) action: NULL keyEquivalent: @""];
-            [mi setRepresentedObject: toNSStr(values[i])];
-            [[object menu] addItem:mi];
-
-            if (p_item->value.psz && !strcmp(p_item->value.psz, values[i]))
-                [object selectItem: [object lastItem]];
-        } else {
-            [[object menu] addItem: [NSMenuItem separatorItem]];
-        }
-
-        free(texts[i]);
-        free(values[i]);
-    }
-
-    free(texts);
-    free(values);
-
-    if (p_item->psz_longtext)
-        [object setToolTip: NSTR(p_item->psz_longtext)];
-}
-
-// just for clarification that this is a module list
-- (void)setupButton: (NSPopUpButton *)object forModuleList: (const char *)name
-{
-    [self setupButton: object forStringList: name];
-}
-
 - (void)setupButton: (NSPopUpButton *)object forIntList: (const char *)name
 {
     module_config_t *p_item;
@@ -523,20 +477,6 @@ create_toolbar_item(NSString *itemIdent, NSString *name, NSString *desc, NSStrin
 
     if (p_item->psz_longtext)
         [object setToolTip: NSTR(p_item->psz_longtext)];
-}
-
-- (void)setupButton: (NSButton *)object forBoolValue: (const char *)name
-{
-    [object setState: config_GetInt(name)];
-    [object setToolTip: NSTR(config_GetLabel(name))];
-}
-
-- (void)setupField:(NSTextField *)object forOption:(const char *)psz_option
-{
-    char *psz_tmp = config_GetPsz(psz_option);
-    [object setStringValue: toNSStr(psz_tmp)];
-    [object setToolTip: NSTR(config_GetLabel(psz_option))];
-    free(psz_tmp);
 }
 
 - (BOOL)hasModule:(NSString *)moduleName inConfig:(NSString *)config
@@ -602,14 +542,14 @@ create_toolbar_item(NSString *itemIdent, NSString *name, NSString *desc, NSStrin
 
     self.intf_displayTrackNumberPlayQueueCheckBox.state = [defaults boolForKey:VLCDisplayTrackNumberPlayQueueKey] ? NSControlStateValueOn : NSControlStateValueOff;
 
-    [self setupButton:_intf_statusIconCheckbox forBoolValue: "macosx-statusicon"];
+    [VLCPreferencesControlHelper setupButton:_intf_statusIconCheckbox forBoolValue: "macosx-statusicon"];
 
-    [self setupButton:_video_nativeFullscreenCheckbox forBoolValue: "macosx-nativefullscreenmode"];
-    [self setupButton:_video_embeddedCheckbox forBoolValue: "embedded-video"];
+    [VLCPreferencesControlHelper setupButton:_video_nativeFullscreenCheckbox forBoolValue: "macosx-nativefullscreenmode"];
+    [VLCPreferencesControlHelper setupButton:_video_embeddedCheckbox forBoolValue: "embedded-video"];
 
     [self setupButton:_intf_pauseitunesPopup forIntList: "macosx-control-itunes"];
 
-    [self setupButton:_intf_artCheckbox forBoolValue: "metadata-network-access"];
+    [VLCPreferencesControlHelper setupButton:_intf_artCheckbox forBoolValue: "metadata-network-access"];
 
 
 #ifdef HAVE_SPARKLE
@@ -627,12 +567,12 @@ create_toolbar_item(NSString *itemIdent, NSString *name, NSString *desc, NSStrin
     [_intf_enableluahttpCheckbox setState: httpEnabled ? NSControlStateValueOn : NSControlStateValueOff];
     _intf_luahttppwdTextField.enabled = httpEnabled;
 
-    [self setupField:_intf_luahttppwdTextField forOption: "http-password"];
+    [VLCPreferencesControlHelper setupField:_intf_luahttppwdTextField forOption: "http-password"];
 
     /******************
      * audio settings *
      ******************/
-    [self setupButton:_audio_enableCheckbox forBoolValue: "audio"];
+    [VLCPreferencesControlHelper setupButton:_audio_enableCheckbox forBoolValue: "audio"];
 
     if (config_GetInt("volume-save")) {
         [_audio_autosavevol_yesButtonCell setState: NSControlStateValueOn];
@@ -654,14 +594,14 @@ create_toolbar_item(NSString *itemIdent, NSString *name, NSString *desc, NSStrin
         [_audio_volTextField setIntValue: i];
     }
 
-    [self setupField:_audio_langTextField forOption: "audio-language"];
+    [VLCPreferencesControlHelper setupField:_audio_langTextField forOption: "audio-language"];
 
-    [self setupButton:_audio_visualPopup forModuleList: "audio-visual"];
+    [VLCPreferencesControlHelper setupButton:_audio_visualPopup forModuleList: "audio-visual"];
 
     /* Last.FM is optional */
     if (module_exists("audioscrobbler")) {
-        [self setupField:_audio_lastuserTextField forOption:"lastfm-username"];
-        [self setupField:_audio_lastpwdSecureTextField forOption:"lastfm-password"];
+        [VLCPreferencesControlHelper setupField:_audio_lastuserTextField forOption:"lastfm-username"];
+        [VLCPreferencesControlHelper setupField:_audio_lastpwdSecureTextField forOption:"lastfm-password"];
 
         if (config_ExistIntf("audioscrobbler")) {
             [_audio_lastCheckbox setState: NSControlStateValueOn];
@@ -678,13 +618,13 @@ create_toolbar_item(NSString *itemIdent, NSString *name, NSString *desc, NSStrin
     /******************
      * video settings *
      ******************/
-    [self setupButton:_video_enableCheckbox forBoolValue: "video"];
-    [self setupButton:_video_startInFullscreenCheckbox forBoolValue: "fullscreen"];
-    [self setupButton:_video_onTopCheckbox forBoolValue: "video-on-top"];
-    [self setupButton:_video_blackScreenCheckbox forBoolValue: "macosx-black"];
-    [self setupButton:_video_videodecoCheckbox forBoolValue: "video-deco"];
-    [self setupButton:_video_pauseWhenMinimizedCheckbox forBoolValue: "macosx-pause-minimized"];
-    [self setupButton:_video_resizeToNativeSizeCheckbox forBoolValue: "macosx-video-autoresize"];
+    [VLCPreferencesControlHelper setupButton:_video_enableCheckbox forBoolValue: "video"];
+    [VLCPreferencesControlHelper setupButton:_video_startInFullscreenCheckbox forBoolValue: "fullscreen"];
+    [VLCPreferencesControlHelper setupButton:_video_onTopCheckbox forBoolValue: "video-on-top"];
+    [VLCPreferencesControlHelper setupButton:_video_blackScreenCheckbox forBoolValue: "macosx-black"];
+    [VLCPreferencesControlHelper setupButton:_video_videodecoCheckbox forBoolValue: "video-deco"];
+    [VLCPreferencesControlHelper setupButton:_video_pauseWhenMinimizedCheckbox forBoolValue: "macosx-pause-minimized"];
+    [VLCPreferencesControlHelper setupButton:_video_resizeToNativeSizeCheckbox forBoolValue: "macosx-video-autoresize"];
     
     self.video_useClassicLayoutCheckbox.state = [defaults boolForKey:VLCUseClassicVideoPlayerLayoutKey] ? NSControlStateValueOn : NSControlStateValueOff;
 
@@ -704,12 +644,12 @@ create_toolbar_item(NSString *itemIdent, NSString *name, NSString *desc, NSStrin
     [_video_devicePopup selectItemAtIndex: 0];
     [_video_devicePopup selectItemWithTag: config_GetInt("macosx-vdev")];
 
-    [self setupField:_video_snap_folderTextField forOption:"snapshot-path"];
-    [self setupField:_video_snap_prefixTextField forOption:"snapshot-prefix"];
-    [self setupButton:_video_snap_seqnumCheckbox forBoolValue: "snapshot-sequential"];
-    [self setupButton:_video_snap_formatPopup forStringList: "snapshot-format"];
+    [VLCPreferencesControlHelper setupField:_video_snap_folderTextField forOption:"snapshot-path"];
+    [VLCPreferencesControlHelper setupField:_video_snap_prefixTextField forOption:"snapshot-prefix"];
+    [VLCPreferencesControlHelper setupButton:_video_snap_seqnumCheckbox forBoolValue: "snapshot-sequential"];
+    [VLCPreferencesControlHelper setupButton:_video_snap_formatPopup forStringList: "snapshot-format"];
     [self setupButton:_video_deinterlacePopup forIntList: "deinterlace"];
-    [self setupButton:_video_deinterlace_modePopup forStringList: "deinterlace-mode"];
+    [VLCPreferencesControlHelper setupButton:_video_deinterlace_modePopup forStringList: "deinterlace-mode"];
 
     // set lion fullscreen mode restrictions
     [self enableLionFullscreenMode: [_video_nativeFullscreenCheckbox state]];
@@ -717,10 +657,10 @@ create_toolbar_item(NSString *itemIdent, NSString *name, NSString *desc, NSStrin
     /***************************
      * input & codecs settings *
      ***************************/
-    [self setupField:_input_recordTextField forOption:"input-record-path"];
+    [VLCPreferencesControlHelper setupField:_input_recordTextField forOption:"input-record-path"];
 
-    [self setupButton:_input_hardwareAccelerationCheckbox forBoolValue: "videotoolbox"];
-    [self setupButton:_input_fastSeekCheckbox forBoolValue: "input-fast-seek"];
+    [VLCPreferencesControlHelper setupButton:_input_hardwareAccelerationCheckbox forBoolValue: "videotoolbox"];
+    [VLCPreferencesControlHelper setupButton:_input_fastSeekCheckbox forBoolValue: "input-fast-seek"];
     [self setupButton:_input_aviPopup forIntList: "avi-index"];
     [self setupButton:_input_skipLoopPopup forIntList: "avcodec-skiploopfilter"];
 
@@ -761,12 +701,12 @@ create_toolbar_item(NSString *itemIdent, NSString *name, NSString *desc, NSStrin
     /*********************
      * subtitle settings *
      *********************/
-    [self setupButton:_osd_osdCheckbox forBoolValue: "osd"];
+    [VLCPreferencesControlHelper setupButton:_osd_osdCheckbox forBoolValue: "osd"];
 
-    [self setupButton:_osd_encodingPopup forStringList: "subsdec-encoding"];
-    [self setupField:_osd_langTextField forOption: "sub-language" ];
+    [VLCPreferencesControlHelper setupButton:_osd_encodingPopup forStringList: "subsdec-encoding"];
+    [VLCPreferencesControlHelper setupField:_osd_langTextField forOption: "sub-language" ];
 
-    [self setupField:_osd_fontTextField forOption: "freetype-font"];
+    [VLCPreferencesControlHelper setupField:_osd_fontTextField forOption: "freetype-font"];
     [self setupButton:_osd_font_colorPopup forIntList: "freetype-color"];
     _osd_font_sizeSlider.intValue = (int)config_GetInt("sub-text-scale");
     [_osd_font_sizeTextField setStringValue: [NSString stringWithFormat:@"%.2fx", _osd_font_sizeSlider.intValue / 100.]];
@@ -775,7 +715,7 @@ create_toolbar_item(NSString *itemIdent, NSString *name, NSString *desc, NSStrin
     [_osd_opacitySlider setIntValue: i];
     [_osd_opacitySlider setToolTip: NSTR(config_GetLabel("freetype-opacity"))];
     [_osd_opacityTextField setToolTip: [_osd_opacitySlider toolTip]];
-    [self setupButton:_osd_forceboldCheckbox forBoolValue: "freetype-bold"];
+    [VLCPreferencesControlHelper setupButton:_osd_forceboldCheckbox forBoolValue: "freetype-bold"];
     [self setupButton:_osd_outline_colorPopup forIntList: "freetype-outline-color"];
     [self setupButton:_osd_outline_thicknessPopup forIntList: "freetype-outline-thickness"];
 
@@ -1073,8 +1013,8 @@ static inline void save_string_list(intf_thread_t * __unused p_intf, id object, 
         [_video_devicePopup setToolTip:tooltipText];
 
     } else {
-        [self setupButton:_video_videodecoCheckbox forBoolValue: "video-deco"];
-        [self setupButton:_video_blackScreenCheckbox forBoolValue: "macosx-black"];
+        [VLCPreferencesControlHelper setupButton:_video_videodecoCheckbox forBoolValue: "video-deco"];
+        [VLCPreferencesControlHelper setupButton:_video_blackScreenCheckbox forBoolValue: "macosx-black"];
 
         [_video_devicePopup setToolTip:@""];
     }
