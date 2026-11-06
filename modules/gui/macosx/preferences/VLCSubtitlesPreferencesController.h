@@ -23,8 +23,9 @@
  *****************************************************************************/
 
 #import <Cocoa/Cocoa.h>
+#import "VLCSimplePreferencesPane.h"
 
-@interface VLCSubtitlesPreferencesController : NSObject <NSTextFieldDelegate, NSWindowDelegate>
+@interface VLCSubtitlesPreferencesController : NSObject <VLCSimplePreferencesPane, NSTextFieldDelegate, NSWindowDelegate>
 
 @property (readwrite, strong) IBOutlet NSView *view;
 
@@ -55,9 +56,6 @@
 
 - (IBAction)osdSettingChanged:(id)sender;
 - (IBAction)showFontPicker:(id)sender;
-- (void)setupControls;
-- (void)resetControls;
-- (void)saveChangedSettings;
 - (void)closeFontPanel;
 
 @end

@@ -23,8 +23,9 @@
  *****************************************************************************/
 
 #import <Cocoa/Cocoa.h>
+#import "VLCSimplePreferencesPane.h"
 
-@interface VLCInputPreferencesController : NSObject <NSTextFieldDelegate>
+@interface VLCInputPreferencesController : NSObject <VLCSimplePreferencesPane, NSTextFieldDelegate>
 
 @property (readwrite, strong) IBOutlet NSView *view;
 
@@ -63,8 +64,5 @@
 
 - (IBAction)urlHandlerAction:(id)sender;
 - (IBAction)inputSettingChanged:(id)sender;
-- (void)setupControls;
-- (void)resetControls;
-- (void)saveChangedSettings;
 
 @end

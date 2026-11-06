@@ -23,9 +23,10 @@
  *****************************************************************************/
 
 #import <Cocoa/Cocoa.h>
+#import "VLCSimplePreferencesPane.h"
 #import "VLCHotkeyChangeWindow.h"
 
-@interface VLCHotkeyPreferencesController : NSObject <NSTableViewDataSource, VLCHotkeyChangeWindowDelegate>
+@interface VLCHotkeyPreferencesController : NSObject <VLCSimplePreferencesPane, NSTableViewDataSource, VLCHotkeyChangeWindowDelegate>
 
 @property (readwrite, strong) IBOutlet NSView *view;
 @property (readwrite, strong) IBOutlet VLCHotkeyChangeWindow *changeWindow;
@@ -39,8 +40,5 @@
 @property (readwrite, weak) IBOutlet NSTableView *listbox;
 @property (readwrite, weak) IBOutlet NSButton *mediaKeysCheckbox;
 
-- (void)setupControls;
-- (void)resetControls;
-- (void)saveChangedSettings;
 
 @end

@@ -488,6 +488,7 @@ libmacosx_plugin_la_SOURCES = \
 	gui/macosx/preferences/VLCVideoPreferencesController.m \
 	gui/macosx/preferences/VLCSubtitlesPreferencesController.h \
 	gui/macosx/preferences/VLCSubtitlesPreferencesController.m \
+	gui/macosx/preferences/VLCSimplePreferencesPane.h \
 	gui/macosx/preferences/VLCSimplePrefsController.h \
 	gui/macosx/preferences/VLCSimplePrefsController.m \
 	gui/macosx/preferences/VLCSimplePrefsWindow.h \

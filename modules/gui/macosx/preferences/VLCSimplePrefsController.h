@@ -5,6 +5,7 @@
  *
  * Authors: Felix Paul Kühne <fkuehne # videolan dot org>
  *          David Fuhrmann <dfuhrmann # videolan dot org>
+ *          Serhii Bykov <esphynox@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by

@@ -23,8 +23,9 @@
  *****************************************************************************/
 
 #import <Cocoa/Cocoa.h>
+#import "VLCSimplePreferencesPane.h"
 
-@interface VLCInterfacePreferencesController : NSObject <NSTextFieldDelegate>
+@interface VLCInterfacePreferencesController : NSObject <VLCSimplePreferencesPane, NSTextFieldDelegate>
 
 // intf pane - general box
 @property (readwrite, strong) IBOutlet NSView *view;
@@ -60,9 +61,6 @@
 @property (readwrite, weak) IBOutlet NSTextField *luahttppwdTextField;
 
 - (IBAction)interfaceSettingChanged:(id)sender;
-- (void)setupControls;
-- (void)resetControls;
-- (void)saveChangedSettings;
 + (BOOL)updateRightToLeftSettings;
 
 @end

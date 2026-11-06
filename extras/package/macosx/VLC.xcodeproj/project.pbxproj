@@ -1041,6 +1041,7 @@
 		CC962E2C0CC7992800A56695 /* WebKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WebKit.framework; path = /System/Library/Frameworks/WebKit.framework; sourceTree = "<absolute>"; };
 		CCB0BB3013FAC9F40095BD0A /* CompatibilityFixes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CompatibilityFixes.h; sourceTree = "<group>"; };
 		CCB24D5D0D54BBAE004D780C /* VLCSimplePrefsController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = VLCSimplePrefsController.m; sourceTree = "<group>"; };
+		7A0C6FB12C925000008A1D00 /* VLCSimplePreferencesPane.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VLCSimplePreferencesPane.h; sourceTree = "<group>"; };
 		CCB24D5E0D54BBAE004D780C /* VLCSimplePrefsController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VLCSimplePrefsController.h; sourceTree = "<group>"; };
 		7A0C6F612C925000008A1D00 /* VLCPreferencesControlHelper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VLCPreferencesControlHelper.h; sourceTree = "<group>"; };
 		7A0C6F622C925000008A1D00 /* VLCPreferencesControlHelper.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VLCPreferencesControlHelper.m; sourceTree = "<group>"; };
@@ -1468,6 +1469,7 @@
 				7A0C6F522C925000008A1D00 /* VLCHotkeyPreferencesController.m */,
 				7A0C6F412C925000008A1D00 /* VLCMediaLibraryFolderManagementController.h */,
 				7A0C6F422C925000008A1D00 /* VLCMediaLibraryFolderManagementController.m */,
+				7A0C6FB12C925000008A1D00 /* VLCSimplePreferencesPane.h */,
 				CCB24D5E0D54BBAE004D780C /* VLCSimplePrefsController.h */,
 				CCB24D5D0D54BBAE004D780C /* VLCSimplePrefsController.m */,
 				6B4D50911E7979CB004479B5 /* VLCSimplePrefsWindow.h */,

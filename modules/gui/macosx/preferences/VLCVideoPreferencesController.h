@@ -23,8 +23,9 @@
  *****************************************************************************/
 
 #import <Cocoa/Cocoa.h>
+#import "VLCSimplePreferencesPane.h"
 
-@interface VLCVideoPreferencesController : NSObject <NSTextFieldDelegate>
+@interface VLCVideoPreferencesController : NSObject <VLCSimplePreferencesPane, NSTextFieldDelegate>
 
 @property (readwrite, strong) IBOutlet NSView *view;
 
@@ -65,8 +66,5 @@
 @property (readwrite, weak) IBOutlet NSButton *snapSeqnumCheckbox;
 
 - (IBAction)videoSettingChanged:(id)sender;
-- (void)setupControls;
-- (void)resetControls;
-- (void)saveChangedSettings;
 
 @end

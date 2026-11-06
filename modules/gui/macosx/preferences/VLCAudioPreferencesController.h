@@ -23,8 +23,9 @@
  *****************************************************************************/
 
 #import <Cocoa/Cocoa.h>
+#import "VLCSimplePreferencesPane.h"
 
-@interface VLCAudioPreferencesController : NSObject <NSTextFieldDelegate>
+@interface VLCAudioPreferencesController : NSObject <VLCSimplePreferencesPane, NSTextFieldDelegate>
 
 @property (readwrite, strong) IBOutlet NSView *view;
 
@@ -48,8 +49,5 @@
 @property (readwrite, weak) IBOutlet NSButtonCell *autosavevolNoButtonCell;
 
 - (IBAction)audioSettingChanged:(id)sender;
-- (void)setupControls;
-- (void)resetControls;
-- (void)saveChangedSettings;
 
 @end

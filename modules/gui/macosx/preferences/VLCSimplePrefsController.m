@@ -5,6 +5,7 @@
  *
  * Authors: Felix Paul Kühne <fkuehne # videolan dot org>
  *          David Fuhrmann <dfuhrmann # videolan dot org>
+ *          Serhii Bykov <esphynox@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -96,12 +97,8 @@ static NSString* VLCHotkeysSettingToolbarIdentifier = @"Hotkeys Settings Item Id
     [self.window setCollectionBehavior: NSWindowCollectionBehaviorFullScreenAuxiliary];
     [self.window setHidesOnDeactivate:YES];
 
-    [_hotkeyPreferencesController setupControls];
-    [_audioPreferencesController setupControls];
-    [_videoPreferencesController setupControls];
-    [_inputPreferencesController setupControls];
-    [_subtitlesPreferencesController setupControls];
-    [_interfacePreferencesController setupControls];
+    for (id<VLCSimplePreferencesPane> pane in self.preferencePanes)
+        [pane setupControls];
 
     // Workaround for Mac OS X Lion, which does not apply the same constraints when set in IB
     NSView *clipView = _contentView.superview;
@@ -224,14 +221,20 @@ create_toolbar_item(NSString *itemIdent, NSString *name, NSString *desc, NSStrin
 #pragma mark -
 #pragma mark Setup controls
 
+- (NSArray<id<VLCSimplePreferencesPane>> *)preferencePanes
+{
+    return @[_interfacePreferencesController,
+             _audioPreferencesController,
+             _videoPreferencesController,
+             _inputPreferencesController,
+             _subtitlesPreferencesController,
+             _hotkeyPreferencesController];
+}
+
 - (void)resetControls
 {
-    [_interfacePreferencesController resetControls];
-    [_audioPreferencesController resetControls];
-    [_videoPreferencesController resetControls];
-    [_inputPreferencesController resetControls];
-    [_subtitlesPreferencesController resetControls];
-    [_hotkeyPreferencesController resetControls];
+    for (id<VLCSimplePreferencesPane> pane in self.preferencePanes)
+        [pane resetControls];
 }
 
 #pragma mark -
@@ -299,12 +302,9 @@ create_toolbar_item(NSString *itemIdent, NSString *name, NSString *desc, NSStrin
 
 - (void)saveChangedSettings
 {
-    [_interfacePreferencesController saveChangedSettings];
-    [_audioPreferencesController saveChangedSettings];
-    [_videoPreferencesController saveChangedSettings];
-    [_inputPreferencesController saveChangedSettings];
-    [_subtitlesPreferencesController saveChangedSettings];
-    [_hotkeyPreferencesController saveChangedSettings];
+    for (id<VLCSimplePreferencesPane> pane in self.preferencePanes)
+        [pane saveChangedSettings];
+
     fixIntfSettings();
 
     /* okay, let's save our changes to vlcrc */
