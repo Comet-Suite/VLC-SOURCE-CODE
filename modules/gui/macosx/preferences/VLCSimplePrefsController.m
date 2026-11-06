@@ -32,11 +32,8 @@
 #import "VLCVideoPreferencesController.h"
 #import "VLCInputPreferencesController.h"
 #import "VLCSubtitlesPreferencesController.h"
+#import "VLCInterfacePreferencesController.h"
 #import "VLCPreferencesControlHelper.h"
-
-#ifdef HAVE_SPARKLE
-#import <Sparkle/Sparkle.h>                        //for o_intf_last_updateLabel
-#endif
 
 #import <vlc_configuration.h>
 #import <vlc_actions.h>
@@ -57,79 +54,6 @@
 #import "playqueue/VLCPlayQueueTableCellView.h"
 #import "views/VLCPlaybackEndViewController.h"
 
-static struct {
-    const char iso[6];
-    const char name[34];
-    BOOL isRightToLeft;
-
-} const language_map[] = {
-    { "auto",  N_("Auto"),              NO },
-    { "en",    "American English",      NO },
-    { "ar",    "عربي",                  YES },
-    { "an",    "Aragonés",              NO },
-    { "as_IN", "অসমীয়া",                 NO },
-    { "ast",   "Asturianu",             NO },
-    { "be",    "беларуская мова",       NO },
-    { "brx",   "बर'/बड़",                 NO },
-    { "bn",    "বাংলা",                   NO },
-    { "pt_BR", "Português Brasileiro",  NO },
-    { "en_GB", "British English",       NO },
-    { "el",    "Νέα Ελληνικά",          NO },
-    { "bg",    "български език",        NO },
-    { "ca",    "Català",                NO },
-    { "zh_TW", "正體中文",                NO },
-    { "cs",    "Čeština",               NO },
-    { "cy",    "Cymraeg",               NO },
-    { "da",    "Dansk",                 NO },
-    { "nl",    "Nederlands",            NO },
-    { "fi",    "Suomi",                 NO },
-    { "et",    "eesti keel",            NO },
-    { "eu",    "Euskara",               NO },
-    { "fr",    "Français",              NO },
-    { "ga",    "Gaeilge",               NO },
-    { "gd",    "Gàidhlig",              NO },
-    { "gl",    "Galego",                NO },
-    { "gu",    "ગુજરાતી",                 NO },
-    { "de",    "Deutsch",               NO },
-    { "he",    "עברית",                 YES },
-    { "hr",    "hrvatski",              NO },
-    { "kn",    "ಕನ್ನಡ",                   NO },
-    { "lv",    "Latviešu valoda",       NO },
-    { "hu",    "Magyar",                NO },
-    { "mr",    "मराठी",                   NO },
-    { "is",    "íslenska",              NO },
-    { "id",    "Bahasa Indonesia",      NO },
-    { "it",    "Italiano",              NO },
-    { "ja",    "日本語",                 NO },
-    { "ko",    "한국어",                  NO },
-    { "lt",    "lietuvių",              NO },
-    { "ms",    "Melayu",                NO },
-    { "nb",    "Bokmål",                NO },
-    { "nn",    "Nynorsk",               NO },
-    { "kk",    "Қазақ тілі",            NO },
-    { "km",    "ភាសាខ្មែរ",                NO },
-    { "ne",    "नेपाली",                  NO },
-    { "oc",    "Occitan",               NO },
-    { "pl",    "Polski",                NO },
-    { "pt_PT", "Português",             NO },
-    { "pa",    "ਪੰਜਾਬੀ",                  NO },
-    { "ro",    "Română",                NO },
-    { "ru",    "Русский",               NO },
-    { "zh_CN", "简体中文",                NO },
-    { "si",    "සිංහල",                   NO },
-    { "sr",    "српски",                NO },
-    { "sk",    "Slovensky",             NO },
-    { "sl",    "slovenščina",           NO },
-    { "es",    "Español",               NO },
-    { "es_MX", "Español Mexicano",      NO },
-    { "sv",    "Svenska",               NO },
-    { "th",    "ภาษาไทย",               NO },
-    { "tr",    "Türkçe",                NO },
-    { "uk",    "украї́нська мо́ва",       NO },
-    { "vi",    "tiếng Việt",            NO },
-    { "wa",    "Walon",                 NO }
-};
-
 static NSString* VLCSPrefsToolbarIdentifier = @"Our Simple Preferences Toolbar Identifier";
 static NSString* VLCIntfSettingToolbarIdentifier = @"Intf Settings Item Identifier";
 static NSString* VLCAudioSettingToolbarIdentifier = @"Audio Settings Item Identifier";
@@ -141,7 +65,6 @@ static NSString* VLCHotkeysSettingToolbarIdentifier = @"Hotkeys Settings Item Id
 
 @interface VLCSimplePrefsController() <NSToolbarDelegate, NSWindowDelegate>
 {
-    BOOL _intfSettingChanged;
 
     VLCMediaLibraryFolderManagementController *_mediaLibraryManagementController;
 
@@ -152,6 +75,7 @@ static NSString* VLCHotkeysSettingToolbarIdentifier = @"Hotkeys Settings Item Id
 @property (nonatomic, strong) IBOutlet VLCVideoPreferencesController *videoPreferencesController;
 @property (nonatomic, strong) IBOutlet VLCInputPreferencesController *inputPreferencesController;
 @property (nonatomic, strong) IBOutlet VLCSubtitlesPreferencesController *subtitlesPreferencesController;
+@property (nonatomic, strong) IBOutlet VLCInterfacePreferencesController *interfacePreferencesController;
 @end
 
 @implementation VLCSimplePrefsController
@@ -172,16 +96,6 @@ static NSString* VLCHotkeysSettingToolbarIdentifier = @"Hotkeys Settings Item Id
 {
     [self initStrings];
 
-#ifdef HAVE_SPARKLE
-    [_intf_updateCheckbox bind:@"value"
-                   toObject:VLCMain.sharedInstance.sparkleUpdaterController.updater
-                withKeyPath:@"automaticallyChecksForUpdates"
-                    options:nil];
-#else
-    [_intf_updateCheckbox setState:NSControlStateValueOff];
-    [_intf_updateCheckbox setEnabled:NO];
-#endif
-
     /* setup the toolbar */
     NSToolbar * toolbar = [[NSToolbar alloc] initWithIdentifier: VLCSPrefsToolbarIdentifier];
     [toolbar setAllowsUserCustomization: NO];
@@ -199,6 +113,7 @@ static NSString* VLCHotkeysSettingToolbarIdentifier = @"Hotkeys Settings Item Id
     [_videoPreferencesController setupControls];
     [_inputPreferencesController setupControls];
     [_subtitlesPreferencesController setupControls];
+    [_interfacePreferencesController setupControls];
 
     // Workaround for Mac OS X Lion, which does not apply the same constraints when set in IB
     NSView *clipView = _contentView.superview;
@@ -343,29 +258,6 @@ create_toolbar_item(NSString *itemIdent, NSString *name, NSString *desc, NSStrin
     [_urlhandler_saveButton setTitle: _NS("Save")];
     [_urlhandler_cancelButton setTitle: _NS("Cancel")];
 
-    /* interface */
-    [_intf_generalSettingsBox setTitle:_NS("General settings")];
-    [_intf_languageLabel setStringValue: _NS("Language")];
-
-    [_intf_playbackControlBox setTitle:_NS("Playback control")];
-    [_intf_continueplaybackLabel setStringValue:_NS("Continue playback")];
-    [_intf_displayEndOfPlaybackViewCheckBox setTitle:_NS("Display end of playback view")];
-    [_intf_statusIconCheckbox setTitle: _NS("Display VLC status menu icon")];
-    [_intf_displayTrackNumberPlayQueueCheckBox setTitle: _NS("Display album track numbers in play queue")];
-
-    [_intf_playbackBehaviourBox setTitle:_NS("Playback behaviour")];
-    [_intf_enableNotificationsCheckbox setTitle: _NS("Enable notifications on play queue item change")];
-    [_intf_pauseitunesLabel setStringValue:_NS("Control external music players")];
-
-    [_intf_networkBox setTitle: _NS("Privacy / Network Interaction")];
-    [_intf_artCheckbox setTitle: _NS("Allow metadata network access")];
-    [_intf_updateCheckbox setTitle: _NS("Automatically check for updates")];
-    [_intf_last_updateLabel setStringValue: @""];
-
-    [_intf_luahttpBox setTitle:_NS("HTTP web interface")];
-    [_intf_enableluahttpCheckbox setTitle: _NS("Enable HTTP web interface")];
-    [_intf_luahttppwdLabel setStringValue:_NS("Password")];
-
     /* media library */
     [_mediaLibraryAddFolderButton setTitle:_NS("Add Folder...")];
     [_mediaLibraryBanFolderButton setTitle:_NS("Ban Folder")];
@@ -387,90 +279,10 @@ create_toolbar_item(NSString *itemIdent, NSString *name, NSString *desc, NSStrin
 #pragma mark -
 #pragma mark Setup controls
 
-- (BOOL)hasModule:(NSString *)moduleName inConfig:(NSString *)config
-{
-    char *value = config_GetPsz([config UTF8String]);
-    NSString *modules = toNSStr(value);
-    free(value);
-
-    return [[modules componentsSeparatedByString:@":"] containsObject:moduleName];
-}
-
-- (void)changeModule:(NSString *)moduleName inConfig:(NSString *)config enable:(BOOL)enable
-{
-    char *value = config_GetPsz([config UTF8String]);
-    NSString *modules = toNSStr(value);
-    free(value);
-
-    NSMutableArray *components = [[modules componentsSeparatedByString:@":"] mutableCopy];
-    if (enable) {
-        if (![components containsObject:moduleName]) {
-            [components addObject:moduleName];
-        }
-    } else {
-        [components removeObject:moduleName];
-    }
-
-    // trim empty entries
-    [components removeObject:@""];
-
-    config_PutPsz([config UTF8String], [[components componentsJoinedByString:@":"] UTF8String]);
-}
-
 - (void)resetControls
 {
 
-    /**********************
-     * interface settings *
-     **********************/
-    NSUInteger sel = 0;
-    const char *pref = NULL;
-    NSUserDefaults * const defaults = NSUserDefaults.standardUserDefaults;
-    pref = [[defaults objectForKey:@"language"] UTF8String];
-    for (size_t x = 0; x < ARRAY_SIZE(language_map); x++) {
-        [_intf_languagePopup addItemWithTitle:toNSStr(language_map[x].name)];
-        if (pref) {
-            if (!strcmp(language_map[x].iso, pref))
-                sel = x;
-        }
-    }
-    [_intf_languagePopup selectItemAtIndex:sel];
-
-    [VLCPreferencesControlHelper setupButton:_intf_continueplaybackPopup forIntList: "macosx-continue-playback"];
-    if (!var_InheritBool(p_intf, "macosx-recentitems")) {
-        [_intf_continueplaybackPopup setEnabled: NO];
-        [_intf_continueplaybackPopup setToolTip: _NS("Media files cannot be resumed because keeping recent media items is disabled.")];
-    } else {
-        [_intf_continueplaybackPopup setEnabled: YES];
-    }
-
-    self.intf_displayEndOfPlaybackViewCheckBox.state = [defaults boolForKey:VLCPlaybackEndViewEnabledKey] ? NSControlStateValueOn : NSControlStateValueOff;
-
-    self.intf_displayTrackNumberPlayQueueCheckBox.state = [defaults boolForKey:VLCDisplayTrackNumberPlayQueueKey] ? NSControlStateValueOn : NSControlStateValueOff;
-
-    [VLCPreferencesControlHelper setupButton:_intf_statusIconCheckbox forBoolValue: "macosx-statusicon"];
-
-    [VLCPreferencesControlHelper setupButton:_intf_pauseitunesPopup forIntList: "macosx-control-itunes"];
-
-    [VLCPreferencesControlHelper setupButton:_intf_artCheckbox forBoolValue: "metadata-network-access"];
-
-
-#ifdef HAVE_SPARKLE
-    NSDate * const lastUpdateCheckDate = VLCMain.sharedInstance.sparkleUpdaterController.updater.lastUpdateCheckDate;
-    if (lastUpdateCheckDate != NULL)
-        [_intf_last_updateLabel setStringValue: [NSString stringWithFormat: _NS("Last check on: %@"), [lastUpdateCheckDate descriptionWithLocale: [[NSUserDefaults standardUserDefaults] dictionaryRepresentation]]]];
-    else
-        [_intf_last_updateLabel setStringValue: _NS("No check was performed yet.")];
-#endif
-
-    BOOL growlEnabled = [self hasModule:@"growl" inConfig:@"control"];
-    [_intf_enableNotificationsCheckbox setState: growlEnabled ? NSControlStateValueOn : NSControlStateValueOff];
-
-    BOOL httpEnabled = [self hasModule:@"http" inConfig:@"extraintf"];
-    [_intf_enableluahttpCheckbox setState: httpEnabled ? NSControlStateValueOn : NSControlStateValueOff];
-    _intf_luahttppwdTextField.enabled = httpEnabled;
-
-    [VLCPreferencesControlHelper setupField:_intf_luahttppwdTextField forOption: "http-password"];
+    [_interfacePreferencesController resetControls];
 
     [_audioPreferencesController resetControls];
 
@@ -541,75 +353,14 @@ create_toolbar_item(NSString *itemIdent, NSString *name, NSString *desc, NSStrin
     }];
 }
 
-static inline void save_int_list(intf_thread_t * __unused p_intf, id object, const char * name)
-{
-    NSNumber *p_valueobject = (NSNumber *)[[object selectedItem] representedObject];
-    if (p_valueobject) {
-        assert([p_valueobject isKindOfClass:[NSNumber class]]);
-        config_PutInt(name, [p_valueobject intValue]);
-    }
-}
-
 + (BOOL)updateRightToLeftSettings
 {
-    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
-    NSString *isoCode = [defaults stringForKey:@"language"];
-
-    if (!isoCode || [isoCode isEqualToString:@"auto"]) {
-        // Automatic handling of right to left
-        [defaults removeObjectForKey:@"NSForceRightToLeftWritingDirection"];
-        [defaults removeObjectForKey:@"AppleTextDirection"];
-    } else {
-        for(size_t i = 0; i < ARRAY_SIZE(language_map); i++) {
-            if (!strcmp(language_map[i].iso, [isoCode UTF8String])) {
-                [defaults setBool:language_map[i].isRightToLeft forKey:@"NSForceRightToLeftWritingDirection"];
-                [defaults setBool:language_map[i].isRightToLeft forKey:@"AppleTextDirection"];
-                return YES;
-            }
-        }
-    }
-
-    return NO;
+    return [VLCInterfacePreferencesController updateRightToLeftSettings];
 }
 
 - (void)saveChangedSettings
 {
-#define SaveIntList(object, name) save_int_list(p_intf, object, name)
-
-
-    /**********************
-     * interface settings *
-     **********************/
-    if (_intfSettingChanged) {
-        NSUInteger index = [_intf_languagePopup indexOfSelectedItem];
-        NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
-        [defaults setObject:toNSStr(language_map[index].iso) forKey:@"language"];
-        [VLCSimplePrefsController updateRightToLeftSettings];
-
-        const BOOL originalDisplayTrackNumberSetting = [defaults boolForKey:VLCDisplayTrackNumberPlayQueueKey];
-
-        [defaults setBool:self.intf_displayEndOfPlaybackViewCheckBox.state == NSControlStateValueOn
-                   forKey:VLCPlaybackEndViewEnabledKey];
-        [defaults setBool:self.intf_displayTrackNumberPlayQueueCheckBox.state == NSControlStateValueOn
-                   forKey:VLCDisplayTrackNumberPlayQueueKey];
-        
-        if (originalDisplayTrackNumberSetting != [defaults boolForKey:VLCDisplayTrackNumberPlayQueueKey]) {
-            [NSNotificationCenter.defaultCenter postNotificationName:VLCDisplayTrackNumberPlayQueueSettingChanged object:nil];
-        }
-
-        config_PutInt("metadata-network-access", [_intf_artCheckbox state]);
-
-        config_PutInt("macosx-statusicon", [_intf_statusIconCheckbox state]);
-
-        [self changeModule:@"growl" inConfig:@"control" enable:[_intf_enableNotificationsCheckbox state] == NSControlStateValueOn];
-
-        [self changeModule:@"http" inConfig:@"extraintf" enable:[_intf_enableluahttpCheckbox state] == NSControlStateValueOn];
-        config_PutPsz("http-password", [[_intf_luahttppwdTextField stringValue] UTF8String]);
-
-        SaveIntList(_intf_pauseitunesPopup, "macosx-control-itunes");
-        SaveIntList(_intf_continueplaybackPopup, "macosx-continue-playback");
-        _intfSettingChanged = NO;
-    }
+    [_interfacePreferencesController saveChangedSettings];
 
     [_audioPreferencesController saveChangedSettings];
 
@@ -645,18 +396,9 @@ static inline void save_int_list(intf_thread_t * __unused p_intf, id object, con
 #pragma mark -
 #pragma mark Specific actions
 
-- (IBAction)interfaceSettingChanged:(id)sender
-{
-    if (sender == _intf_enableluahttpCheckbox) {
-        _intf_luahttppwdTextField.enabled = [sender state] == NSControlStateValueOn;
-    }
-
-    _intfSettingChanged = YES;
-}
-
 - (void)showInterfaceSettings
 {
-    [self showSettingsForCategory:_intfView];
+    [self showSettingsForCategory:_interfacePreferencesController.view];
 }
 
 - (void)showAudioSettings
@@ -672,13 +414,6 @@ static inline void save_int_list(intf_thread_t * __unused p_intf, id object, con
 - (void)showOSDSettings
 {
     [self showSettingsForCategory:_subtitlesPreferencesController.view];
-}
-
-- (void)controlTextDidChange:(NSNotification *)notification
-{
-    id notificationObject = [notification object];
-    if (notificationObject == _intf_luahttppwdTextField)
-        _intfSettingChanged = YES;
 }
 
 - (void)showInputSettings

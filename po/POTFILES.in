@@ -570,6 +570,8 @@ modules/gui/macosx/preferences/VLCAudioPreferencesController.h
 modules/gui/macosx/preferences/VLCAudioPreferencesController.m
 modules/gui/macosx/preferences/VLCPreferencesControlHelper.h
 modules/gui/macosx/preferences/VLCPreferencesControlHelper.m
+modules/gui/macosx/preferences/VLCInterfacePreferencesController.h
+modules/gui/macosx/preferences/VLCInterfacePreferencesController.m
 modules/gui/macosx/preferences/VLCInputPreferencesController.h
 modules/gui/macosx/preferences/VLCInputPreferencesController.m
 modules/gui/macosx/preferences/VLCHotkeyChangeWindow.h

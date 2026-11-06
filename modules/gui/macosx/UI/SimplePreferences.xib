@@ -127,8 +127,35 @@
                 <outlet property="outlineThicknessPopup" destination="3682" id="GQN-oD-XkB"/>
             </connections>
         </customObject>
+        <customObject id="int-01-ctl" customClass="VLCInterfacePreferencesController">
+            <connections>
+                <outlet property="view" destination="2311" id="pUM-XM-2rM"/>
+                <outlet property="artCheckbox" destination="3928" id="HND-nW-BHK"/>
+                <outlet property="continueplaybackLabel" destination="3919" id="ZJO-qY-UCq"/>
+                <outlet property="continueplaybackPopup" destination="3920" id="dZ3-SI-SCp"/>
+                <outlet property="displayEndOfPlaybackViewCheckBox" destination="SYi-7I-cKE" id="sTC-Oc-1zX"/>
+                <outlet property="displayTrackNumberPlayQueueCheckBox" destination="QZ2-zA-u6A" id="C0Q-pp-Hx7"/>
+                <outlet property="enableNotificationsCheckbox" destination="3564" id="IIA-ce-g61"/>
+                <outlet property="enableluahttpCheckbox" destination="lpZ-9y-Vfn" id="ieR-ZH-mcd"/>
+                <outlet property="generalSettingsBox" destination="kup-aY-Wqq" id="RsL-yE-DVe"/>
+                <outlet property="languageLabel" destination="3892" id="klM-r2-XKf"/>
+                <outlet property="languagePopup" destination="3900" id="USp-A1-Aut"/>
+                <outlet property="lastUpdateLabel" destination="3560" id="9TG-0W-rqH"/>
+                <outlet property="luahttpBox" destination="drh-ot-Vyn" id="YKi-8n-s8a"/>
+                <outlet property="luahttppwdLabel" destination="3875" id="zl0-da-lHe"/>
+                <outlet property="luahttppwdTextField" destination="3884" id="dxk-zl-ZLZ"/>
+                <outlet property="networkBox" destination="2318" id="wm1-kM-rZB"/>
+                <outlet property="pauseitunesLabel" destination="3910" id="miA-VW-WB3"/>
+                <outlet property="pauseitunesPopup" destination="3911" id="UZN-lH-STQ"/>
+                <outlet property="playbackBehaviourBox" destination="EKZ-iB-CMo" id="mbV-7q-aS2"/>
+                <outlet property="playbackControlBox" destination="CZP-ZN-k6p" id="voN-Ji-9aw"/>
+                <outlet property="statusIconCheckbox" destination="r3P-eU-tEX" id="ixl-Al-ddh"/>
+                <outlet property="updateCheckbox" destination="3556" id="YsJ-GG-xVt"/>
+            </connections>
+        </customObject>
         <customObject id="-2" userLabel="File's Owner" customClass="VLCSimplePrefsController">
             <connections>
+                <outlet property="interfacePreferencesController" destination="int-01-ctl" id="int-01-own"/>
                 <outlet property="subtitlesPreferencesController" destination="sub-01-ctl" id="sub-01-own"/>
                 <outlet property="inputPreferencesController" destination="inp-01-ctl" id="inp-01-own"/>
                 <outlet property="videoPreferencesController" destination="vid-01-ctl" id="vid-01-own"/>
@@ -136,28 +163,6 @@
                 <outlet property="cancelButton" destination="2276" id="sME-3c-gc4"/>
                 <outlet property="contentView" destination="HOX-DS-Fgr" id="Gcx-RH-0il"/>
                 <outlet property="hotkeyPreferencesController" destination="hkc-01-ctl" id="hkc-01-own"/>
-                <outlet property="intfView" destination="2311" id="pUM-XM-2rM"/>
-                <outlet property="intf_artCheckbox" destination="3928" id="HND-nW-BHK"/>
-                <outlet property="intf_continueplaybackLabel" destination="3919" id="ZJO-qY-UCq"/>
-                <outlet property="intf_continueplaybackPopup" destination="3920" id="dZ3-SI-SCp"/>
-                <outlet property="intf_displayEndOfPlaybackViewCheckBox" destination="SYi-7I-cKE" id="sTC-Oc-1zX"/>
-                <outlet property="intf_displayTrackNumberPlayQueueCheckBox" destination="QZ2-zA-u6A" id="C0Q-pp-Hx7"/>
-                <outlet property="intf_enableNotificationsCheckbox" destination="3564" id="IIA-ce-g61"/>
-                <outlet property="intf_enableluahttpCheckbox" destination="lpZ-9y-Vfn" id="ieR-ZH-mcd"/>
-                <outlet property="intf_generalSettingsBox" destination="kup-aY-Wqq" id="RsL-yE-DVe"/>
-                <outlet property="intf_languageLabel" destination="3892" id="klM-r2-XKf"/>
-                <outlet property="intf_languagePopup" destination="3900" id="USp-A1-Aut"/>
-                <outlet property="intf_last_updateLabel" destination="3560" id="9TG-0W-rqH"/>
-                <outlet property="intf_luahttpBox" destination="drh-ot-Vyn" id="YKi-8n-s8a"/>
-                <outlet property="intf_luahttppwdLabel" destination="3875" id="zl0-da-lHe"/>
-                <outlet property="intf_luahttppwdTextField" destination="3884" id="dxk-zl-ZLZ"/>
-                <outlet property="intf_networkBox" destination="2318" id="wm1-kM-rZB"/>
-                <outlet property="intf_pauseitunesLabel" destination="3910" id="miA-VW-WB3"/>
-                <outlet property="intf_pauseitunesPopup" destination="3911" id="UZN-lH-STQ"/>
-                <outlet property="intf_playbackBehaviourBox" destination="EKZ-iB-CMo" id="mbV-7q-aS2"/>
-                <outlet property="intf_playbackControlBox" destination="CZP-ZN-k6p" id="voN-Ji-9aw"/>
-                <outlet property="intf_statusIconCheckbox" destination="r3P-eU-tEX" id="ixl-Al-ddh"/>
-                <outlet property="intf_updateCheckbox" destination="3556" id="YsJ-GG-xVt"/>
                 <outlet property="mediaLibraryAddFolderButton" destination="AsR-G7-aHo" id="rWZ-Ns-RgB"/>
                 <outlet property="mediaLibraryBanFolderButton" destination="Yvu-g1-fLU" id="FIb-RT-Ymv"/>
                 <outlet property="mediaLibraryBannedTableColumn" destination="bjG-Ru-jiX" id="4KB-Y9-maP"/>
@@ -351,7 +356,7 @@ Gw
                                     <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="288" id="Kfa-pp-08X"/>
                                 </constraints>
                                 <connections>
-                                    <action selector="interfaceSettingChanged:" target="-2" id="iZ8-Hl-fvA"/>
+                                    <action selector="interfaceSettingChanged:" target="int-01-ctl" id="iZ8-Hl-fvA"/>
                                 </connections>
                             </popUpButton>
                             <button mirrorLayoutDirectionWhenInternationalizing="always" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="r3P-eU-tEX">
@@ -361,7 +366,7 @@ Gw
                                     <font key="font" metaFont="system"/>
                                 </buttonCell>
                                 <connections>
-                                    <action selector="interfaceSettingChanged:" target="-2" id="Ys3-K6-647"/>
+                                    <action selector="interfaceSettingChanged:" target="int-01-ctl" id="Ys3-K6-647"/>
                                 </connections>
                             </button>
                             <button mirrorLayoutDirectionWhenInternationalizing="always" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="QZ2-zA-u6A">
@@ -371,7 +376,7 @@ Gw
                                     <font key="font" metaFont="system"/>
                                 </buttonCell>
                                 <connections>
-                                    <action selector="interfaceSettingChanged:" target="-2" id="eDk-ch-tvU"/>
+                                    <action selector="interfaceSettingChanged:" target="int-01-ctl" id="eDk-ch-tvU"/>
                                 </connections>
                             </button>
                         </subviews>
@@ -417,7 +422,7 @@ Gw
                                     <menu key="menu" title="OtherViews" id="3922"/>
                                 </popUpButtonCell>
                                 <connections>
-                                    <action selector="interfaceSettingChanged:" target="-2" id="SxN-sI-55J"/>
+                                    <action selector="interfaceSettingChanged:" target="int-01-ctl" id="SxN-sI-55J"/>
                                 </connections>
                             </popUpButton>
                             <button mirrorLayoutDirectionWhenInternationalizing="always" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="SYi-7I-cKE">
@@ -427,7 +432,7 @@ Gw
                                     <font key="font" metaFont="system"/>
                                 </buttonCell>
                                 <connections>
-                                    <action selector="interfaceSettingChanged:" target="-2" id="SR0-g4-Kx9"/>
+                                    <action selector="interfaceSettingChanged:" target="int-01-ctl" id="SR0-g4-Kx9"/>
                                 </connections>
                             </button>
                         </subviews>
@@ -463,7 +468,7 @@ Gw
                                     <font key="font" metaFont="system"/>
                                 </buttonCell>
                                 <connections>
-                                    <action selector="interfaceSettingChanged:" target="-2" id="ZE0-IR-FYq"/>
+                                    <action selector="interfaceSettingChanged:" target="int-01-ctl" id="ZE0-IR-FYq"/>
                                 </connections>
                             </button>
                             <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="3910">
@@ -482,7 +487,7 @@ Gw
                                     <menu key="menu" title="OtherViews" id="3913"/>
                                 </popUpButtonCell>
                                 <connections>
-                                    <action selector="interfaceSettingChanged:" target="-2" id="qeG-Iu-Gee"/>
+                                    <action selector="interfaceSettingChanged:" target="int-01-ctl" id="qeG-Iu-Gee"/>
                                 </connections>
                             </popUpButton>
                         </subviews>
@@ -520,7 +525,7 @@ Gw
                                     <font key="font" metaFont="system"/>
                                 </buttonCell>
                                 <connections>
-                                    <action selector="interfaceSettingChanged:" target="-2" id="t18-Rf-im8"/>
+                                    <action selector="interfaceSettingChanged:" target="int-01-ctl" id="t18-Rf-im8"/>
                                 </connections>
                             </button>
                             <button mirrorLayoutDirectionWhenInternationalizing="always" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="3928">
@@ -530,7 +535,7 @@ Gw
                                     <font key="font" metaFont="system"/>
                                 </buttonCell>
                                 <connections>
-                                    <action selector="interfaceSettingChanged:" target="-2" id="5zR-84-Rjx"/>
+                                    <action selector="interfaceSettingChanged:" target="int-01-ctl" id="5zR-84-Rjx"/>
                                 </connections>
                             </button>
                             <textField focusRingType="none" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="3560">
@@ -596,8 +601,8 @@ Gw
                                     <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                 </textFieldCell>
                                 <connections>
-                                    <action selector="interfaceSettingChanged:" target="-2" id="BSM-KK-Wd3"/>
-                                    <outlet property="delegate" destination="-2" id="CTK-cN-vZp"/>
+                                    <action selector="interfaceSettingChanged:" target="int-01-ctl" id="BSM-KK-Wd3"/>
+                                    <outlet property="delegate" destination="int-01-ctl" id="CTK-cN-vZp"/>
                                 </connections>
                             </textField>
                             <button mirrorLayoutDirectionWhenInternationalizing="always" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="lpZ-9y-Vfn">
@@ -607,7 +612,7 @@ Gw
                                     <font key="font" metaFont="system"/>
                                 </buttonCell>
                                 <connections>
-                                    <action selector="interfaceSettingChanged:" target="-2" id="dVG-jB-ra3"/>
+                                    <action selector="interfaceSettingChanged:" target="int-01-ctl" id="dVG-jB-ra3"/>
                                 </connections>
                             </button>
                         </subviews>

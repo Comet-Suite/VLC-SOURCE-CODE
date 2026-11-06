@@ -49,39 +49,6 @@
 @property (readwrite, weak) IBOutlet NSButton *mediaLibraryBanFolderButton;
 @property (readwrite, weak) IBOutlet NSButton *mediaLibraryReloadFolderButton;
 
-// intf pane - general box
-@property (readwrite, strong) IBOutlet NSView *intfView;
-
-@property (readwrite, weak) IBOutlet NSBox *intf_generalSettingsBox;
-@property (readwrite, weak) IBOutlet NSPopUpButton *intf_languagePopup;
-@property (readwrite, weak) IBOutlet NSTextField *intf_languageLabel;
-@property (readwrite, weak) IBOutlet NSButton *intf_statusIconCheckbox;
-@property (readwrite, weak) IBOutlet NSButton *intf_displayTrackNumberPlayQueueCheckBox;
-
-// intf pane - control box
-@property (readwrite, weak) IBOutlet NSBox *intf_playbackControlBox;
-@property (readwrite, weak) IBOutlet NSTextField *intf_continueplaybackLabel;
-@property (readwrite, weak) IBOutlet NSPopUpButton *intf_continueplaybackPopup;
-@property (readwrite, weak) IBOutlet NSButton *intf_displayEndOfPlaybackViewCheckBox;
-
-// intf pane - behaviour box
-@property (readwrite, weak) IBOutlet NSBox *intf_playbackBehaviourBox;
-@property (readwrite, weak) IBOutlet NSButton *intf_enableNotificationsCheckbox;
-@property (readwrite, weak) IBOutlet NSTextField *intf_pauseitunesLabel;
-@property (readwrite, weak) IBOutlet NSPopUpButton *intf_pauseitunesPopup;
-
-// intf pane - network box
-@property (readwrite, weak) IBOutlet NSBox *intf_networkBox;
-@property (readwrite, weak) IBOutlet NSButton *intf_artCheckbox;
-@property (readwrite, weak) IBOutlet NSButton *intf_updateCheckbox;
-@property (readwrite, weak) IBOutlet NSTextField *intf_last_updateLabel;
-
-// intf pane - http interface box
-@property (readwrite, weak) IBOutlet NSBox *intf_luahttpBox;
-@property (readwrite, weak) IBOutlet NSButton *intf_enableluahttpCheckbox;
-@property (readwrite, weak) IBOutlet NSTextField *intf_luahttppwdLabel;
-@property (readwrite, weak) IBOutlet NSTextField *intf_luahttppwdTextField;
-
 // URL handler popup window
 @property (readwrite, strong) IBOutlet NSWindow *urlhandler_win;
 
@@ -110,9 +77,6 @@
 
 - (IBAction)buttonAction:(id)sender;
 - (IBAction)resetPreferences:(id)sender;
-
-/* interface */
-- (IBAction)interfaceSettingChanged:(id)sender;
 
 /* input & codecs */
 - (IBAction)urlHandlerAction:(id)sender;
