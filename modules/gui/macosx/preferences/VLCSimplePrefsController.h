@@ -82,34 +82,6 @@
 @property (readwrite, weak) IBOutlet NSTextField *intf_luahttppwdLabel;
 @property (readwrite, weak) IBOutlet NSTextField *intf_luahttppwdTextField;
 
-// osd pane
-@property (readwrite, strong) IBOutlet NSView *osdView;
-
-@property (readwrite, weak) IBOutlet NSPopUpButton *osd_encodingPopup;
-@property (readwrite, weak) IBOutlet NSTextField *osd_encodingLabel;
-@property (readwrite, weak) IBOutlet NSBox *osd_fontBox;
-@property (readwrite, weak) IBOutlet NSButton *osd_fontButton;
-@property (readwrite, weak) IBOutlet NSPopUpButton *osd_font_colorPopup;
-@property (readwrite, weak) IBOutlet NSTextField *osd_font_colorLabel;
-@property (readwrite, weak) IBOutlet NSTextField *osd_fontTextField;
-@property (readwrite, weak) IBOutlet NSSlider *osd_font_sizeSlider;
-@property (readwrite, weak) IBOutlet NSTextField *osd_font_sizeTextField;
-@property (readwrite, weak) IBOutlet NSTextField *osd_font_sizeLabel;
-@property (readwrite, weak) IBOutlet NSTextField *osd_fontLabel;
-@property (readwrite, weak) IBOutlet NSBox *osd_langBox;
-@property (readwrite, weak) IBOutlet NSTextField *osd_langTextField;
-@property (readwrite, weak) IBOutlet NSTextField *osd_langLabel;
-@property (readwrite, weak) IBOutlet NSTextField *osd_opacityLabel;
-@property (readwrite, weak) IBOutlet NSTextField *osd_opacityTextField;
-@property (readwrite, weak) IBOutlet NSSlider *osd_opacitySlider;
-@property (readwrite, weak) IBOutlet NSPopUpButton *osd_outline_colorPopup;
-@property (readwrite, weak) IBOutlet NSTextField *osd_outline_colorLabel;
-@property (readwrite, weak) IBOutlet NSPopUpButton *osd_outline_thicknessPopup;
-@property (readwrite, weak) IBOutlet NSTextField *osd_outline_thicknessLabel;
-@property (readwrite, weak) IBOutlet NSButton *osd_forceboldCheckbox;
-@property (readwrite, weak) IBOutlet NSBox *osd_osdBox;
-@property (readwrite, weak) IBOutlet NSButton *osd_osdCheckbox;
-
 // URL handler popup window
 @property (readwrite, strong) IBOutlet NSWindow *urlhandler_win;
 
@@ -141,11 +113,6 @@
 
 /* interface */
 - (IBAction)interfaceSettingChanged:(id)sender;
-
-/* OSD / subtitles */
-- (IBAction)osdSettingChanged:(id)sender;
-- (IBAction)showFontPicker:(id)sender;
-- (void)changeFont:(id)sender;
 
 /* input & codecs */
 - (IBAction)urlHandlerAction:(id)sender;

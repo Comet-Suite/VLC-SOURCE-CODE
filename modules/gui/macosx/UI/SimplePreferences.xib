@@ -98,8 +98,38 @@
                 <outlet property="urlhandlerButton" destination="3742" id="1GV-O9-8SF"/>
             </connections>
         </customObject>
+        <customObject id="sub-01-ctl" customClass="VLCSubtitlesPreferencesController">
+            <connections>
+                <outlet property="view" destination="2523" id="d1o-FZ-hXa"/>
+                <outlet property="encodingLabel" destination="2531" id="yyW-qD-zJ0"/>
+                <outlet property="encodingPopup" destination="2532" id="mBO-m6-lIV"/>
+                <outlet property="fontBox" destination="2537" id="OCf-KO-i4B"/>
+                <outlet property="fontButton" destination="2543" id="UOT-87-z16"/>
+                <outlet property="fontLabel" destination="2542" id="LD1-g4-6Ex"/>
+                <outlet property="fontTextField" destination="2541" id="xU3-Ys-YSP"/>
+                <outlet property="fontColorLabel" destination="2555" id="hn1-FU-ogE"/>
+                <outlet property="fontColorPopup" destination="2550" id="fmK-Dm-Zbi"/>
+                <outlet property="fontSizeLabel" destination="2549" id="6UR-DN-mC3"/>
+                <outlet property="fontSizeSlider" destination="3MP-L5-isz" id="i58-fy-YgB"/>
+                <outlet property="fontSizeTextField" destination="yfD-4K-I4T" id="n4d-Lf-NWh"/>
+                <outlet property="forceboldCheckbox" destination="3584" id="cvp-0k-8wD"/>
+                <outlet property="langBox" destination="1aw-Yd-yzY" id="qnx-GL-6WT"/>
+                <outlet property="langLabel" destination="2529" id="WOg-LS-PvE"/>
+                <outlet property="langTextField" destination="2530" id="ajX-mt-AZI"/>
+                <outlet property="opacityLabel" destination="3568" id="Ev0-Zk-agh"/>
+                <outlet property="opacitySlider" destination="3569" id="Z6R-ol-3f7"/>
+                <outlet property="opacityTextField" destination="3594" id="4gS-xW-YPL"/>
+                <outlet property="osdBox" destination="2524" id="IZy-89-AfQ"/>
+                <outlet property="osdCheckbox" destination="2526" id="Rf4-6g-rcm"/>
+                <outlet property="outlineColorLabel" destination="3692" id="1di-TX-lkL"/>
+                <outlet property="outlineColorPopup" destination="3691" id="dRq-rt-DOh"/>
+                <outlet property="outlineThicknessLabel" destination="3683" id="t4w-o6-oxq"/>
+                <outlet property="outlineThicknessPopup" destination="3682" id="GQN-oD-XkB"/>
+            </connections>
+        </customObject>
         <customObject id="-2" userLabel="File's Owner" customClass="VLCSimplePrefsController">
             <connections>
+                <outlet property="subtitlesPreferencesController" destination="sub-01-ctl" id="sub-01-own"/>
                 <outlet property="inputPreferencesController" destination="inp-01-ctl" id="inp-01-own"/>
                 <outlet property="videoPreferencesController" destination="vid-01-ctl" id="vid-01-own"/>
                 <outlet property="audioPreferencesController" destination="aud-01-ctl" id="aud-01-own"/>
@@ -138,31 +168,6 @@
                 <outlet property="mediaLibraryReloadFolderButton" destination="hvb-5M-TTc" id="HV0-Gc-GLE"/>
                 <outlet property="mediaLibraryRemoveFolderButton" destination="WnC-lv-27l" id="EUb-bH-L13"/>
                 <outlet property="mediaLibraryView" destination="eei-wi-f9H" id="Oh4-jV-mOk"/>
-                <outlet property="osdView" destination="2523" id="d1o-FZ-hXa"/>
-                <outlet property="osd_encodingLabel" destination="2531" id="yyW-qD-zJ0"/>
-                <outlet property="osd_encodingPopup" destination="2532" id="mBO-m6-lIV"/>
-                <outlet property="osd_fontBox" destination="2537" id="OCf-KO-i4B"/>
-                <outlet property="osd_fontButton" destination="2543" id="UOT-87-z16"/>
-                <outlet property="osd_fontLabel" destination="2542" id="LD1-g4-6Ex"/>
-                <outlet property="osd_fontTextField" destination="2541" id="xU3-Ys-YSP"/>
-                <outlet property="osd_font_colorLabel" destination="2555" id="hn1-FU-ogE"/>
-                <outlet property="osd_font_colorPopup" destination="2550" id="fmK-Dm-Zbi"/>
-                <outlet property="osd_font_sizeLabel" destination="2549" id="6UR-DN-mC3"/>
-                <outlet property="osd_font_sizeSlider" destination="3MP-L5-isz" id="i58-fy-YgB"/>
-                <outlet property="osd_font_sizeTextField" destination="yfD-4K-I4T" id="n4d-Lf-NWh"/>
-                <outlet property="osd_forceboldCheckbox" destination="3584" id="cvp-0k-8wD"/>
-                <outlet property="osd_langBox" destination="1aw-Yd-yzY" id="qnx-GL-6WT"/>
-                <outlet property="osd_langLabel" destination="2529" id="WOg-LS-PvE"/>
-                <outlet property="osd_langTextField" destination="2530" id="ajX-mt-AZI"/>
-                <outlet property="osd_opacityLabel" destination="3568" id="Ev0-Zk-agh"/>
-                <outlet property="osd_opacitySlider" destination="3569" id="Z6R-ol-3f7"/>
-                <outlet property="osd_opacityTextField" destination="3594" id="4gS-xW-YPL"/>
-                <outlet property="osd_osdBox" destination="2524" id="IZy-89-AfQ"/>
-                <outlet property="osd_osdCheckbox" destination="2526" id="Rf4-6g-rcm"/>
-                <outlet property="osd_outline_colorLabel" destination="3692" id="1di-TX-lkL"/>
-                <outlet property="osd_outline_colorPopup" destination="3691" id="dRq-rt-DOh"/>
-                <outlet property="osd_outline_thicknessLabel" destination="3683" id="t4w-o6-oxq"/>
-                <outlet property="osd_outline_thicknessPopup" destination="3682" id="GQN-oD-XkB"/>
                 <outlet property="resetButton" destination="2277" id="CQQ-49-4Gq"/>
                 <outlet property="saveButton" destination="2275" id="WsL-HB-mfJ"/>
                 <outlet property="scrollView" destination="b28-nA-RR5" id="EGK-oO-Okf"/>
@@ -1978,8 +1983,8 @@ Gw
                                     <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                 </textFieldCell>
                                 <connections>
-                                    <action selector="osdSettingChanged:" target="-2" id="wAT-B8-EeZ"/>
-                                    <outlet property="delegate" destination="-2" id="yRU-e8-r5Z"/>
+                                    <action selector="osdSettingChanged:" target="sub-01-ctl" id="wAT-B8-EeZ"/>
+                                    <outlet property="delegate" destination="sub-01-ctl" id="yRU-e8-r5Z"/>
                                     <outlet property="nextKeyView" destination="3594" id="3599"/>
                                 </connections>
                             </textField>
@@ -1998,7 +2003,7 @@ Gw
                                     <font key="font" metaFont="system"/>
                                 </buttonCell>
                                 <connections>
-                                    <action selector="showFontPicker:" target="-2" id="E58-CZ-jFO"/>
+                                    <action selector="showFontPicker:" target="sub-01-ctl" id="E58-CZ-jFO"/>
                                 </connections>
                             </button>
                             <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="2549">
@@ -2023,7 +2028,7 @@ Gw
                                     </menu>
                                 </popUpButtonCell>
                                 <connections>
-                                    <action selector="osdSettingChanged:" target="-2" id="uHy-A5-OFR"/>
+                                    <action selector="osdSettingChanged:" target="sub-01-ctl" id="uHy-A5-OFR"/>
                                 </connections>
                             </popUpButton>
                             <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="2555">
@@ -2048,7 +2053,7 @@ Gw
                                     </menu>
                                 </popUpButtonCell>
                                 <connections>
-                                    <action selector="osdSettingChanged:" target="-2" id="jyO-mG-U6b"/>
+                                    <action selector="osdSettingChanged:" target="sub-01-ctl" id="jyO-mG-U6b"/>
                                 </connections>
                             </popUpButton>
                             <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="3683">
@@ -2073,7 +2078,7 @@ Gw
                                     </menu>
                                 </popUpButtonCell>
                                 <connections>
-                                    <action selector="osdSettingChanged:" target="-2" id="pld-OJ-u5X"/>
+                                    <action selector="osdSettingChanged:" target="sub-01-ctl" id="pld-OJ-u5X"/>
                                 </connections>
                             </popUpButton>
                             <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="3692">
@@ -2098,7 +2103,7 @@ Gw
                                     <font key="font" metaFont="user"/>
                                 </sliderCell>
                                 <connections>
-                                    <action selector="osdSettingChanged:" target="-2" id="Ng5-zQ-ywZ"/>
+                                    <action selector="osdSettingChanged:" target="sub-01-ctl" id="Ng5-zQ-ywZ"/>
                                 </connections>
                             </slider>
                             <button mirrorLayoutDirectionWhenInternationalizing="always" translatesAutoresizingMaskIntoConstraints="NO" id="3584">
@@ -2108,7 +2113,7 @@ Gw
                                     <font key="font" metaFont="system"/>
                                 </buttonCell>
                                 <connections>
-                                    <action selector="osdSettingChanged:" target="-2" id="3JT-kF-0RI"/>
+                                    <action selector="osdSettingChanged:" target="sub-01-ctl" id="3JT-kF-0RI"/>
                                 </connections>
                             </button>
                             <textField focusRingType="none" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="3594">
@@ -2129,8 +2134,8 @@ Gw
                                     <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                 </textFieldCell>
                                 <connections>
-                                    <action selector="osdSettingChanged:" target="-2" id="0LP-DQ-jcB"/>
-                                    <outlet property="delegate" destination="-2" id="xLc-5J-AVL"/>
+                                    <action selector="osdSettingChanged:" target="sub-01-ctl" id="0LP-DQ-jcB"/>
+                                    <outlet property="delegate" destination="sub-01-ctl" id="xLc-5J-AVL"/>
                                     <outlet property="nextKeyView" destination="3584" id="3598"/>
                                 </connections>
                             </textField>
@@ -2140,7 +2145,7 @@ Gw
                                     <font key="font" metaFont="user"/>
                                 </sliderCell>
                                 <connections>
-                                    <action selector="osdSettingChanged:" target="-2" id="B0M-7t-a7N"/>
+                                    <action selector="osdSettingChanged:" target="sub-01-ctl" id="B0M-7t-a7N"/>
                                 </connections>
                             </slider>
                             <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="yfD-4K-I4T">
@@ -2261,7 +2266,7 @@ Gw
                                     <font key="font" metaFont="system"/>
                                 </buttonCell>
                                 <connections>
-                                    <action selector="osdSettingChanged:" target="-2" id="sFw-8L-5T2"/>
+                                    <action selector="osdSettingChanged:" target="sub-01-ctl" id="sFw-8L-5T2"/>
                                 </connections>
                             </button>
                         </subviews>
@@ -2301,8 +2306,8 @@ Gw
                                     <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                 </textFieldCell>
                                 <connections>
-                                    <action selector="osdSettingChanged:" target="-2" id="GCz-TH-5ck"/>
-                                    <outlet property="delegate" destination="-2" id="AOP-2P-emL"/>
+                                    <action selector="osdSettingChanged:" target="sub-01-ctl" id="GCz-TH-5ck"/>
+                                    <outlet property="delegate" destination="sub-01-ctl" id="AOP-2P-emL"/>
                                 </connections>
                             </textField>
                             <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="2531">
@@ -2330,7 +2335,7 @@ Gw
                                     </menu>
                                 </popUpButtonCell>
                                 <connections>
-                                    <action selector="osdSettingChanged:" target="-2" id="xeg-0v-Ab2"/>
+                                    <action selector="osdSettingChanged:" target="sub-01-ctl" id="xeg-0v-Ab2"/>
                                 </connections>
                             </popUpButton>
                         </subviews>

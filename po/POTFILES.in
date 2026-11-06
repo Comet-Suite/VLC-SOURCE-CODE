@@ -580,6 +580,8 @@ modules/gui/macosx/preferences/VLCMediaLibraryFolderManagementController.h
 modules/gui/macosx/preferences/VLCMediaLibraryFolderManagementController.m
 modules/gui/macosx/preferences/VLCVideoPreferencesController.h
 modules/gui/macosx/preferences/VLCVideoPreferencesController.m
+modules/gui/macosx/preferences/VLCSubtitlesPreferencesController.h
+modules/gui/macosx/preferences/VLCSubtitlesPreferencesController.m
 modules/gui/macosx/preferences/VLCSimplePrefsController.h
 modules/gui/macosx/preferences/VLCSimplePrefsController.m
 modules/gui/macosx/preferences/VLCSimplePrefsWindow.h

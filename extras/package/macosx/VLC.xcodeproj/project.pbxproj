@@ -42,6 +42,7 @@
 		1C3113D71E508C6900D4DD76 /* VLCPopupPanelController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1C7CB91B1D787E7600388902 /* VLCPopupPanelController.m */; };
 		1C3113D91E508C6900D4DD76 /* VLCSimplePrefsController.m in Sources */ = {isa = PBXBuildFile; fileRef = CCB24D5D0D54BBAE004D780C /* VLCSimplePrefsController.m */; };
 		7A0C6F602C925000008A1D00 /* VLCPreferencesControlHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = 7A0C6F622C925000008A1D00 /* VLCPreferencesControlHelper.m */; };
+		7A0C6F902C925000008A1D00 /* VLCSubtitlesPreferencesController.m in Sources */ = {isa = PBXBuildFile; fileRef = 7A0C6F922C925000008A1D00 /* VLCSubtitlesPreferencesController.m */; };
 		7A0C6F802C925000008A1D00 /* VLCInputPreferencesController.m in Sources */ = {isa = PBXBuildFile; fileRef = 7A0C6F822C925000008A1D00 /* VLCInputPreferencesController.m */; };
 		7A0C6F702C925000008A1D00 /* VLCVideoPreferencesController.m in Sources */ = {isa = PBXBuildFile; fileRef = 7A0C6F722C925000008A1D00 /* VLCVideoPreferencesController.m */; };
 		7A0C6F632C925000008A1D00 /* VLCAudioPreferencesController.m in Sources */ = {isa = PBXBuildFile; fileRef = 7A0C6F652C925000008A1D00 /* VLCAudioPreferencesController.m */; };
@@ -1042,6 +1043,8 @@
 		CCB24D5E0D54BBAE004D780C /* VLCSimplePrefsController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VLCSimplePrefsController.h; sourceTree = "<group>"; };
 		7A0C6F612C925000008A1D00 /* VLCPreferencesControlHelper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VLCPreferencesControlHelper.h; sourceTree = "<group>"; };
 		7A0C6F622C925000008A1D00 /* VLCPreferencesControlHelper.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VLCPreferencesControlHelper.m; sourceTree = "<group>"; };
+		7A0C6F912C925000008A1D00 /* VLCSubtitlesPreferencesController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VLCSubtitlesPreferencesController.h; sourceTree = "<group>"; };
+		7A0C6F922C925000008A1D00 /* VLCSubtitlesPreferencesController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VLCSubtitlesPreferencesController.m; sourceTree = "<group>"; };
 		7A0C6F812C925000008A1D00 /* VLCInputPreferencesController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VLCInputPreferencesController.h; sourceTree = "<group>"; };
 		7A0C6F822C925000008A1D00 /* VLCInputPreferencesController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VLCInputPreferencesController.m; sourceTree = "<group>"; };
 		7A0C6F712C925000008A1D00 /* VLCVideoPreferencesController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VLCVideoPreferencesController.h; sourceTree = "<group>"; };
@@ -1448,6 +1451,8 @@
 				6B4D508F1E79781F004479B5 /* VLCHotkeyChangeWindow.m */,
 				7A0C6F612C925000008A1D00 /* VLCPreferencesControlHelper.h */,
 				7A0C6F622C925000008A1D00 /* VLCPreferencesControlHelper.m */,
+				7A0C6F912C925000008A1D00 /* VLCSubtitlesPreferencesController.h */,
+				7A0C6F922C925000008A1D00 /* VLCSubtitlesPreferencesController.m */,
 				7A0C6F812C925000008A1D00 /* VLCInputPreferencesController.h */,
 				7A0C6F822C925000008A1D00 /* VLCInputPreferencesController.m */,
 				7A0C6F712C925000008A1D00 /* VLCVideoPreferencesController.h */,
@@ -2676,6 +2681,7 @@
 				7D445D8B22032B9200263D34 /* VLCPlayQueueTableView.m in Sources */,
 				1C3113D91E508C6900D4DD76 /* VLCSimplePrefsController.m in Sources */,
 				7A0C6F602C925000008A1D00 /* VLCPreferencesControlHelper.m in Sources */,
+				7A0C6F902C925000008A1D00 /* VLCSubtitlesPreferencesController.m in Sources */,
 				7A0C6F802C925000008A1D00 /* VLCInputPreferencesController.m in Sources */,
 				7A0C6F702C925000008A1D00 /* VLCVideoPreferencesController.m in Sources */,
 				7A0C6F632C925000008A1D00 /* VLCAudioPreferencesController.m in Sources */,

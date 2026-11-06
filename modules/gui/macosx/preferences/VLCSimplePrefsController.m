@@ -31,6 +31,7 @@
 #import "VLCAudioPreferencesController.h"
 #import "VLCVideoPreferencesController.h"
 #import "VLCInputPreferencesController.h"
+#import "VLCSubtitlesPreferencesController.h"
 #import "VLCPreferencesControlHelper.h"
 
 #ifdef HAVE_SPARKLE
@@ -141,7 +142,6 @@ static NSString* VLCHotkeysSettingToolbarIdentifier = @"Hotkeys Settings Item Id
 @interface VLCSimplePrefsController() <NSToolbarDelegate, NSWindowDelegate>
 {
     BOOL _intfSettingChanged;
-    BOOL _osdSettingChanged;
 
     VLCMediaLibraryFolderManagementController *_mediaLibraryManagementController;
 
@@ -151,6 +151,7 @@ static NSString* VLCHotkeysSettingToolbarIdentifier = @"Hotkeys Settings Item Id
 @property (nonatomic, strong) IBOutlet VLCAudioPreferencesController *audioPreferencesController;
 @property (nonatomic, strong) IBOutlet VLCVideoPreferencesController *videoPreferencesController;
 @property (nonatomic, strong) IBOutlet VLCInputPreferencesController *inputPreferencesController;
+@property (nonatomic, strong) IBOutlet VLCSubtitlesPreferencesController *subtitlesPreferencesController;
 @end
 
 @implementation VLCSimplePrefsController
@@ -197,6 +198,7 @@ static NSString* VLCHotkeysSettingToolbarIdentifier = @"Hotkeys Settings Item Id
     [_audioPreferencesController setupControls];
     [_videoPreferencesController setupControls];
     [_inputPreferencesController setupControls];
+    [_subtitlesPreferencesController setupControls];
 
     // Workaround for Mac OS X Lion, which does not apply the same constraints when set in IB
     NSView *clipView = _contentView.superview;
@@ -364,22 +366,6 @@ create_toolbar_item(NSString *itemIdent, NSString *name, NSString *desc, NSStrin
     [_intf_enableluahttpCheckbox setTitle: _NS("Enable HTTP web interface")];
     [_intf_luahttppwdLabel setStringValue:_NS("Password")];
 
-    /* Subtitles and OSD */
-    [_osd_encodingLabel setStringValue: _NS("Default Encoding")];
-    [_osd_fontBox setTitle: _NS("Display Settings")];
-    [_osd_fontButton setTitle: _NS("Choose...")];
-    [_osd_font_colorLabel setStringValue: _NS("Font color")];
-    [_osd_font_sizeLabel setStringValue: _NS("Font size")];
-    [_osd_fontLabel setStringValue: _NS("Font")];
-    [_osd_langBox setTitle: _NS("Subtitle languages")];
-    [_osd_langLabel setStringValue: _NS("Preferred subtitle language")];
-    [_osd_osdBox setTitle: _NS("On Screen Display")];
-    [_osd_osdCheckbox setTitle: _NS("Enable OSD")];
-    [_osd_opacityLabel setStringValue: _NS("Opacity")];
-    [_osd_forceboldCheckbox setTitle: _NS("Force bold")];
-    [_osd_outline_colorLabel setStringValue: _NS("Outline color")];
-    [_osd_outline_thicknessLabel setStringValue: _NS("Outline thickness")];
-
     /* media library */
     [_mediaLibraryAddFolderButton setTitle:_NS("Add Folder...")];
     [_mediaLibraryBanFolderButton setTitle:_NS("Ban Folder")];
@@ -433,7 +419,6 @@ create_toolbar_item(NSString *itemIdent, NSString *name, NSString *desc, NSStrin
 
 - (void)resetControls
 {
-    int i = 0;
 
     /**********************
      * interface settings *
@@ -493,26 +478,7 @@ create_toolbar_item(NSString *itemIdent, NSString *name, NSString *desc, NSStrin
 
     [_inputPreferencesController resetControls];
 
-    /*********************
-     * subtitle settings *
-     *********************/
-    [VLCPreferencesControlHelper setupButton:_osd_osdCheckbox forBoolValue: "osd"];
-
-    [VLCPreferencesControlHelper setupButton:_osd_encodingPopup forStringList: "subsdec-encoding"];
-    [VLCPreferencesControlHelper setupField:_osd_langTextField forOption: "sub-language" ];
-
-    [VLCPreferencesControlHelper setupField:_osd_fontTextField forOption: "freetype-font"];
-    [VLCPreferencesControlHelper setupButton:_osd_font_colorPopup forIntList: "freetype-color"];
-    _osd_font_sizeSlider.intValue = (int)config_GetInt("sub-text-scale");
-    [_osd_font_sizeTextField setStringValue: [NSString stringWithFormat:@"%.2fx", _osd_font_sizeSlider.intValue / 100.]];
-    i = config_GetInt("freetype-opacity") * 100.0 / 255.0 + 0.5;
-    [_osd_opacityTextField setIntValue: i];
-    [_osd_opacitySlider setIntValue: i];
-    [_osd_opacitySlider setToolTip: NSTR(config_GetLabel("freetype-opacity"))];
-    [_osd_opacityTextField setToolTip: [_osd_opacitySlider toolTip]];
-    [VLCPreferencesControlHelper setupButton:_osd_forceboldCheckbox forBoolValue: "freetype-bold"];
-    [VLCPreferencesControlHelper setupButton:_osd_outline_colorPopup forIntList: "freetype-outline-color"];
-    [VLCPreferencesControlHelper setupButton:_osd_outline_thicknessPopup forIntList: "freetype-outline-thickness"];
+    [_subtitlesPreferencesController resetControls];
 
     [_hotkeyPreferencesController resetControls];
 }
@@ -542,11 +508,11 @@ create_toolbar_item(NSString *itemIdent, NSString *name, NSString *desc, NSStrin
 - (IBAction)buttonAction:(id)sender
 {
     if (sender == _cancelButton) {
-        [[NSFontPanel sharedFontPanel] close];
+        [_subtitlesPreferencesController closeFontPanel];
         [self.window orderOut: sender];
     } else if (sender == _saveButton) {
         [self saveChangedSettings];
-        [[NSFontPanel sharedFontPanel] close];
+        [_subtitlesPreferencesController closeFontPanel];
         [self.window orderOut: sender];
     } else if (sender == _showAllButton) {
         [self.window orderOut: self];
@@ -584,15 +550,6 @@ static inline void save_int_list(intf_thread_t * __unused p_intf, id object, con
     }
 }
 
-static inline void save_string_list(intf_thread_t * __unused p_intf, id object, const char * name)
-{
-    NSString *p_stringobject = (NSString *)[[object selectedItem] representedObject];
-    if (p_stringobject) {
-        assert([p_stringobject isKindOfClass:[NSString class]]);
-        config_PutPsz(name, [p_stringobject UTF8String]);
-    }
-}
-
 + (BOOL)updateRightToLeftSettings
 {
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
@@ -619,8 +576,6 @@ static inline void save_string_list(intf_thread_t * __unused p_intf, id object, 
 {
 #define SaveIntList(object, name) save_int_list(p_intf, object, name)
 
-#define SaveStringList(object, name) save_string_list(p_intf, object, name)
-#define SaveModuleList(object, name) SaveStringList(object, name)
 
     /**********************
      * interface settings *
@@ -662,28 +617,7 @@ static inline void save_string_list(intf_thread_t * __unused p_intf, id object, 
 
     [_inputPreferencesController saveChangedSettings];
 
-    /**********************
-     * subtitles settings *
-     **********************/
-    if (_osdSettingChanged) {
-        config_PutInt("osd", [_osd_osdCheckbox state]);
-
-        if ([_osd_encodingPopup indexOfSelectedItem] >= 0)
-            SaveStringList(_osd_encodingPopup, "subsdec-encoding");
-        else
-            config_PutPsz("subsdec-encoding", "");
-
-        config_PutPsz("sub-language", [[_osd_langTextField stringValue] UTF8String]);
-
-        config_PutPsz("freetype-font", [[_osd_fontTextField stringValue] UTF8String]);
-        SaveIntList(_osd_font_colorPopup, "freetype-color");
-        config_PutInt("sub-text-scale", _osd_font_sizeSlider.intValue);
-        config_PutInt("freetype-opacity", [_osd_opacityTextField intValue] * 255.0 / 100.0 + 0.5);
-        config_PutInt("freetype-bold", [_osd_forceboldCheckbox state]);
-        SaveIntList(_osd_outline_colorPopup, "freetype-outline-color");
-        SaveIntList(_osd_outline_thicknessPopup, "freetype-outline-thickness");
-        _osdSettingChanged = NO;
-    }
+    [_subtitlesPreferencesController saveChangedSettings];
 
     [_hotkeyPreferencesController saveChangedSettings];
     fixIntfSettings();
@@ -735,68 +669,17 @@ static inline void save_string_list(intf_thread_t * __unused p_intf, id object, 
     [self showSettingsForCategory:_videoPreferencesController.view];
 }
 
-- (IBAction)osdSettingChanged:(id)sender
-{
-    if (sender == _osd_opacityTextField) {
-        [_osd_opacitySlider setIntValue: [_osd_opacityTextField intValue]];
-    } else if (sender == _osd_opacitySlider) {
-        [_osd_opacityTextField setIntValue: [_osd_opacitySlider intValue]];
-    } else if (sender == _osd_font_sizeSlider) {
-        [_osd_font_sizeTextField setStringValue: [NSString stringWithFormat:@"%.2fx", _osd_font_sizeSlider.intValue / 100.]];
-    }
-
-    _osdSettingChanged = YES;
-}
-
 - (void)showOSDSettings
 {
-    [self showSettingsForCategory:_osdView];
+    [self showSettingsForCategory:_subtitlesPreferencesController.view];
 }
 
 - (void)controlTextDidChange:(NSNotification *)notification
 {
     id notificationObject = [notification object];
-    if (notificationObject == _osd_fontTextField ||
-            notificationObject == _osd_langTextField ||
-            notificationObject == _osd_opacityTextField)
-        _osdSettingChanged = YES;
-    else if (notificationObject == _intf_luahttppwdTextField)
+    if (notificationObject == _intf_luahttppwdTextField)
         _intfSettingChanged = YES;
 }
-
-- (IBAction)showFontPicker:(id)sender
-{
-    char * font = config_GetPsz("freetype-font");
-    NSString * fontName = font ? toNSStr(font) : nil;
-    free(font);
-    if (fontName) {
-        NSFont * font = [NSFont fontWithName:fontName size:0.0];
-        [[NSFontManager sharedFontManager] setSelectedFont:font isMultiple:NO];
-    }
-    [[NSFontManager sharedFontManager] setTarget: self];
-    [[NSFontPanel sharedFontPanel] setDelegate:self];
-    [[NSFontPanel sharedFontPanel] makeKeyAndOrderFront:self];
-}
-
-- (void)changeFont:(id)sender
-{
-    NSFont *someFont = [NSFont systemFontOfSize:12];
-
-    // converts given font to changes in font panel. Original font is irrelevant
-    NSFont *selectedFont = [sender convertFont:someFont];
-
-    [_osd_fontTextField setStringValue:[selectedFont fontName]];
-    [self osdSettingChanged:self];
-}
-
-// NSFontPanelModeMask is replacing NSUInteger, and should be backwards compatible
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunguarded-availability-new"
-- (NSFontPanelModeMask)validModesForFontPanel:(NSFontPanel *)fontPanel
-{
-    return NSFontPanelFaceModeMask | NSFontPanelCollectionModeMask;
-}
-#pragma clang diagnostic pop
 
 - (void)showInputSettings
 {
