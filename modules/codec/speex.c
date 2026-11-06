@@ -766,6 +766,7 @@ static int DecodeRtpSpeexPacket( decoder_t *p_dec, block_t *p_speex_bit_block )
     block_t *p_aout_buffer;
     int i_decode_ret;
     unsigned int i_speex_frame_size;
+    int ret = VLCDEC_SUCCESS;
 
     if ( !p_speex_bit_block || p_speex_bit_block->i_pts == VLC_TICK_INVALID )
     {
@@ -797,6 +798,7 @@ static int DecodeRtpSpeexPacket( decoder_t *p_dec, block_t *p_speex_bit_block )
         if (mode == NULL)
         {
             msg_Err(p_dec, "Invalid rtp rate");
+            ret = VLCDEC_ECRITICAL;
             goto error_init_header;
         }
 
@@ -825,6 +827,7 @@ static int DecodeRtpSpeexPacket( decoder_t *p_dec, block_t *p_speex_bit_block )
                                &i_speex_frame_size ) )
         {
             msg_Err( p_dec, "Could not determine the frame size." );
+            ret = VLCDEC_ECRITICAL;
             goto error_init_state;
         }
         p_dec->fmt_out.audio.i_bytes_per_frame = i_speex_frame_size;
@@ -894,7 +897,7 @@ error_init:
 
 error:
     block_Release(p_speex_bit_block);
-    return VLCDEC_SUCCESS;
+    return ret;
 }
 
 /*****************************************************************************
