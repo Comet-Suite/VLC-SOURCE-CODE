@@ -394,5 +394,13 @@ Widgets.PageExt {
                 }
             }
         }
+
+        onSortCriteriaChangeRequested: (criteria /* : string */) => {
+            model.sortCriteria = criteria
+        }
+
+        onSortOrderChangeRequested: (order /* : int */) => {
+            model.sortOrder = order
+        }
     }
 }

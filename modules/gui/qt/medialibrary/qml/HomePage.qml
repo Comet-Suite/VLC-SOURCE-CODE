@@ -266,6 +266,14 @@ Widgets.PageExt {
                         }
                     }
                 }
+
+                onSortCriteriaChangeRequested: (criteria /* : string */) => {
+                    model.sortCriteria = criteria
+                }
+
+                onSortOrderChangeRequested: (order /* : int */) => {
+                    model.sortOrder = order
+                }
             }
 
             Widgets.ViewHeader {
@@ -341,6 +349,14 @@ Widgets.PageExt {
                             contentYBehavior.enabled = true
                         }
                     }
+                }
+
+                onSortCriteriaChangeRequested: (criteria /* : string */) => {
+                    model.sortCriteria = criteria
+                }
+
+                onSortOrderChangeRequested: (order /* : int */) => {
+                    model.sortOrder = order
                 }
             }
 
@@ -422,6 +438,14 @@ Widgets.PageExt {
                         }
                     }
                 }
+
+                onSortCriteriaChangeRequested: (criteria /* : string */) => {
+                    model.sortCriteria = criteria
+                }
+
+                onSortOrderChangeRequested: (order /* : int */) => {
+                    model.sortOrder = order
+                }
             }
 
             Widgets.ViewHeader {
@@ -495,6 +519,14 @@ Widgets.PageExt {
                             contentYBehavior.enabled = false
                         }
                     }
+                }
+
+                onSortCriteriaChangeRequested: (criteria /* : string */) => {
+                    model.sortCriteria = criteria
+                }
+
+                onSortOrderChangeRequested: (order /* : int */) => {
+                    model.sortOrder = order
                 }
             }
         }

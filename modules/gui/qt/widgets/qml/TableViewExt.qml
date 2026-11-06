@@ -154,6 +154,9 @@ ListViewExt {
     signal rightClick(Item menuParent, var menuModel, point globalMousePos)
     signal itemDoubleClicked(var index, var model)
 
+    signal sortCriteriaChangeRequested(string criteria)
+    signal sortOrderChangeRequested(int order)
+
     Component.onCompleted: {
         // This is a remnant from the time `TableViewExt` derived from `FocusScope`:
         MainCtx.setItemFlag(this, Item.ItemIsFocusScope)
@@ -336,9 +339,9 @@ ListViewExt {
                                 if (!(modelData.model.isSortable ?? true))
                                     return
                                 else if (root.model.sortCriteria !== modelData.model.criteria)
-                                    root.model.sortCriteria = modelData.model.criteria
+                                    root.sortCriteriaChangeRequested(modelData.model.criteria)
                                 else
-                                    root.model.sortOrder = (root.model.sortOrder === Qt.AscendingOrder) ? Qt.DescendingOrder : Qt.AscendingOrder
+                                    root.sortOrderChangeRequested((root.model.sortOrder === Qt.AscendingOrder) ? Qt.DescendingOrder : Qt.AscendingOrder)
                             }
                         }
                     }
