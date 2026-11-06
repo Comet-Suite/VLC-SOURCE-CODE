@@ -50,8 +50,6 @@
 - (IBAction)buttonAction:(id)sender;
 - (IBAction)resetPreferences:(id)sender;
 
-/* hotkeys */
-
 /**
  * Updates right to left UI setting according to currently set language code
  * \return true if specific language was selected and RTL UI settings were updated

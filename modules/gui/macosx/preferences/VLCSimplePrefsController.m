@@ -33,26 +33,16 @@
 #import "VLCInputPreferencesController.h"
 #import "VLCSubtitlesPreferencesController.h"
 #import "VLCInterfacePreferencesController.h"
-#import "VLCPreferencesControlHelper.h"
 
 #import <vlc_configuration.h>
-#import <vlc_actions.h>
 #import <vlc_interface.h>
-#import <vlc_dialog.h>
-#import <vlc_modules.h>
-#import <vlc_plugin.h>
 #import <vlc_config_cat.h>
-#import <vlc_aout.h>
 
 #import "extensions/NSString+Helpers.h"
-#import "extensions/NSFont+VLCAdditions.h"
 #import "main/VLCMain.h"
 #import "main/VLCMain+OldPrefs.h"
-#import "os-integration/VLCClickerManager.h"
 #import "preferences/prefs.h"
 #import "library/VLCLibraryController.h"
-#import "playqueue/VLCPlayQueueTableCellView.h"
-#import "views/VLCPlaybackEndViewController.h"
 
 static NSString* VLCSPrefsToolbarIdentifier = @"Our Simple Preferences Toolbar Identifier";
 static NSString* VLCIntfSettingToolbarIdentifier = @"Intf Settings Item Identifier";
@@ -65,7 +55,6 @@ static NSString* VLCHotkeysSettingToolbarIdentifier = @"Hotkeys Settings Item Id
 
 @interface VLCSimplePrefsController() <NSToolbarDelegate, NSWindowDelegate>
 {
-
     intf_thread_t *p_intf;
 }
 @property (nonatomic, strong) IBOutlet VLCHotkeyPreferencesController *hotkeyPreferencesController;
@@ -237,17 +226,11 @@ create_toolbar_item(NSString *itemIdent, NSString *name, NSString *desc, NSStrin
 
 - (void)resetControls
 {
-
     [_interfacePreferencesController resetControls];
-
     [_audioPreferencesController resetControls];
-
     [_videoPreferencesController resetControls];
-
     [_inputPreferencesController resetControls];
-
     [_subtitlesPreferencesController resetControls];
-
     [_hotkeyPreferencesController resetControls];
 }
 
@@ -317,15 +300,10 @@ create_toolbar_item(NSString *itemIdent, NSString *name, NSString *desc, NSStrin
 - (void)saveChangedSettings
 {
     [_interfacePreferencesController saveChangedSettings];
-
     [_audioPreferencesController saveChangedSettings];
-
     [_videoPreferencesController saveChangedSettings];
-
     [_inputPreferencesController saveChangedSettings];
-
     [_subtitlesPreferencesController saveChangedSettings];
-
     [_hotkeyPreferencesController saveChangedSettings];
     fixIntfSettings();
 
@@ -376,9 +354,6 @@ create_toolbar_item(NSString *itemIdent, NSString *name, NSString *desc, NSStrin
 {
     [self showSettingsForCategory:_inputPreferencesController.view];
 }
-
-#pragma mark -
-#pragma mark Hotkey actions
 
 - (void)showHotkeySettings
 {
