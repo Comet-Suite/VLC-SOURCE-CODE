@@ -480,6 +480,8 @@ libmacosx_plugin_la_SOURCES = \
 	gui/macosx/preferences/VLCHotkeyPreferencesController.m \
 	gui/macosx/preferences/VLCMediaLibraryFolderManagementController.h \
 	gui/macosx/preferences/VLCMediaLibraryFolderManagementController.m \
+	gui/macosx/preferences/VLCVideoPreferencesController.h \
+	gui/macosx/preferences/VLCVideoPreferencesController.m \
 	gui/macosx/preferences/VLCSimplePrefsController.h \
 	gui/macosx/preferences/VLCSimplePrefsController.m \
 	gui/macosx/preferences/VLCSimplePrefsWindow.h \

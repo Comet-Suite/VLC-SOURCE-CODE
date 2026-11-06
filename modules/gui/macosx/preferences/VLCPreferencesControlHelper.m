@@ -96,4 +96,33 @@
     free(psz_tmp);
 }
 
++ (void)setupButton: (NSPopUpButton *)object forIntList: (const char *)name
+{
+    module_config_t *p_item;
+
+    [object removeAllItems];
+    p_item = config_FindConfig(name);
+
+    /* serious problem, if no item found */
+    assert(p_item);
+
+    int64_t *values;
+    char **texts;
+    ssize_t count = config_GetIntChoices(name, &values, &texts);
+    for (ssize_t i = 0; i < count; i++) {
+        NSMenuItem *mi = [[NSMenuItem alloc] initWithTitle: toNSStr(texts[i]) action: NULL keyEquivalent: @""];
+        [mi setRepresentedObject:[NSNumber numberWithInteger:values[i]]];
+        [[object menu] addItem:mi];
+
+        if (p_item->value.i == values[i])
+            [object selectItem:[object lastItem]];
+
+        free(texts[i]);
+    }
+    free(texts);
+
+    if (p_item->psz_longtext)
+        [object setToolTip: NSTR(p_item->psz_longtext)];
+}
+
 @end

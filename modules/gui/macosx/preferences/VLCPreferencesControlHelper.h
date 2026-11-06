@@ -27,6 +27,7 @@
 @interface VLCPreferencesControlHelper : NSObject
 + (void)setupButton:(NSPopUpButton *)object forStringList:(const char *)name;
 + (void)setupButton:(NSPopUpButton *)object forModuleList:(const char *)name;
++ (void)setupButton:(NSPopUpButton *)object forIntList:(const char *)name;
 + (void)setupButton:(NSButton *)object forBoolValue:(const char *)name;
 + (void)setupField:(NSTextField *)object forOption:(const char *)name;
 @end

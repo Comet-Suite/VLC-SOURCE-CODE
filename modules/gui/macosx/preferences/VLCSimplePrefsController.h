@@ -130,45 +130,6 @@
 @property (readwrite, weak) IBOutlet NSBox *osd_osdBox;
 @property (readwrite, weak) IBOutlet NSButton *osd_osdCheckbox;
 
-// video pane
-@property (readwrite, strong) IBOutlet NSView *videoView;
-
-@property (readwrite, weak) IBOutlet NSButton *video_enableCheckbox;
-// video pane - display box
-@property (readwrite, weak) IBOutlet NSBox *video_displayBox;
-@property (readwrite, weak) IBOutlet NSButton *video_embeddedCheckbox;
-@property (readwrite, weak) IBOutlet NSButton *video_pauseWhenMinimizedCheckbox;
-@property (readwrite, weak) IBOutlet NSButton *video_onTopCheckbox;
-@property (readwrite, weak) IBOutlet NSButton *video_videodecoCheckbox;
-@property (readwrite, weak) IBOutlet NSButton *video_resizeToNativeSizeCheckbox;
-@property (readwrite, weak) IBOutlet NSButton *video_useClassicLayoutCheckbox;
-
-// video pane - fullscreen box
-@property (readwrite, weak) IBOutlet NSBox *video_fullscreenBox;
-@property (readwrite, weak) IBOutlet NSButton *video_startInFullscreenCheckbox;
-@property (readwrite, weak) IBOutlet NSButton *video_blackScreenCheckbox;
-@property (readwrite, weak) IBOutlet NSButton *video_nativeFullscreenCheckbox;
-@property (readwrite, weak) IBOutlet NSTextField *video_deviceLabel;
-@property (readwrite, weak) IBOutlet NSPopUpButton *video_devicePopup;
-
-// video pane - video box
-@property (readwrite, weak) IBOutlet NSBox *video_videoBox;
-@property (readwrite, weak) IBOutlet NSTextField *video_deinterlaceLabel;
-@property (readwrite, weak) IBOutlet NSPopUpButton *video_deinterlacePopup;
-@property (readwrite, weak) IBOutlet NSTextField *video_deinterlace_modeLabel;
-@property (readwrite, weak) IBOutlet NSPopUpButton *video_deinterlace_modePopup;
-
-// video pane - snapshot box
-@property (readwrite, weak) IBOutlet NSBox *video_snapBox;
-@property (readwrite, weak) IBOutlet NSButton *video_snap_folderButton;
-@property (readwrite, weak) IBOutlet NSTextField *video_snap_folderTextField;
-@property (readwrite, weak) IBOutlet NSTextField *video_snap_folderLabel;
-@property (readwrite, weak) IBOutlet NSPopUpButton *video_snap_formatPopup;
-@property (readwrite, weak) IBOutlet NSTextField *video_snap_formatLabel;
-@property (readwrite, weak) IBOutlet NSTextField *video_snap_prefixTextField;
-@property (readwrite, weak) IBOutlet NSTextField *video_snap_prefixLabel;
-@property (readwrite, weak) IBOutlet NSButton *video_snap_seqnumCheckbox;
-
 // URL handler popup window
 @property (readwrite, strong) IBOutlet NSWindow *urlhandler_win;
 
@@ -200,9 +161,6 @@
 
 /* interface */
 - (IBAction)interfaceSettingChanged:(id)sender;
-
-/* video */
-- (IBAction)videoSettingChanged:(id)sender;
 
 /* OSD / subtitles */
 - (IBAction)osdSettingChanged:(id)sender;

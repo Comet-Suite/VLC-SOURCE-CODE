@@ -44,8 +44,42 @@
                 <outlet property="volTextField" destination="2336" id="Nl0-aK-ahI"/>
             </connections>
         </customObject>
+        <customObject id="vid-01-ctl" customClass="VLCVideoPreferencesController">
+            <connections>
+                <outlet property="view" destination="2440" id="BYi-3T-vUQ"/>
+                <outlet property="blackScreenCheckbox" destination="i5X-iK-Hbj" id="b3s-kQ-Myp"/>
+                <outlet property="deinterlaceLabel" destination="3705" id="6TA-6G-k4c"/>
+                <outlet property="deinterlacePopup" destination="3704" id="Dml-Eu-lQ0"/>
+                <outlet property="deinterlaceModeLabel" destination="3707" id="wpM-z5-0zJ"/>
+                <outlet property="deinterlaceModePopup" destination="3706" id="Aa2-X9-mpw"/>
+                <outlet property="deviceLabel" destination="pch-Ac-iPY" id="BMX-TB-PWw"/>
+                <outlet property="devicePopup" destination="74n-z2-A2G" id="xc9-xO-bZb"/>
+                <outlet property="displayBox" destination="2449" id="i0p-HK-1F5"/>
+                <outlet property="embeddedCheckbox" destination="2452" id="1k0-sj-mAd"/>
+                <outlet property="enableCheckbox" destination="2448" id="EfL-Vf-auC"/>
+                <outlet property="fullscreenBox" destination="9CN-jv-NQ1" id="xXs-Bs-yCM"/>
+                <outlet property="nativeFullscreenCheckbox" destination="6mo-Qc-MZV" id="4Qq-ci-Gbl"/>
+                <outlet property="onTopCheckbox" destination="2451" id="64h-nw-rQ0"/>
+                <outlet property="pauseWhenMinimizedCheckbox" destination="rpy-5O-tek" id="jBe-GO-Iiw"/>
+                <outlet property="resizeToNativeSizeCheckbox" destination="4a1-oW-HKH" id="bCd-bh-8FT"/>
+                <outlet property="snapBox" destination="2466" id="bQQ-pv-z09"/>
+                <outlet property="snapFolderButton" destination="2473" id="c2H-eo-wvH"/>
+                <outlet property="snapFolderLabel" destination="2470" id="oBs-TH-xvl"/>
+                <outlet property="snapFolderTextField" destination="2468" id="Mbl-2a-ZzN"/>
+                <outlet property="snapFormatLabel" destination="2477" id="s16-ET-UCo"/>
+                <outlet property="snapFormatPopup" destination="2478" id="yt4-Gb-mxa"/>
+                <outlet property="snapPrefixLabel" destination="2475" id="oaH-HK-RPD"/>
+                <outlet property="snapPrefixTextField" destination="2474" id="O5Q-MK-Cz3"/>
+                <outlet property="snapSeqnumCheckbox" destination="2476" id="Fa0-ZE-QW9"/>
+                <outlet property="startInFullscreenCheckbox" destination="5Db-fa-Ffw" id="eK9-Wr-Nym"/>
+                <outlet property="useClassicLayoutCheckbox" destination="6yQ-ig-eP0" id="2Yd-Dh-NMh"/>
+                <outlet property="videoBox" destination="3722" id="bRq-1u-kBT"/>
+                <outlet property="videodecoCheckbox" destination="3728" id="yE0-ry-RZA"/>
+            </connections>
+        </customObject>
         <customObject id="-2" userLabel="File's Owner" customClass="VLCSimplePrefsController">
             <connections>
+                <outlet property="videoPreferencesController" destination="vid-01-ctl" id="vid-01-own"/>
                 <outlet property="audioPreferencesController" destination="aud-01-ctl" id="aud-01-own"/>
                 <outlet property="cancelButton" destination="2276" id="sME-3c-gc4"/>
                 <outlet property="contentView" destination="HOX-DS-Fgr" id="Gcx-RH-0il"/>
@@ -141,35 +175,6 @@
                 <outlet property="urlhandler_titleLabel" destination="3747" id="hJi-n6-0xv"/>
                 <outlet property="urlhandler_udpPopup" destination="3845" id="xJU-C6-6Cc"/>
                 <outlet property="urlhandler_win" destination="3745" id="5qQ-aU-KO7"/>
-                <outlet property="videoView" destination="2440" id="BYi-3T-vUQ"/>
-                <outlet property="video_blackScreenCheckbox" destination="i5X-iK-Hbj" id="b3s-kQ-Myp"/>
-                <outlet property="video_deinterlaceLabel" destination="3705" id="6TA-6G-k4c"/>
-                <outlet property="video_deinterlacePopup" destination="3704" id="Dml-Eu-lQ0"/>
-                <outlet property="video_deinterlace_modeLabel" destination="3707" id="wpM-z5-0zJ"/>
-                <outlet property="video_deinterlace_modePopup" destination="3706" id="Aa2-X9-mpw"/>
-                <outlet property="video_deviceLabel" destination="pch-Ac-iPY" id="BMX-TB-PWw"/>
-                <outlet property="video_devicePopup" destination="74n-z2-A2G" id="xc9-xO-bZb"/>
-                <outlet property="video_displayBox" destination="2449" id="i0p-HK-1F5"/>
-                <outlet property="video_embeddedCheckbox" destination="2452" id="1k0-sj-mAd"/>
-                <outlet property="video_enableCheckbox" destination="2448" id="EfL-Vf-auC"/>
-                <outlet property="video_fullscreenBox" destination="9CN-jv-NQ1" id="xXs-Bs-yCM"/>
-                <outlet property="video_nativeFullscreenCheckbox" destination="6mo-Qc-MZV" id="4Qq-ci-Gbl"/>
-                <outlet property="video_onTopCheckbox" destination="2451" id="64h-nw-rQ0"/>
-                <outlet property="video_pauseWhenMinimizedCheckbox" destination="rpy-5O-tek" id="jBe-GO-Iiw"/>
-                <outlet property="video_resizeToNativeSizeCheckbox" destination="4a1-oW-HKH" id="bCd-bh-8FT"/>
-                <outlet property="video_snapBox" destination="2466" id="bQQ-pv-z09"/>
-                <outlet property="video_snap_folderButton" destination="2473" id="c2H-eo-wvH"/>
-                <outlet property="video_snap_folderLabel" destination="2470" id="oBs-TH-xvl"/>
-                <outlet property="video_snap_folderTextField" destination="2468" id="Mbl-2a-ZzN"/>
-                <outlet property="video_snap_formatLabel" destination="2477" id="s16-ET-UCo"/>
-                <outlet property="video_snap_formatPopup" destination="2478" id="yt4-Gb-mxa"/>
-                <outlet property="video_snap_prefixLabel" destination="2475" id="oaH-HK-RPD"/>
-                <outlet property="video_snap_prefixTextField" destination="2474" id="O5Q-MK-Cz3"/>
-                <outlet property="video_snap_seqnumCheckbox" destination="2476" id="Fa0-ZE-QW9"/>
-                <outlet property="video_startInFullscreenCheckbox" destination="5Db-fa-Ffw" id="eK9-Wr-Nym"/>
-                <outlet property="video_useClassicLayoutCheckbox" destination="6yQ-ig-eP0" id="2Yd-Dh-NMh"/>
-                <outlet property="video_videoBox" destination="3722" id="bRq-1u-kBT"/>
-                <outlet property="video_videodecoCheckbox" destination="3728" id="yE0-ry-RZA"/>
                 <outlet property="window" destination="2265" id="mGG-NZ-eoi"/>
             </connections>
         </customObject>
@@ -1066,7 +1071,7 @@ Gw
                         <font key="font" metaFont="system"/>
                     </buttonCell>
                     <connections>
-                        <action selector="videoSettingChanged:" target="-2" id="BYl-tW-BeB"/>
+                        <action selector="videoSettingChanged:" target="vid-01-ctl" id="BYl-tW-BeB"/>
                     </connections>
                 </button>
                 <box verticalHuggingPriority="249" title="Display" translatesAutoresizingMaskIntoConstraints="NO" id="2449">
@@ -1082,7 +1087,7 @@ Gw
                                     <font key="font" metaFont="system"/>
                                 </buttonCell>
                                 <connections>
-                                    <action selector="videoSettingChanged:" target="-2" id="jdL-pA-9Ed"/>
+                                    <action selector="videoSettingChanged:" target="vid-01-ctl" id="jdL-pA-9Ed"/>
                                 </connections>
                             </button>
                             <button mirrorLayoutDirectionWhenInternationalizing="always" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="6yQ-ig-eP0">
@@ -1092,7 +1097,7 @@ Gw
                                     <font key="font" metaFont="system"/>
                                 </buttonCell>
                                 <connections>
-                                    <action selector="videoSettingChanged:" target="-2" id="qef-S5-w02"/>
+                                    <action selector="videoSettingChanged:" target="vid-01-ctl" id="qef-S5-w02"/>
                                 </connections>
                             </button>
                             <button mirrorLayoutDirectionWhenInternationalizing="always" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="2451">
@@ -1102,7 +1107,7 @@ Gw
                                     <font key="font" metaFont="system"/>
                                 </buttonCell>
                                 <connections>
-                                    <action selector="videoSettingChanged:" target="-2" id="m6x-T2-Ao2"/>
+                                    <action selector="videoSettingChanged:" target="vid-01-ctl" id="m6x-T2-Ao2"/>
                                 </connections>
                             </button>
                             <button mirrorLayoutDirectionWhenInternationalizing="always" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="rpy-5O-tek">
@@ -1112,7 +1117,7 @@ Gw
                                     <font key="font" metaFont="system"/>
                                 </buttonCell>
                                 <connections>
-                                    <action selector="videoSettingChanged:" target="-2" id="sk0-pw-9AE"/>
+                                    <action selector="videoSettingChanged:" target="vid-01-ctl" id="sk0-pw-9AE"/>
                                 </connections>
                             </button>
                             <button mirrorLayoutDirectionWhenInternationalizing="always" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="4a1-oW-HKH">
@@ -1122,7 +1127,7 @@ Gw
                                     <font key="font" metaFont="system"/>
                                 </buttonCell>
                                 <connections>
-                                    <action selector="videoSettingChanged:" target="-2" id="Thc-PT-O88"/>
+                                    <action selector="videoSettingChanged:" target="vid-01-ctl" id="Thc-PT-O88"/>
                                 </connections>
                             </button>
                             <button mirrorLayoutDirectionWhenInternationalizing="always" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="3728">
@@ -1132,7 +1137,7 @@ Gw
                                     <font key="font" metaFont="system"/>
                                 </buttonCell>
                                 <connections>
-                                    <action selector="videoSettingChanged:" target="-2" id="EQc-X2-ZSV"/>
+                                    <action selector="videoSettingChanged:" target="vid-01-ctl" id="EQc-X2-ZSV"/>
                                 </connections>
                             </button>
                         </subviews>
@@ -1175,7 +1180,7 @@ Gw
                                     <font key="font" metaFont="system"/>
                                 </buttonCell>
                                 <connections>
-                                    <action selector="videoSettingChanged:" target="-2" id="9Dw-qx-0Eo"/>
+                                    <action selector="videoSettingChanged:" target="vid-01-ctl" id="9Dw-qx-0Eo"/>
                                 </connections>
                             </button>
                             <button mirrorLayoutDirectionWhenInternationalizing="always" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="i5X-iK-Hbj">
@@ -1185,7 +1190,7 @@ Gw
                                     <font key="font" metaFont="system"/>
                                 </buttonCell>
                                 <connections>
-                                    <action selector="videoSettingChanged:" target="-2" id="cL2-0Y-iKD"/>
+                                    <action selector="videoSettingChanged:" target="vid-01-ctl" id="cL2-0Y-iKD"/>
                                 </connections>
                             </button>
                             <button mirrorLayoutDirectionWhenInternationalizing="always" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="6mo-Qc-MZV">
@@ -1195,7 +1200,7 @@ Gw
                                     <font key="font" metaFont="system"/>
                                 </buttonCell>
                                 <connections>
-                                    <action selector="videoSettingChanged:" target="-2" id="dyL-vV-01T"/>
+                                    <action selector="videoSettingChanged:" target="vid-01-ctl" id="dyL-vV-01T"/>
                                 </connections>
                             </button>
                             <popUpButton verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="74n-z2-A2G">
@@ -1212,7 +1217,7 @@ Gw
                                     </menu>
                                 </popUpButtonCell>
                                 <connections>
-                                    <action selector="videoSettingChanged:" target="-2" id="43z-cH-dlV"/>
+                                    <action selector="videoSettingChanged:" target="vid-01-ctl" id="43z-cH-dlV"/>
                                 </connections>
                             </popUpButton>
                             <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="pch-Ac-iPY">
@@ -1290,7 +1295,7 @@ Gw
                                     </menu>
                                 </popUpButtonCell>
                                 <connections>
-                                    <action selector="videoSettingChanged:" target="-2" id="Xwk-um-MkC"/>
+                                    <action selector="videoSettingChanged:" target="vid-01-ctl" id="Xwk-um-MkC"/>
                                 </connections>
                             </popUpButton>
                             <popUpButton verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="3706">
@@ -1307,7 +1312,7 @@ Gw
                                     </menu>
                                 </popUpButtonCell>
                                 <connections>
-                                    <action selector="videoSettingChanged:" target="-2" id="4Js-Oa-RhO"/>
+                                    <action selector="videoSettingChanged:" target="vid-01-ctl" id="4Js-Oa-RhO"/>
                                 </connections>
                             </popUpButton>
                         </subviews>
@@ -1372,8 +1377,8 @@ Gw
                                     <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                 </textFieldCell>
                                 <connections>
-                                    <action selector="videoSettingChanged:" target="-2" id="4cS-5o-8CH"/>
-                                    <outlet property="delegate" destination="-2" id="yKI-r3-dSa"/>
+                                    <action selector="videoSettingChanged:" target="vid-01-ctl" id="4cS-5o-8CH"/>
+                                    <outlet property="delegate" destination="vid-01-ctl" id="yKI-r3-dSa"/>
                                     <outlet property="nextKeyView" destination="2474" id="3429"/>
                                 </connections>
                             </textField>
@@ -1392,7 +1397,7 @@ Gw
                                     <font key="font" metaFont="system"/>
                                 </buttonCell>
                                 <connections>
-                                    <action selector="videoSettingChanged:" target="-2" id="OpE-LJ-bwy"/>
+                                    <action selector="videoSettingChanged:" target="vid-01-ctl" id="OpE-LJ-bwy"/>
                                 </connections>
                             </button>
                             <textField focusRingType="none" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="2474">
@@ -1403,8 +1408,8 @@ Gw
                                     <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                 </textFieldCell>
                                 <connections>
-                                    <action selector="videoSettingChanged:" target="-2" id="l7G-BO-EWd"/>
-                                    <outlet property="delegate" destination="-2" id="X0B-No-shf"/>
+                                    <action selector="videoSettingChanged:" target="vid-01-ctl" id="l7G-BO-EWd"/>
+                                    <outlet property="delegate" destination="vid-01-ctl" id="X0B-No-shf"/>
                                     <outlet property="nextKeyView" destination="2468" id="3430"/>
                                 </connections>
                             </textField>
@@ -1423,7 +1428,7 @@ Gw
                                     <font key="font" metaFont="system"/>
                                 </buttonCell>
                                 <connections>
-                                    <action selector="videoSettingChanged:" target="-2" id="qnw-Lv-7dq"/>
+                                    <action selector="videoSettingChanged:" target="vid-01-ctl" id="qnw-Lv-7dq"/>
                                 </connections>
                             </button>
                             <textField focusRingType="none" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="2477">
@@ -1450,7 +1455,7 @@ Gw
                                     <constraint firstAttribute="width" constant="210" id="QXI-vw-6ZO"/>
                                 </constraints>
                                 <connections>
-                                    <action selector="videoSettingChanged:" target="-2" id="buC-OF-Rew"/>
+                                    <action selector="videoSettingChanged:" target="vid-01-ctl" id="buC-OF-Rew"/>
                                 </connections>
                             </popUpButton>
                         </subviews>
