@@ -49,26 +49,6 @@
 @property (readwrite, weak) IBOutlet NSButton *mediaLibraryBanFolderButton;
 @property (readwrite, weak) IBOutlet NSButton *mediaLibraryReloadFolderButton;
 
-// input pane
-@property (readwrite, strong) IBOutlet NSView *inputView;
-
-@property (readwrite, weak) IBOutlet NSBox *input_recordBox;
-@property (readwrite, weak) IBOutlet NSTextField *input_recordTextField;
-@property (readwrite, weak) IBOutlet NSButton *input_recordButton;
-@property (readwrite, weak) IBOutlet NSPopUpButton *input_aviPopup;
-@property (readwrite, weak) IBOutlet NSTextField *input_aviLabel;
-@property (readwrite, weak) IBOutlet NSPopUpButton *input_cachelevelPopup;
-@property (readwrite, weak) IBOutlet NSTextField *input_cachelevelLabel;
-@property (readwrite, weak) IBOutlet NSTextField *input_cachelevel_customLabel;
-@property (readwrite, weak) IBOutlet NSBox *input_cachingBox;
-@property (readwrite, weak) IBOutlet NSBox *input_muxBox;
-@property (readwrite, weak) IBOutlet NSBox *input_netBox;
-@property (readwrite, weak) IBOutlet NSButton *input_hardwareAccelerationCheckbox;
-@property (readwrite, weak) IBOutlet NSTextField *input_skipLoopLabel;
-@property (readwrite, weak) IBOutlet NSPopUpButton *input_skipLoopPopup;
-@property (readwrite, weak) IBOutlet NSButton *input_urlhandlerButton;
-@property (readwrite, weak) IBOutlet NSButton *input_fastSeekCheckbox;
-
 // intf pane - general box
 @property (readwrite, strong) IBOutlet NSView *intfView;
 
@@ -168,7 +148,6 @@
 - (void)changeFont:(id)sender;
 
 /* input & codecs */
-- (IBAction)inputSettingChanged:(id)sender;
 - (IBAction)urlHandlerAction:(id)sender;
 
 /* hotkeys */

@@ -30,6 +30,7 @@
 #import "VLCHotkeyPreferencesController.h"
 #import "VLCAudioPreferencesController.h"
 #import "VLCVideoPreferencesController.h"
+#import "VLCInputPreferencesController.h"
 #import "VLCPreferencesControlHelper.h"
 
 #ifdef HAVE_SPARKLE
@@ -141,9 +142,7 @@ static NSString* VLCHotkeysSettingToolbarIdentifier = @"Hotkeys Settings Item Id
 {
     BOOL _intfSettingChanged;
     BOOL _osdSettingChanged;
-    BOOL _inputSettingChanged;
 
-    NSOpenPanel *_selectFolderPanel;
     VLCMediaLibraryFolderManagementController *_mediaLibraryManagementController;
 
     intf_thread_t *p_intf;
@@ -151,6 +150,7 @@ static NSString* VLCHotkeysSettingToolbarIdentifier = @"Hotkeys Settings Item Id
 @property (nonatomic, strong) IBOutlet VLCHotkeyPreferencesController *hotkeyPreferencesController;
 @property (nonatomic, strong) IBOutlet VLCAudioPreferencesController *audioPreferencesController;
 @property (nonatomic, strong) IBOutlet VLCVideoPreferencesController *videoPreferencesController;
+@property (nonatomic, strong) IBOutlet VLCInputPreferencesController *inputPreferencesController;
 @end
 
 @implementation VLCSimplePrefsController
@@ -196,6 +196,7 @@ static NSString* VLCHotkeysSettingToolbarIdentifier = @"Hotkeys Settings Item Id
     [_hotkeyPreferencesController setupControls];
     [_audioPreferencesController setupControls];
     [_videoPreferencesController setupControls];
+    [_inputPreferencesController setupControls];
 
     // Workaround for Mac OS X Lion, which does not apply the same constraints when set in IB
     NSView *clipView = _contentView.superview;
@@ -334,21 +335,6 @@ create_toolbar_item(NSString *itemIdent, NSString *name, NSString *desc, NSStrin
 
 - (void)initStrings
 {
-    /* input */
-    [_input_recordBox setTitle: _NS("Record directory or filename")];
-    [_input_recordButton setTitle: _NS("Browse...")];
-    [_input_recordButton setToolTip: _NS("Directory or filename where the records will be stored")];
-    [_input_aviLabel setStringValue: _NS("Repair AVI Files")];
-    [_input_cachelevelLabel setStringValue: _NS("Default Caching Level")];
-    [_input_cachingBox setTitle: _NS("Caching")];
-    [_input_cachelevel_customLabel setStringValue: _NS("Use the complete preferences to configure custom caching values for each access module.")];
-    [_input_muxBox setTitle: _NS("Codecs / Muxers")];
-    [_input_netBox setTitle: _NS("Network")];
-    [_input_hardwareAccelerationCheckbox setTitle: _NS("Enable hardware acceleration")];
-    [_input_skipLoopLabel setStringValue: _NS("Skip the loop filter for H.264 decoding")];
-    [_input_urlhandlerButton setTitle: _NS("Edit default application settings for network protocols")];
-    [_input_fastSeekCheckbox setTitle: _NS("Fast seek")];
-
     /* url handler */
     [_urlhandler_titleLabel setStringValue: _NS("Open network streams using the following protocols")];
     [_urlhandler_subtitleLabel setStringValue: _NS("Note that these are system-wide settings.")];
@@ -505,49 +491,7 @@ create_toolbar_item(NSString *itemIdent, NSString *name, NSString *desc, NSStrin
 
     [_videoPreferencesController resetControls];
 
-    /***************************
-     * input & codecs settings *
-     ***************************/
-    [VLCPreferencesControlHelper setupField:_input_recordTextField forOption:"input-record-path"];
-
-    [VLCPreferencesControlHelper setupButton:_input_hardwareAccelerationCheckbox forBoolValue: "videotoolbox"];
-    [VLCPreferencesControlHelper setupButton:_input_fastSeekCheckbox forBoolValue: "input-fast-seek"];
-    [VLCPreferencesControlHelper setupButton:_input_aviPopup forIntList: "avi-index"];
-    [VLCPreferencesControlHelper setupButton:_input_skipLoopPopup forIntList: "avcodec-skiploopfilter"];
-
-    [_input_cachelevelPopup removeAllItems];
-    NSMenuItem *item = [[_input_cachelevelPopup menu] addItemWithTitle:_NS("Custom") action:nil keyEquivalent:@""];
-    [item setTag: 0];
-    item = [[_input_cachelevelPopup menu] addItemWithTitle:_NS("Lowest Latency") action:nil keyEquivalent:@""];
-    [item setTag: 100];
-    item = [[_input_cachelevelPopup menu] addItemWithTitle:_NS("Low Latency") action:nil keyEquivalent:@""];
-    [item setTag: 200];
-    item = [[_input_cachelevelPopup menu] addItemWithTitle:_NS("Normal") action:nil keyEquivalent:@""];
-    [item setTag: 300];
-    item = [[_input_cachelevelPopup menu] addItemWithTitle:_NS("Higher Latency") action:nil keyEquivalent:@""];
-    [item setTag: 500];
-    item = [[_input_cachelevelPopup menu] addItemWithTitle:_NS("Highest Latency") action:nil keyEquivalent:@""];
-    [item setTag: 1000];
-
-    #define TestCaC(name, factor) \
-    cache_equal = cache_equal && \
-    (i_cache * factor == config_GetInt(name));
-
-    /* Select the accurate value of the PopupButton */
-    bool cache_equal = true;
-    int i_cache = (int)config_GetInt("file-caching");
-
-    TestCaC("network-caching", 10/3);
-    TestCaC("disc-caching", 1);
-    TestCaC("live-caching", 1);
-    if (cache_equal) {
-        [_input_cachelevelPopup selectItemWithTag: i_cache];
-        [_input_cachelevel_customLabel setHidden: YES];
-    } else {
-        [_input_cachelevelPopup selectItemWithTitle: _NS("Custom")];
-        [_input_cachelevel_customLabel setHidden: NO];
-    }
-    #undef TestCaC
+    [_inputPreferencesController resetControls];
 
     /*********************
      * subtitle settings *
@@ -716,32 +660,7 @@ static inline void save_string_list(intf_thread_t * __unused p_intf, id object, 
 
     [_videoPreferencesController saveChangedSettings];
 
-    /***************************
-     * input & codecs settings *
-     ***************************/
-    if (_inputSettingChanged) {
-        config_PutPsz("input-record-path", [[_input_recordTextField stringValue] UTF8String]);
-
-        config_PutInt("videotoolbox", [_input_hardwareAccelerationCheckbox state]);
-        config_PutInt("input-fast-seek", [_input_fastSeekCheckbox state]);
-
-        SaveIntList(_input_aviPopup, "avi-index");
-
-        SaveIntList(_input_skipLoopPopup, "avcodec-skiploopfilter");
-
-        #define CaC(name, factor) config_PutInt(name, [[_input_cachelevelPopup selectedItem] tag] * factor)
-        if ([[_input_cachelevelPopup selectedItem] tag] == 0) {
-            msg_Dbg(p_intf, "Custom chosen, not adjusting cache values");
-        } else {
-            msg_Dbg(p_intf, "Adjusting all cache values to: %i", (int)[[_input_cachelevelPopup selectedItem] tag]);
-            CaC("file-caching", 1);
-            CaC("network-caching", 10/3);
-            CaC("disc-caching", 1);
-            CaC("live-caching", 1);
-        }
-        #undef CaC
-        _inputSettingChanged = NO;
-    }
+    [_inputPreferencesController saveChangedSettings];
 
     /**********************
      * subtitles settings *
@@ -837,9 +756,7 @@ static inline void save_string_list(intf_thread_t * __unused p_intf, id object, 
 - (void)controlTextDidChange:(NSNotification *)notification
 {
     id notificationObject = [notification object];
-    if (notificationObject == _input_recordTextField)
-        _inputSettingChanged = YES;
-    else if (notificationObject == _osd_fontTextField ||
+    if (notificationObject == _osd_fontTextField ||
             notificationObject == _osd_langTextField ||
             notificationObject == _osd_opacityTextField)
         _osdSettingChanged = YES;
@@ -881,39 +798,9 @@ static inline void save_string_list(intf_thread_t * __unused p_intf, id object, 
 }
 #pragma clang diagnostic pop
 
-- (IBAction)inputSettingChanged:(id)sender
-{
-    if (sender == _input_cachelevelPopup) {
-        if ([[[_input_cachelevelPopup selectedItem] title] isEqualToString: _NS("Custom")])
-            [_input_cachelevel_customLabel setHidden: NO];
-        else
-            [_input_cachelevel_customLabel setHidden: YES];
-    } else if (sender == _input_recordButton) {
-        _selectFolderPanel = [[NSOpenPanel alloc] init];
-        [_selectFolderPanel setCanChooseDirectories: YES];
-        [_selectFolderPanel setCanChooseFiles: YES];
-        [_selectFolderPanel setResolvesAliases: YES];
-        [_selectFolderPanel setAllowsMultipleSelection: NO];
-        [_selectFolderPanel setMessage: _NS("Choose the directory or filename where the records will be stored.")];
-        [_selectFolderPanel setCanCreateDirectories: YES];
-        [_selectFolderPanel setPrompt: _NS("Choose")];
-        [_selectFolderPanel beginSheetModalForWindow:self.window completionHandler: ^(NSInteger returnCode) {
-            if (returnCode == NSModalResponseOK)
-            {
-                [self->_input_recordTextField setStringValue: [[self->_selectFolderPanel URL] path]];
-                self->_inputSettingChanged = YES;
-            }
-        }];
-
-        return;
-    }
-
-    _inputSettingChanged = YES;
-}
-
 - (void)showInputSettings
 {
-    [self showSettingsForCategory:_inputView];
+    [self showSettingsForCategory:_inputPreferencesController.view];
 }
 
 - (NSString *)bundleIdentifierForApplicationName:(NSString *)appName
@@ -943,7 +830,7 @@ static inline void save_string_list(intf_thread_t * __unused p_intf, id object, 
 
 - (IBAction)urlHandlerAction:(id)sender
 {
-    if (sender == _input_urlhandlerButton) {
+    if (sender == _inputPreferencesController.urlhandlerButton) {
 
         void (^fillUrlHandlerPopup)(NSString*, NSPopUpButton*) = ^void(NSString *protocol, NSPopUpButton *object) {
 

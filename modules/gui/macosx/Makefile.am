@@ -474,6 +474,8 @@ libmacosx_plugin_la_SOURCES = \
 	gui/macosx/preferences/VLCAudioPreferencesController.m \
 	gui/macosx/preferences/VLCPreferencesControlHelper.h \
 	gui/macosx/preferences/VLCPreferencesControlHelper.m \
+	gui/macosx/preferences/VLCInputPreferencesController.h \
+	gui/macosx/preferences/VLCInputPreferencesController.m \
 	gui/macosx/preferences/VLCHotkeyChangeWindow.h \
 	gui/macosx/preferences/VLCHotkeyChangeWindow.m \
 	gui/macosx/preferences/VLCHotkeyPreferencesController.h \
