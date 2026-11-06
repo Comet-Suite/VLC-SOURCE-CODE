@@ -45,11 +45,6 @@ Widgets.PageExt {
             return 5
     }
 
-    sortModel: [
-        { text: qsTr("Alphabetic"), criteria: "name"},
-        { text: qsTr("Url"),        criteria: "mrl" }
-    ]
-
     hasGridListMode: true
     isSearchable: true
 
