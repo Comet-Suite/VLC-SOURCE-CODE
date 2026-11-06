@@ -37,28 +37,6 @@
 @property (readwrite, weak) IBOutlet NSButton *resetButton;
 @property (readwrite, weak) IBOutlet NSButton *saveButton;
 
-// Audio pane
-@property (readwrite, strong) IBOutlet NSView *audioView;
-
-@property (readwrite, weak) IBOutlet NSBox *audio_effectsBox;
-@property (readwrite, weak) IBOutlet NSButton *audio_enableCheckbox;
-@property (readwrite, weak) IBOutlet NSBox *audio_generalBox;
-@property (readwrite, weak) IBOutlet NSTextField *audio_langTextField;
-@property (readwrite, weak) IBOutlet NSTextField *audio_langLabel;
-@property (readwrite, weak) IBOutlet NSBox *audio_lastBox;
-@property (readwrite, weak) IBOutlet NSButton *audio_lastCheckbox;
-@property (readwrite, weak) IBOutlet NSSecureTextField *audio_lastpwdSecureTextField;
-@property (readwrite, weak) IBOutlet NSTextField *audio_lastpwdLabel;
-@property (readwrite, weak) IBOutlet NSTextField *audio_lastuserTextField;
-@property (readwrite, weak) IBOutlet NSTextField *audio_lastuserLabel;
-@property (readwrite, weak) IBOutlet NSPopUpButton *audio_visualPopup;
-@property (readwrite, weak) IBOutlet NSTextField *audio_visualLabel;
-@property (readwrite, weak) IBOutlet NSTextField *audio_volTextField;
-@property (readwrite, weak) IBOutlet NSSlider *audio_volSlider;
-@property (readwrite, weak) IBOutlet NSMatrix *audio_autosavevolMatrix;
-@property (readwrite, weak) IBOutlet NSButtonCell *audio_autosavevol_yesButtonCell;
-@property (readwrite, weak) IBOutlet NSButtonCell *audio_autosavevol_noButtonCell;
-
 // library pane
 @property (readwrite, strong) IBOutlet NSView *mediaLibraryView;
 @property (readwrite, weak) IBOutlet NSTableView *mediaLibraryFolderTableView;
@@ -222,9 +200,6 @@
 
 /* interface */
 - (IBAction)interfaceSettingChanged:(id)sender;
-
-/* audio */
-- (IBAction)audioSettingChanged:(id)sender;
 
 /* video */
 - (IBAction)videoSettingChanged:(id)sender;

@@ -28,6 +28,7 @@
 #import "VLCSimplePrefsController.h"
 #import "VLCMediaLibraryFolderManagementController.h"
 #import "VLCHotkeyPreferencesController.h"
+#import "VLCAudioPreferencesController.h"
 #import "VLCPreferencesControlHelper.h"
 
 #ifdef HAVE_SPARKLE
@@ -139,7 +140,6 @@ static NSString* VLCHotkeysSettingToolbarIdentifier = @"Hotkeys Settings Item Id
 
 @interface VLCSimplePrefsController() <NSToolbarDelegate, NSWindowDelegate>
 {
-    BOOL _audioSettingChanged;
     BOOL _intfSettingChanged;
     BOOL _videoSettingChanged;
     BOOL _osdSettingChanged;
@@ -151,6 +151,7 @@ static NSString* VLCHotkeysSettingToolbarIdentifier = @"Hotkeys Settings Item Id
     intf_thread_t *p_intf;
 }
 @property (nonatomic, strong) IBOutlet VLCHotkeyPreferencesController *hotkeyPreferencesController;
+@property (nonatomic, strong) IBOutlet VLCAudioPreferencesController *audioPreferencesController;
 @end
 
 @implementation VLCSimplePrefsController
@@ -194,6 +195,7 @@ static NSString* VLCHotkeysSettingToolbarIdentifier = @"Hotkeys Settings Item Id
     [self.window setHidesOnDeactivate:YES];
 
     [_hotkeyPreferencesController setupControls];
+    [_audioPreferencesController setupControls];
 
     // Workaround for Mac OS X Lion, which does not apply the same constraints when set in IB
     NSView *clipView = _contentView.superview;
@@ -332,18 +334,6 @@ create_toolbar_item(NSString *itemIdent, NSString *name, NSString *desc, NSStrin
 
 - (void)initStrings
 {
-    /* audio */
-    [_audio_effectsBox setTitle: _NS("Audio Effects")];
-    [_audio_enableCheckbox setTitle: _NS("Enable audio")];
-    [_audio_generalBox setTitle: _NS("General Audio")];
-    [_audio_langLabel setStringValue: _NS("Preferred Audio language")];
-    [_audio_lastCheckbox setTitle: _NS("Enable Last.fm submissions")];
-    [_audio_lastpwdLabel setStringValue: _NS("Password")];
-    [_audio_lastuserLabel setStringValue: _NS("Username")];
-    [_audio_visualLabel setStringValue: _NS("Visualization")];
-    [_audio_autosavevol_yesButtonCell setTitle: _NS("Keep audio level between sessions")];
-    [_audio_autosavevol_noButtonCell setTitle: _NS("Always reset audio start level to:")];
-
     /* input */
     [_input_recordBox setTitle: _NS("Record directory or filename")];
     [_input_recordButton setTitle: _NS("Browse...")];
@@ -569,51 +559,7 @@ create_toolbar_item(NSString *itemIdent, NSString *name, NSString *desc, NSStrin
 
     [VLCPreferencesControlHelper setupField:_intf_luahttppwdTextField forOption: "http-password"];
 
-    /******************
-     * audio settings *
-     ******************/
-    [VLCPreferencesControlHelper setupButton:_audio_enableCheckbox forBoolValue: "audio"];
-
-    if (config_GetInt("volume-save")) {
-        [_audio_autosavevol_yesButtonCell setState: NSControlStateValueOn];
-        [_audio_autosavevol_noButtonCell setState: NSControlStateValueOff];
-        [_audio_volTextField setEnabled: NO];
-        [_audio_volSlider setEnabled: NO];
-
-        [_audio_volSlider setIntValue: 100];
-        [_audio_volTextField setIntValue: 100];
-    } else {
-        [_audio_autosavevol_yesButtonCell setState: NSControlStateValueOff];
-        [_audio_autosavevol_noButtonCell setState: NSControlStateValueOn];
-        [_audio_volTextField setEnabled: YES];
-        [_audio_volSlider setEnabled: YES];
-
-        i = (int)var_InheritInteger(p_intf, "auhal-volume");
-        i = i * 200. / AOUT_VOLUME_MAX;
-        [_audio_volSlider setIntValue: i];
-        [_audio_volTextField setIntValue: i];
-    }
-
-    [VLCPreferencesControlHelper setupField:_audio_langTextField forOption: "audio-language"];
-
-    [VLCPreferencesControlHelper setupButton:_audio_visualPopup forModuleList: "audio-visual"];
-
-    /* Last.FM is optional */
-    if (module_exists("audioscrobbler")) {
-        [VLCPreferencesControlHelper setupField:_audio_lastuserTextField forOption:"lastfm-username"];
-        [VLCPreferencesControlHelper setupField:_audio_lastpwdSecureTextField forOption:"lastfm-password"];
-
-        if (config_ExistIntf("audioscrobbler")) {
-            [_audio_lastCheckbox setState: NSControlStateValueOn];
-            [_audio_lastuserTextField setEnabled: YES];
-            [_audio_lastpwdSecureTextField setEnabled: YES];
-        } else {
-            [_audio_lastCheckbox setState: NSControlStateValueOff];
-            [_audio_lastuserTextField setEnabled: NO];
-            [_audio_lastpwdSecureTextField setEnabled: NO];
-        }
-    } else
-        [_audio_lastCheckbox setEnabled: NO];
+    [_audioPreferencesController resetControls];
 
     /******************
      * video settings *
@@ -861,35 +807,7 @@ static inline void save_string_list(intf_thread_t * __unused p_intf, id object, 
         _intfSettingChanged = NO;
     }
 
-    /******************
-     * audio settings *
-     ******************/
-    if (_audioSettingChanged) {
-        config_PutInt("audio", [_audio_enableCheckbox state]);
-        config_PutInt("volume-save", [_audio_autosavevol_yesButtonCell state]);
-        var_SetBool(p_intf, "volume-save", [_audio_autosavevol_yesButtonCell state]);
-        if ([_audio_volTextField isEnabled])
-            config_PutInt("auhal-volume", ([_audio_volTextField intValue] * AOUT_VOLUME_MAX) / 200);
-
-        config_PutPsz("audio-language", [[_audio_langTextField stringValue] UTF8String]);
-
-        SaveModuleList(_audio_visualPopup, "audio-visual");
-
-        /* Last.FM is optional */
-        if (module_exists("audioscrobbler")) {
-            [_audio_lastCheckbox setEnabled: YES];
-            if ([_audio_lastCheckbox state] == NSControlStateValueOn)
-                config_AddIntf("audioscrobbler");
-            else
-                config_RemoveIntf("audioscrobbler");
-
-            config_PutPsz("lastfm-username", [[_audio_lastuserTextField stringValue] UTF8String]);
-            config_PutPsz("lastfm-password", [[_audio_lastpwdSecureTextField stringValue] UTF8String]);
-        }
-        else
-            [_audio_lastCheckbox setEnabled: NO];
-        _audioSettingChanged = NO;
-    }
+    [_audioPreferencesController saveChangedSettings];
 
     /******************
      * video settings *
@@ -1034,36 +952,9 @@ static inline void save_string_list(intf_thread_t * __unused p_intf, id object, 
     [self showSettingsForCategory:_intfView];
 }
 
-- (IBAction)audioSettingChanged:(id)sender
-{
-    if (sender == _audio_volSlider)
-        [_audio_volTextField setIntValue: [_audio_volSlider intValue]];
-
-    if (sender == _audio_volTextField)
-        [_audio_volSlider setIntValue: [_audio_volTextField intValue]];
-
-    if (sender == _audio_lastCheckbox) {
-        if ([_audio_lastCheckbox state] == NSControlStateValueOn) {
-            [_audio_lastpwdSecureTextField setEnabled: YES];
-            [_audio_lastuserTextField setEnabled: YES];
-        } else {
-            [_audio_lastpwdSecureTextField setEnabled: NO];
-            [_audio_lastuserTextField setEnabled: NO];
-        }
-    }
-
-    if (sender == _audio_autosavevolMatrix) {
-        BOOL enableVolumeSlider = [_audio_autosavevolMatrix selectedTag] == 1;
-        [_audio_volTextField setEnabled: enableVolumeSlider];
-        [_audio_volSlider setEnabled: enableVolumeSlider];
-    }
-
-    _audioSettingChanged = YES;
-}
-
 - (void)showAudioSettings
 {
-    [self showSettingsForCategory:_audioView];
+    [self showSettingsForCategory:_audioPreferencesController.view];
 }
 
 - (IBAction)videoSettingChanged:(id)sender
@@ -1115,12 +1006,7 @@ static inline void save_string_list(intf_thread_t * __unused p_intf, id object, 
 - (void)controlTextDidChange:(NSNotification *)notification
 {
     id notificationObject = [notification object];
-    if (notificationObject == _audio_langTextField ||
-       notificationObject ==  _audio_lastpwdSecureTextField ||
-       notificationObject ==  _audio_lastuserTextField ||
-       notificationObject == _audio_volTextField)
-        _audioSettingChanged = YES;
-    else if (notificationObject == _input_recordTextField)
+    if (notificationObject == _input_recordTextField)
         _inputSettingChanged = YES;
     else if (notificationObject == _osd_fontTextField ||
             notificationObject == _osd_langTextField ||

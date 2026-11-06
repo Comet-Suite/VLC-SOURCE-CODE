@@ -42,6 +42,7 @@
 		1C3113D71E508C6900D4DD76 /* VLCPopupPanelController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1C7CB91B1D787E7600388902 /* VLCPopupPanelController.m */; };
 		1C3113D91E508C6900D4DD76 /* VLCSimplePrefsController.m in Sources */ = {isa = PBXBuildFile; fileRef = CCB24D5D0D54BBAE004D780C /* VLCSimplePrefsController.m */; };
 		7A0C6F602C925000008A1D00 /* VLCPreferencesControlHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = 7A0C6F622C925000008A1D00 /* VLCPreferencesControlHelper.m */; };
+		7A0C6F632C925000008A1D00 /* VLCAudioPreferencesController.m in Sources */ = {isa = PBXBuildFile; fileRef = 7A0C6F652C925000008A1D00 /* VLCAudioPreferencesController.m */; };
 		7A0C6F502C925000008A1D00 /* VLCHotkeyPreferencesController.m in Sources */ = {isa = PBXBuildFile; fileRef = 7A0C6F522C925000008A1D00 /* VLCHotkeyPreferencesController.m */; };
 		7A0C6F402C925000008A1D00 /* VLCMediaLibraryFolderManagementController.m in Sources */ = {isa = PBXBuildFile; fileRef = 7A0C6F422C925000008A1D00 /* VLCMediaLibraryFolderManagementController.m */; };
 		1C3113DD1E508C6900D4DD76 /* VLCTrackSynchronizationWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = CC707EC4137464CD0003010A /* VLCTrackSynchronizationWindowController.m */; };
@@ -1039,6 +1040,8 @@
 		CCB24D5E0D54BBAE004D780C /* VLCSimplePrefsController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VLCSimplePrefsController.h; sourceTree = "<group>"; };
 		7A0C6F612C925000008A1D00 /* VLCPreferencesControlHelper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VLCPreferencesControlHelper.h; sourceTree = "<group>"; };
 		7A0C6F622C925000008A1D00 /* VLCPreferencesControlHelper.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VLCPreferencesControlHelper.m; sourceTree = "<group>"; };
+		7A0C6F642C925000008A1D00 /* VLCAudioPreferencesController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VLCAudioPreferencesController.h; sourceTree = "<group>"; };
+		7A0C6F652C925000008A1D00 /* VLCAudioPreferencesController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VLCAudioPreferencesController.m; sourceTree = "<group>"; };
 		7A0C6F512C925000008A1D00 /* VLCHotkeyPreferencesController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VLCHotkeyPreferencesController.h; sourceTree = "<group>"; };
 		7A0C6F522C925000008A1D00 /* VLCHotkeyPreferencesController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VLCHotkeyPreferencesController.m; sourceTree = "<group>"; };
 		7A0C6F412C925000008A1D00 /* VLCMediaLibraryFolderManagementController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VLCMediaLibraryFolderManagementController.h; sourceTree = "<group>"; };
@@ -1439,6 +1442,8 @@
 				6B4D508F1E79781F004479B5 /* VLCHotkeyChangeWindow.m */,
 				7A0C6F612C925000008A1D00 /* VLCPreferencesControlHelper.h */,
 				7A0C6F622C925000008A1D00 /* VLCPreferencesControlHelper.m */,
+				7A0C6F642C925000008A1D00 /* VLCAudioPreferencesController.h */,
+				7A0C6F652C925000008A1D00 /* VLCAudioPreferencesController.m */,
 				7A0C6F512C925000008A1D00 /* VLCHotkeyPreferencesController.h */,
 				7A0C6F522C925000008A1D00 /* VLCHotkeyPreferencesController.m */,
 				7A0C6F412C925000008A1D00 /* VLCMediaLibraryFolderManagementController.h */,
@@ -2661,6 +2666,7 @@
 				7D445D8B22032B9200263D34 /* VLCPlayQueueTableView.m in Sources */,
 				1C3113D91E508C6900D4DD76 /* VLCSimplePrefsController.m in Sources */,
 				7A0C6F602C925000008A1D00 /* VLCPreferencesControlHelper.m in Sources */,
+				7A0C6F632C925000008A1D00 /* VLCAudioPreferencesController.m in Sources */,
 				7A0C6F502C925000008A1D00 /* VLCHotkeyPreferencesController.m in Sources */,
 				7A0C6F402C925000008A1D00 /* VLCMediaLibraryFolderManagementController.m in Sources */,
 				7DFBDCC4226E445500B700A5 /* VLCMediaSourceBaseDataSource.m in Sources */,
