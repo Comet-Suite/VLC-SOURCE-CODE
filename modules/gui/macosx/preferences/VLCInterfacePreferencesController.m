@@ -112,13 +112,6 @@ static struct {
     { "wa",    "Walon",                 NO }
 };
 
-static void saveIntList(NSPopUpButton *object, const char *name)
-{
-    NSNumber *value = object.selectedItem.representedObject;
-    if (value)
-        config_PutInt(name, value.intValue);
-}
-
 @implementation VLCInterfacePreferencesController
 {
     BOOL _intfSettingChanged;
@@ -293,8 +286,8 @@ static void saveIntList(NSPopUpButton *object, const char *name)
         [self changeModule:@"http" inConfig:@"extraintf" enable:[_enableluahttpCheckbox state] == NSControlStateValueOn];
         config_PutPsz("http-password", [[_luahttppwdTextField stringValue] UTF8String]);
 
-        saveIntList(_pauseitunesPopup, "macosx-control-itunes");
-        saveIntList(_continueplaybackPopup, "macosx-continue-playback");
+        [VLCPreferencesControlHelper saveIntList:_pauseitunesPopup forOption:"macosx-control-itunes"];
+        [VLCPreferencesControlHelper saveIntList:_continueplaybackPopup forOption:"macosx-continue-playback"];
         _intfSettingChanged = NO;
     }
 }

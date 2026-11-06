@@ -125,4 +125,18 @@
         [object setToolTip: NSTR(p_item->psz_longtext)];
 }
 
++ (void)saveIntList:(NSPopUpButton *)object forOption:(const char *)name
+{
+    NSNumber *value = object.selectedItem.representedObject;
+    if (value)
+        config_PutInt(name, value.intValue);
+}
+
++ (void)saveStringList:(NSPopUpButton *)object forOption:(const char *)name
+{
+    NSString *value = object.selectedItem.representedObject;
+    if (value)
+        config_PutPsz(name, value.UTF8String);
+}
+
 @end

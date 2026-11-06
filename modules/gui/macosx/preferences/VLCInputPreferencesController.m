@@ -33,13 +33,6 @@
 #import "extensions/NSString+Helpers.h"
 #import "main/VLCMain.h"
 
-static void saveIntList(NSPopUpButton *object, const char *name)
-{
-    NSNumber *value = object.selectedItem.representedObject;
-    if (value)
-        config_PutInt(name, value.intValue);
-}
-
 @implementation VLCInputPreferencesController
 {
     BOOL _inputSettingChanged;
@@ -122,9 +115,9 @@ static void saveIntList(NSPopUpButton *object, const char *name)
         config_PutInt("videotoolbox", [_hardwareAccelerationCheckbox state]);
         config_PutInt("input-fast-seek", [_fastSeekCheckbox state]);
 
-        saveIntList(_aviPopup, "avi-index");
+        [VLCPreferencesControlHelper saveIntList:_aviPopup forOption:"avi-index"];
 
-        saveIntList(_skipLoopPopup, "avcodec-skiploopfilter");
+        [VLCPreferencesControlHelper saveIntList:_skipLoopPopup forOption:"avcodec-skiploopfilter"];
 
         #define CaC(name, factor) config_PutInt(name, [[_cachelevelPopup selectedItem] tag] * factor)
         if ([[_cachelevelPopup selectedItem] tag] == 0) {

@@ -32,20 +32,6 @@
 #import <vlc_configuration.h>
 #import "extensions/NSString+Helpers.h"
 
-static void saveIntList(NSPopUpButton *object, const char *name)
-{
-    NSNumber *value = object.selectedItem.representedObject;
-    if (value)
-        config_PutInt(name, value.intValue);
-}
-
-static void saveStringList(NSPopUpButton *object, const char *name)
-{
-    NSString *value = object.selectedItem.representedObject;
-    if (value)
-        config_PutPsz(name, value.UTF8String);
-}
-
 @implementation VLCSubtitlesPreferencesController
 {
     BOOL _osdSettingChanged;
@@ -97,19 +83,19 @@ static void saveStringList(NSPopUpButton *object, const char *name)
         config_PutInt("osd", [_osdCheckbox state]);
 
         if ([_encodingPopup indexOfSelectedItem] >= 0)
-            saveStringList(_encodingPopup, "subsdec-encoding");
+            [VLCPreferencesControlHelper saveStringList:_encodingPopup forOption:"subsdec-encoding"];
         else
             config_PutPsz("subsdec-encoding", "");
 
         config_PutPsz("sub-language", [[_langTextField stringValue] UTF8String]);
 
         config_PutPsz("freetype-font", [[_fontTextField stringValue] UTF8String]);
-        saveIntList(_fontColorPopup, "freetype-color");
+        [VLCPreferencesControlHelper saveIntList:_fontColorPopup forOption:"freetype-color"];
         config_PutInt("sub-text-scale", _fontSizeSlider.intValue);
         config_PutInt("freetype-opacity", [_opacityTextField intValue] * 255.0 / 100.0 + 0.5);
         config_PutInt("freetype-bold", [_forceboldCheckbox state]);
-        saveIntList(_outlineColorPopup, "freetype-outline-color");
-        saveIntList(_outlineThicknessPopup, "freetype-outline-thickness");
+        [VLCPreferencesControlHelper saveIntList:_outlineColorPopup forOption:"freetype-outline-color"];
+        [VLCPreferencesControlHelper saveIntList:_outlineThicknessPopup forOption:"freetype-outline-thickness"];
         _osdSettingChanged = NO;
     }
 }

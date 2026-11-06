@@ -113,9 +113,7 @@
 
         config_PutPsz("audio-language", [[_langTextField stringValue] UTF8String]);
 
-        NSString *visualization = _visualPopup.selectedItem.representedObject;
-        if (visualization)
-            config_PutPsz("audio-visual", visualization.UTF8String);
+        [VLCPreferencesControlHelper saveStringList:_visualPopup forOption:"audio-visual"];
 
         /* Last.FM is optional */
         if (module_exists("audioscrobbler")) {

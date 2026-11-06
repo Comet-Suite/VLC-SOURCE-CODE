@@ -34,20 +34,6 @@
 #import "extensions/NSString+Helpers.h"
 #import "windows/video/VLCMainVideoViewController.h"
 
-static void saveIntList(NSPopUpButton *object, const char *name)
-{
-    NSNumber *value = object.selectedItem.representedObject;
-    if (value)
-        config_PutInt(name, value.intValue);
-}
-
-static void saveStringList(NSPopUpButton *object, const char *name)
-{
-    NSString *value = object.selectedItem.representedObject;
-    if (value)
-        config_PutPsz(name, value.UTF8String);
-}
-
 @implementation VLCVideoPreferencesController
 {
     BOOL _videoSettingChanged;
@@ -147,9 +133,9 @@ static void saveStringList(NSPopUpButton *object, const char *name)
         config_PutPsz("snapshot-path", [[_snapFolderTextField stringValue] UTF8String]);
         config_PutPsz("snapshot-prefix", [[_snapPrefixTextField stringValue] UTF8String]);
         config_PutInt("snapshot-sequential", [_snapSeqnumCheckbox state]);
-        saveStringList(_snapFormatPopup, "snapshot-format");
-        saveIntList(_deinterlacePopup, "deinterlace");
-        saveStringList(_deinterlaceModePopup, "deinterlace-mode");
+        [VLCPreferencesControlHelper saveStringList:_snapFormatPopup forOption:"snapshot-format"];
+        [VLCPreferencesControlHelper saveIntList:_deinterlacePopup forOption:"deinterlace"];
+        [VLCPreferencesControlHelper saveStringList:_deinterlaceModePopup forOption:"deinterlace-mode"];
         _videoSettingChanged = NO;
     }
 }
