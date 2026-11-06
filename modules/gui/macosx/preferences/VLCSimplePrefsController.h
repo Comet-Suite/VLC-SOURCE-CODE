@@ -37,22 +37,6 @@
 @property (readwrite, weak) IBOutlet NSButton *resetButton;
 @property (readwrite, weak) IBOutlet NSButton *saveButton;
 
-// URL handler popup window
-@property (readwrite, strong) IBOutlet NSWindow *urlhandler_win;
-
-@property (readwrite, weak) IBOutlet NSTextField *urlhandler_titleLabel;
-@property (readwrite, weak) IBOutlet NSTextField *urlhandler_subtitleLabel;
-@property (readwrite, weak) IBOutlet NSButton *urlhandler_saveButton;
-@property (readwrite, weak) IBOutlet NSButton *urlhandler_cancelButton;
-@property (readwrite, weak) IBOutlet NSPopUpButton *urlhandler_ftpPopup;
-@property (readwrite, weak) IBOutlet NSPopUpButton *urlhandler_mmsPopup;
-@property (readwrite, weak) IBOutlet NSPopUpButton *urlhandler_rtmpPopup;
-@property (readwrite, weak) IBOutlet NSPopUpButton *urlhandler_rtpPopup;
-@property (readwrite, weak) IBOutlet NSPopUpButton *urlhandler_rtspPopup;
-@property (readwrite, weak) IBOutlet NSPopUpButton *urlhandler_sftpPopup;
-@property (readwrite, weak) IBOutlet NSPopUpButton *urlhandler_smbPopup;
-@property (readwrite, weak) IBOutlet NSPopUpButton *urlhandler_udpPopup;
-
 /* toolbar */
 - (NSToolbarItem *)toolbar:(NSToolbar *)o_toolbar
      itemForItemIdentifier:(NSString *)o_itemIdent
@@ -65,9 +49,6 @@
 
 - (IBAction)buttonAction:(id)sender;
 - (IBAction)resetPreferences:(id)sender;
-
-/* input & codecs */
-- (IBAction)urlHandlerAction:(id)sender;
 
 /* hotkeys */
 

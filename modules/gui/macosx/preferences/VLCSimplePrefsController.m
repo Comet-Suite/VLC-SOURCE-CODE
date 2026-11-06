@@ -224,12 +224,6 @@ create_toolbar_item(NSString *itemIdent, NSString *name, NSString *desc, NSStrin
 
 - (void)initStrings
 {
-    /* url handler */
-    [_urlhandler_titleLabel setStringValue: _NS("Open network streams using the following protocols")];
-    [_urlhandler_subtitleLabel setStringValue: _NS("Note that these are system-wide settings.")];
-    [_urlhandler_saveButton setTitle: _NS("Save")];
-    [_urlhandler_cancelButton setTitle: _NS("Cancel")];
-
     /* generic stuff */
     [_showAllButton setTitle: _NS("Show All")];
     [_cancelButton setTitle: _NS("Cancel")];
@@ -381,81 +375,6 @@ create_toolbar_item(NSString *itemIdent, NSString *name, NSString *desc, NSStrin
 - (void)showInputSettings
 {
     [self showSettingsForCategory:_inputPreferencesController.view];
-}
-
-- (NSString *)bundleIdentifierForApplicationName:(NSString *)appName
-{
-    NSWorkspace * workspace = NSWorkspace.sharedWorkspace;
-    NSString * appPath = [workspace fullPathForApplication:appName];
-    if (appPath) {
-        NSBundle * appBundle = [NSBundle bundleWithPath:appPath];
-        return [appBundle bundleIdentifier];
-    }
-    return nil;
-}
-
-- (NSString *)applicationNameForBundleIdentifier:(NSString *)bundleIdentifier
-{
-    return [[[NSFileManager defaultManager] displayNameAtPath:[NSWorkspace.sharedWorkspace absolutePathForAppBundleWithIdentifier:bundleIdentifier]] stringByDeletingPathExtension];
-}
-
-- (NSImage *)iconForBundleIdentifier:(NSString *)bundleIdentifier
-{
-    NSWorkspace *workspace = NSWorkspace.sharedWorkspace;
-    NSSize iconSize = NSMakeSize(16., 16.);
-    NSImage *icon = [workspace iconForFile:[workspace absolutePathForAppBundleWithIdentifier:bundleIdentifier]];
-    [icon setSize:iconSize];
-    return icon;
-}
-
-- (IBAction)urlHandlerAction:(id)sender
-{
-    if (sender == _inputPreferencesController.urlhandlerButton) {
-
-        void (^fillUrlHandlerPopup)(NSString*, NSPopUpButton*) = ^void(NSString *protocol, NSPopUpButton *object) {
-
-            NSArray *handlers = (__bridge_transfer NSArray *)LSCopyAllHandlersForURLScheme((__bridge CFStringRef)protocol);
-            NSMutableArray *rawHandlers = [[NSMutableArray alloc] init];
-            [object removeAllItems];
-            NSUInteger count = [handlers count];
-            for (NSUInteger x = 0; x < count; x++) {
-                NSString *rawhandler = [handlers objectAtIndex:x];
-                NSString *handler = [self applicationNameForBundleIdentifier:rawhandler];
-                if (handler && ![handler isEqualToString:@""]) {
-                    [object addItemWithTitle:handler];
-                    [[object lastItem] setImage: [self iconForBundleIdentifier:[handlers objectAtIndex:x]]];
-                    [rawHandlers addObject: rawhandler];
-                }
-            }
-            [object selectItemAtIndex: [rawHandlers indexOfObject:(__bridge_transfer id)LSCopyDefaultHandlerForURLScheme((__bridge CFStringRef)protocol)]];
-        };
-
-        fillUrlHandlerPopup(@"ftp", _urlhandler_ftpPopup);
-        fillUrlHandlerPopup(@"mms", _urlhandler_mmsPopup);
-        fillUrlHandlerPopup(@"rtmp", _urlhandler_rtmpPopup);
-        fillUrlHandlerPopup(@"rtp", _urlhandler_rtpPopup);
-        fillUrlHandlerPopup(@"rtsp", _urlhandler_rtspPopup);
-        fillUrlHandlerPopup(@"sftp", _urlhandler_sftpPopup);
-        fillUrlHandlerPopup(@"smb", _urlhandler_smbPopup);
-        fillUrlHandlerPopup(@"udp", _urlhandler_udpPopup);
-
-        [self.window beginSheet:_urlhandler_win completionHandler:nil];
-    } else {
-        [_urlhandler_win orderOut:sender];
-        [NSApp endSheet:_urlhandler_win];
-
-        if (sender == _urlhandler_saveButton) {
-            LSSetDefaultHandlerForURLScheme(CFSTR("ftp"), (__bridge CFStringRef)[self bundleIdentifierForApplicationName:[[_urlhandler_ftpPopup selectedItem] title]]);
-            LSSetDefaultHandlerForURLScheme(CFSTR("mms"), (__bridge CFStringRef)[self bundleIdentifierForApplicationName:[[_urlhandler_mmsPopup selectedItem] title]]);
-            LSSetDefaultHandlerForURLScheme(CFSTR("mmsh"), (__bridge CFStringRef)[self bundleIdentifierForApplicationName:[[_urlhandler_mmsPopup selectedItem] title]]);
-            LSSetDefaultHandlerForURLScheme(CFSTR("rtmp"), (__bridge CFStringRef)[self bundleIdentifierForApplicationName:[[_urlhandler_rtmpPopup selectedItem] title]]);
-            LSSetDefaultHandlerForURLScheme(CFSTR("rtp"), (__bridge CFStringRef)[self bundleIdentifierForApplicationName:[[_urlhandler_rtpPopup selectedItem] title]]);
-            LSSetDefaultHandlerForURLScheme(CFSTR("rtsp"), (__bridge CFStringRef)[self bundleIdentifierForApplicationName:[[_urlhandler_rtspPopup selectedItem] title]]);
-            LSSetDefaultHandlerForURLScheme(CFSTR("sftp"), (__bridge CFStringRef)[self bundleIdentifierForApplicationName:[[_urlhandler_sftpPopup selectedItem] title]]);
-            LSSetDefaultHandlerForURLScheme(CFSTR("smb"), (__bridge CFStringRef)[self bundleIdentifierForApplicationName:[[_urlhandler_smbPopup selectedItem] title]]);
-            LSSetDefaultHandlerForURLScheme(CFSTR("udp"), (__bridge CFStringRef)[self bundleIdentifierForApplicationName:[[_urlhandler_udpPopup selectedItem] title]]);
-        }
-    }
 }
 
 #pragma mark -

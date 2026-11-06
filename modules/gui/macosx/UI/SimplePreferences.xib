@@ -96,6 +96,19 @@
                 <outlet property="skipLoopLabel" destination="3434" id="N1W-pG-ln6"/>
                 <outlet property="skipLoopPopup" destination="3435" id="ia2-kQ-VwV"/>
                 <outlet property="urlhandlerButton" destination="3742" id="1GV-O9-8SF"/>
+                <outlet property="urlhandlerCancelButton" destination="3769" id="slp-XG-uk8"/>
+                <outlet property="urlhandlerFtpPopup" destination="3789" id="Bgt-7w-OTt"/>
+                <outlet property="urlhandlerMmsPopup" destination="3797" id="OZu-Qx-GKe"/>
+                <outlet property="urlhandlerRtmpPopup" destination="3805" id="mtw-fX-vpa"/>
+                <outlet property="urlhandlerRtpPopup" destination="3821" id="kcL-kI-tyT"/>
+                <outlet property="urlhandlerRtspPopup" destination="3813" id="Gpv-hz-0vF"/>
+                <outlet property="urlhandlerSaveButton" destination="3767" id="1uL-Yr-AJx"/>
+                <outlet property="urlhandlerSftpPopup" destination="3829" id="TUc-u2-3st"/>
+                <outlet property="urlhandlerSmbPopup" destination="3837" id="eeg-IG-Cij"/>
+                <outlet property="urlhandlerSubtitleLabel" destination="3749" id="ruW-Rs-NUs"/>
+                <outlet property="urlhandlerTitleLabel" destination="3747" id="hJi-n6-0xv"/>
+                <outlet property="urlhandlerUdpPopup" destination="3845" id="xJU-C6-6Cc"/>
+                <outlet property="urlhandlerWindow" destination="3745" id="5qQ-aU-KO7"/>
             </connections>
         </customObject>
         <customObject id="sub-01-ctl" customClass="VLCSubtitlesPreferencesController">
@@ -182,19 +195,6 @@
                 <outlet property="saveButton" destination="2275" id="WsL-HB-mfJ"/>
                 <outlet property="scrollView" destination="b28-nA-RR5" id="EGK-oO-Okf"/>
                 <outlet property="showAllButton" destination="3636" id="4zi-j8-1Px"/>
-                <outlet property="urlhandler_cancelButton" destination="3769" id="slp-XG-uk8"/>
-                <outlet property="urlhandler_ftpPopup" destination="3789" id="Bgt-7w-OTt"/>
-                <outlet property="urlhandler_mmsPopup" destination="3797" id="OZu-Qx-GKe"/>
-                <outlet property="urlhandler_rtmpPopup" destination="3805" id="mtw-fX-vpa"/>
-                <outlet property="urlhandler_rtpPopup" destination="3821" id="kcL-kI-tyT"/>
-                <outlet property="urlhandler_rtspPopup" destination="3813" id="Gpv-hz-0vF"/>
-                <outlet property="urlhandler_saveButton" destination="3767" id="1uL-Yr-AJx"/>
-                <outlet property="urlhandler_sftpPopup" destination="3829" id="TUc-u2-3st"/>
-                <outlet property="urlhandler_smbPopup" destination="3837" id="eeg-IG-Cij"/>
-                <outlet property="urlhandler_subtitleLabel" destination="3749" id="ruW-Rs-NUs"/>
-                <outlet property="urlhandler_titleLabel" destination="3747" id="hJi-n6-0xv"/>
-                <outlet property="urlhandler_udpPopup" destination="3845" id="xJU-C6-6Cc"/>
-                <outlet property="urlhandler_win" destination="3745" id="5qQ-aU-KO7"/>
                 <outlet property="window" destination="2265" id="mGG-NZ-eoi"/>
             </connections>
         </customObject>
@@ -1832,7 +1832,7 @@ Gw
                                     <font key="font" metaFont="system"/>
                                 </buttonCell>
                                 <connections>
-                                    <action selector="urlHandlerAction:" target="-2" id="fzB-9k-nU3"/>
+                                    <action selector="urlHandlerAction:" target="inp-01-ctl" id="fzB-9k-nU3"/>
                                 </connections>
                             </button>
                         </subviews>
@@ -2710,7 +2710,7 @@ DQ
 </string>
                         </buttonCell>
                         <connections>
-                            <action selector="urlHandlerAction:" target="-2" id="phb-Wl-jTb"/>
+                            <action selector="urlHandlerAction:" target="inp-01-ctl" id="phb-Wl-jTb"/>
                         </connections>
                     </button>
                     <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="3769">
@@ -2723,7 +2723,7 @@ Gw
 </string>
                         </buttonCell>
                         <connections>
-                            <action selector="urlHandlerAction:" target="-2" id="8Xx-JL-T12"/>
+                            <action selector="urlHandlerAction:" target="inp-01-ctl" id="8Xx-JL-T12"/>
                         </connections>
                     </button>
                     <popUpButton verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="3789">

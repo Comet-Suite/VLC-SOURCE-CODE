@@ -45,6 +45,23 @@
 @property (readwrite, weak) IBOutlet NSButton *urlhandlerButton;
 @property (readwrite, weak) IBOutlet NSButton *fastSeekCheckbox;
 
+// URL handler popup window
+@property (readwrite, strong) IBOutlet NSWindow *urlhandlerWindow;
+
+@property (readwrite, weak) IBOutlet NSTextField *urlhandlerTitleLabel;
+@property (readwrite, weak) IBOutlet NSTextField *urlhandlerSubtitleLabel;
+@property (readwrite, weak) IBOutlet NSButton *urlhandlerSaveButton;
+@property (readwrite, weak) IBOutlet NSButton *urlhandlerCancelButton;
+@property (readwrite, weak) IBOutlet NSPopUpButton *urlhandlerFtpPopup;
+@property (readwrite, weak) IBOutlet NSPopUpButton *urlhandlerMmsPopup;
+@property (readwrite, weak) IBOutlet NSPopUpButton *urlhandlerRtmpPopup;
+@property (readwrite, weak) IBOutlet NSPopUpButton *urlhandlerRtpPopup;
+@property (readwrite, weak) IBOutlet NSPopUpButton *urlhandlerRtspPopup;
+@property (readwrite, weak) IBOutlet NSPopUpButton *urlhandlerSftpPopup;
+@property (readwrite, weak) IBOutlet NSPopUpButton *urlhandlerSmbPopup;
+@property (readwrite, weak) IBOutlet NSPopUpButton *urlhandlerUdpPopup;
+
+- (IBAction)urlHandlerAction:(id)sender;
 - (IBAction)inputSettingChanged:(id)sender;
 - (void)setupControls;
 - (void)resetControls;
