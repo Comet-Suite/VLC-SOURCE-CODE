@@ -394,6 +394,20 @@ VLCMediaLibraryMediaItem *VLCLibraryModelTestMediaItem(vlc_ml_media_type_t type,
     }
 }
 
+- (void)markCacheWriteSubmittedForQueryToken:(NSObject *)token
+{
+    dispatch_block_t queriesFinished = nil;
+    @synchronized (self) {
+        [_pendingQueries removeObject:token];
+        if (_pendingQueries.count == 0) {
+            queriesFinished = _queriesFinished;
+            _queriesFinished = nil;
+        }
+    }
+    if (queriesFinished != nil)
+        dispatch_async(dispatch_get_main_queue(), queriesFinished);
+}
+
 - (void)finishPendingQueriesWithCompletion:(dispatch_block_t)completion
 {
     // Startup counts are not cache-refresh tokens. Their final native read must
@@ -481,12 +495,6 @@ VLCMediaLibraryMediaItem *VLCLibraryModelTestMediaItem(vlc_ml_media_type_t type,
     dispatch_semaphore_t queryRelease = nil;
     dispatch_semaphore_t writeRelease = nil;
     @synchronized (self) {
-        // Native reads and mapping are finished when the model submits its write.
-        [_pendingQueries removeObject:token];
-        if (_pendingQueries.count == 0 && _queriesFinished != nil) {
-            dispatch_async(dispatch_get_main_queue(), _queriesFinished);
-            _queriesFinished = nil;
-        }
         if (token == _heldToken) {
             resultCaptured = _resultCaptured;
             processed = _queryProcessed;
@@ -516,6 +524,7 @@ VLCMediaLibraryMediaItem *VLCLibraryModelTestMediaItem(vlc_ml_media_type_t type,
                                                getter:getter
                                               onQueue:queue
                                                 block:block];
+                [self markCacheWriteSubmittedForQueryToken:token];
                 if (processed != nil) {
                     dispatch_barrier_async(queue,
                                            ^{
@@ -550,6 +559,7 @@ VLCMediaLibraryMediaItem *VLCLibraryModelTestMediaItem(vlc_ml_media_type_t type,
                                    getter:getter
                                   onQueue:queue
                                     block:write];
+    [self markCacheWriteSubmittedForQueryToken:token];
     if (writeCaptured != nil) {
         // The real write has been submitted behind the held barrier.
         dispatch_async(dispatch_get_main_queue(), writeCaptured);
