@@ -1513,9 +1513,13 @@ typedef NS_ENUM(NSUInteger, VLCLibraryModelOverlapChange) {
     }
     [model releaseQuery];
     [self waitForExpectations:@[ processed ] timeout:5.];
-    // Processing the rejected snapshot does not imply its replacement query
-    // has finished. Wait for the actual full-list write before inspecting it.
     [self waitForExpectations:@[ reconciled ] timeout:5.];
+    // Wait for all pending queries, so the cache read below sees their writes.
+    XCTestExpectation * const queriesFinished = [self expectationWithDescription:@"Replacement cache queries finished"];
+    [model finishPendingQueriesWithCompletion:^{
+        [queriesFinished fulfill];
+    }];
+    [self waitForExpectations:@[ queriesFinished ] timeout:10.];
     NSArray<id<VLCMediaLibraryItemProtocol>> * const expected = fixture.libraryItems;
     NSArray<id<VLCMediaLibraryItemProtocol>> * const actual = fixture.cachedItems;
     XCTAssertNotNil(expected);
