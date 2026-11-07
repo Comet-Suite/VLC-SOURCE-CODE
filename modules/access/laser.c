@@ -158,6 +158,12 @@ static void DirAddEntry(struct laser_dir_entry *entries, int *pi_count,
     (*pi_count)++;
 }
 
+/* The disc's volume label, else [psz_default]. */
+static const char *DiscLabel(const laser_disc_t *disc, const char *psz_default)
+{
+    return disc->volume_id[0] != '\0' ? disc->volume_id : psz_default;
+}
+
 static int DirRead(stream_t *access, input_item_node_t *p_node)
 {
     access_sys_t *sys = access->p_sys;
@@ -184,57 +190,41 @@ static int DirRead(stream_t *access, input_item_node_t *p_node)
             break;
 
         case LASER_DISC_DVD_VIDEO:
-        {
-            const char *psz_title = disc.volume_id[0] != '\0'
-                                  ? disc.volume_id : "DVD-Video";
-
             /* With menus, then without; the Kotlin side labels the second. */
-            DirAddEntry(entries, &i_entries, i_capacity,
-                        "laser/dvd://%d", token, psz_title);
-            DirAddEntry(entries, &i_entries, i_capacity,
-                        "laser/dvdsimple://%d", token, psz_title);
+            DirAddEntry(entries, &i_entries, i_capacity, "laser/dvd://%d",
+                        token, DiscLabel(&disc, "DVD-Video"));
+            DirAddEntry(entries, &i_entries, i_capacity, "laser/dvdsimple://%d",
+                        token, DiscLabel(&disc, "DVD-Video"));
             break;
-        }
 
         case LASER_DISC_DVD_AUDIO:
-            DirAddEntry(entries, &i_entries, i_capacity,
-                        "laser/dvda://%d", token,
-                        disc.volume_id[0] != '\0' ? disc.volume_id
-                                                  : "DVD-Audio");
+            DirAddEntry(entries, &i_entries, i_capacity, "laser/dvda://%d",
+                        token, DiscLabel(&disc, "DVD-Audio"));
             break;
 
         case LASER_DISC_DVD_UNIVERSAL:
-        {
-            const char *psz_title = disc.volume_id[0] != '\0'
-                                  ? disc.volume_id : "DVD";
-
             /* Audio zone first; the Kotlin side tells the rows apart by
              * their icon. */
-            DirAddEntry(entries, &i_entries, i_capacity,
-                        "laser/dvda://%d", token, psz_title);
-            DirAddEntry(entries, &i_entries, i_capacity,
-                        "laser/dvd://%d", token, psz_title);
+            DirAddEntry(entries, &i_entries, i_capacity, "laser/dvda://%d",
+                        token, DiscLabel(&disc, "DVD"));
+            DirAddEntry(entries, &i_entries, i_capacity, "laser/dvd://%d",
+                        token, DiscLabel(&disc, "DVD"));
             break;
-        }
 
         case LASER_DISC_BD_VIDEO:
             /* libbluray falls back to the first playlist without menus. */
-            DirAddEntry(entries, &i_entries, i_capacity,
-                        "laser/bluray://%d", token,
-                        disc.volume_id[0] != '\0' ? disc.volume_id
-                                                  : "Blu-ray Disc");
+            DirAddEntry(entries, &i_entries, i_capacity, "laser/bluray://%d",
+                        token, DiscLabel(&disc, "Blu-ray Disc"));
             break;
 
         case LASER_DISC_VCD:
-            DirAddEntry(entries, &i_entries, i_capacity, "vcd://laser/%d", token,
-                        disc.volume_id[0] != '\0' ? disc.volume_id
-                                                  : "Video CD");
+            DirAddEntry(entries, &i_entries, i_capacity, "vcd://laser/%d",
+                        token, DiscLabel(&disc, "Video CD"));
             break;
 
         case LASER_DISC_SVCD:
-            DirAddEntry(entries, &i_entries, i_capacity, "svcd://laser/%d", token,
-                        disc.volume_id[0] != '\0' ? disc.volume_id
-                                                  : "Super Video CD");
+            DirAddEntry(entries, &i_entries, i_capacity, "svcd://laser/%d",
+                        token, DiscLabel(&disc, "Super Video CD"));
             break;
 
         /* Data disc, empty drive or read failure: no row. */
@@ -335,11 +325,10 @@ static int OpenDir(vlc_object_t *obj)
     msg_Dbg(access, "OpenDir() accepted '%s://%s' (fd=%d)",
             access->psz_name, access->psz_location, fd);
 
-    access_sys_t *sys = vlc_obj_malloc(obj, sizeof(*sys));
+    access_sys_t *sys = vlc_obj_calloc(obj, 1, sizeof(*sys));
     if (unlikely(sys == NULL))
         return VLC_ENOMEM;
 
-    memset(sys, 0, sizeof(*sys));
     sys->token = fd;
     access->p_sys = sys;
 
@@ -888,13 +877,11 @@ static int OpenStream(vlc_object_t *obj)
     msg_Dbg(access, "OpenStream() accepted '%s://%s' (fd=%d)",
             access->psz_name, access->psz_location, fd);
 
-    access_sys_t *sys = vlc_obj_malloc(obj, sizeof(*sys));
+    access_sys_t *sys = vlc_obj_calloc(obj, 1, sizeof(*sys));
     if (unlikely(sys == NULL))
         return VLC_ENOMEM;
 
-    memset(sys, 0, sizeof(*sys));
-
-    sys->token         = fd;
+    sys->token = fd;
 
     const size_t i_window = (size_t)LASER_MAX_READ_SECTORS
                           * LASER_SECTOR_SIZE;
