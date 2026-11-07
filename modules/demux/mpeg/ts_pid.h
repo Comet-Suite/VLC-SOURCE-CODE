@@ -37,6 +37,7 @@ typedef enum
     TYPE_STREAM,
     TYPE_SI,
     TYPE_PSIP,
+    TYPE_ECM,
 } ts_pid_type_t;
 
 enum

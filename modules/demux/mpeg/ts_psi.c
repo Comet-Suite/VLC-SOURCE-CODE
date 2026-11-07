@@ -1813,6 +1813,39 @@ static void FillPESFromDvbpsiES( demux_t *p_demux,
         p_pes->p_es->fmt.i_id = p_dvbpsies->i_pid;
 }
 
+/* The software CAM needs ECM packets from both program and ES CA descriptors.
+ * They are not elementary streams and must be requested separately at access
+ * level. Keep one reference per PMT so shared ECM PIDs survive PMT updates. */
+static bool ARIBSetupECMPids( demux_t *p_demux, ts_pid_t *pmtpid,
+                              const dvbpsi_descriptor_t *p_dr )
+{
+    demux_sys_t *p_sys = p_demux->p_sys;
+    ts_pmt_t *p_pmt = pmtpid->u.p_pmt;
+    bool b_encryption = false;
+
+    for( ; p_dr; p_dr = p_dr->p_next )
+    {
+        if( p_dr->i_tag != 0x09 || p_dr->i_length < 4 )
+            continue;
+
+        dvbpsi_ca_dr_t *p_ca = dvbpsi_DecodeCADr( (dvbpsi_descriptor_t *)p_dr );
+        if( !p_ca || p_ca->i_ca_system_id != 0x0005 ||
+            p_ca->i_ca_pid < MIN_ES_PID || p_ca->i_ca_pid > MAX_ES_PID )
+            continue;
+
+        b_encryption = true;
+        ts_pid_t *ecmpid = GetPID( p_sys, p_ca->i_ca_pid );
+        bool b_registered = false;
+        for( int i=0; i<p_pmt->ecm_pids.i_size; i++ )
+            b_registered |= p_pmt->ecm_pids.p_elems[i] == ecmpid;
+
+        if( !b_registered && PIDSetup( p_demux, TYPE_ECM, ecmpid, pmtpid ) )
+            ARRAY_APPEND( p_pmt->ecm_pids, ecmpid );
+    }
+
+    return b_encryption;
+}
+
 static en50221_capmt_info_t * CreateCAPMTInfo( const dvbpsi_pmt_t *p_pmt )
 {
     en50221_capmt_info_t *p_en = en50221_capmt_New( p_pmt->i_version,
@@ -1914,6 +1947,9 @@ static void PMTCallBack( void *data, dvbpsi_pmt_t *p_dvbpsipmt )
     if( p_pmt->p_si_sdt_pid )
         ARRAY_APPEND( pid_to_decref, p_pmt->p_si_sdt_pid );
     ARRAY_INIT(p_pmt->e_streams);
+    for( int i=0; i<p_pmt->ecm_pids.i_size; i++ )
+        ARRAY_APPEND( pid_to_decref, p_pmt->ecm_pids.p_elems[i] );
+    ARRAY_RESET( p_pmt->ecm_pids );
 
     if( p_pmt->iod )
     {
@@ -1963,9 +1999,17 @@ static void PMTCallBack( void *data, dvbpsi_pmt_t *p_dvbpsipmt )
     /* Private descriptors depends on standard */
     ParsePMTPrivateRegistrations( p_demux, p_dvbpsipmt->p_first_descriptor, p_pmt, p_sys->standard );
 
+    if( p_sys->standard == TS_STANDARD_ARIB )
+        b_encryption |= ARIBSetupECMPids( p_demux, pmtpid,
+                                         p_dvbpsipmt->p_first_descriptor );
+
     dvbpsi_pmt_es_t *p_dvbpsies;
     for( p_dvbpsies = p_dvbpsipmt->p_first_es; p_dvbpsies != NULL; p_dvbpsies = p_dvbpsies->p_next )
     {
+        if( p_sys->standard == TS_STANDARD_ARIB )
+            b_encryption |= ARIBSetupECMPids( p_demux, pmtpid,
+                                             p_dvbpsies->p_first_descriptor );
+
         ts_pid_t *pespid = GetPID(p_sys, p_dvbpsies->i_pid);
         if ( pespid->type != TYPE_STREAM && pespid->type != TYPE_FREE )
         {

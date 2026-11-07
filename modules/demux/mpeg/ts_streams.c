@@ -94,6 +94,7 @@ ts_pmt_t *ts_pmt_New( demux_t *p_demux )
     }
 
     ARRAY_INIT( pmt->e_streams );
+    ARRAY_INIT( pmt->ecm_pids );
 
     //pmt->pmtcache   = NULL;
     pmt->i_version  = -1;
@@ -134,6 +135,9 @@ void ts_pmt_Del( demux_t *p_demux, ts_pmt_t *pmt )
     for( int i=0; i<pmt->e_streams.i_size; i++ )
         PIDRelease( p_demux, pmt->e_streams.p_elems[i] );
     ARRAY_RESET( pmt->e_streams );
+    for( int i=0; i<pmt->ecm_pids.i_size; i++ )
+        PIDRelease( p_demux, pmt->ecm_pids.p_elems[i] );
+    ARRAY_RESET( pmt->ecm_pids );
     if( pmt->p_atsc_si_basepid )
         PIDRelease( p_demux, pmt->p_atsc_si_basepid );
     if( pmt->p_si_sdt_pid )

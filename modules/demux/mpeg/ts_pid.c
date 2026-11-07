@@ -196,6 +196,10 @@ bool PIDSetup( demux_t *p_demux, ts_pid_type_t i_type, ts_pid_t *pid, ts_pid_t *
         case TYPE_CAT:
             return true;
 
+        case TYPE_ECM:
+            PIDReset( pid );
+            break;
+
         case TYPE_PAT:
             PIDReset( pid );
             pid->u.p_pat = ts_pat_New( p_demux );
@@ -280,6 +284,7 @@ void PIDRelease( demux_t *p_demux, ts_pid_t *pid )
             break;
 
         case TYPE_CAT:
+        case TYPE_ECM:
             break;
 
         case TYPE_PAT:
