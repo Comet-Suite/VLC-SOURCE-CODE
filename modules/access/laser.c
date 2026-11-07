@@ -47,6 +47,7 @@
 #include <vlc_plugin.h>
 #include <vlc_access.h>
 #include <vlc_input_item.h>
+#include <vlc_interrupt.h>
 
 #include <laser.h>
 #include <laser_disc.h>
@@ -85,6 +86,9 @@ typedef struct
     bool         b_readahead_started;
     atomic_bool  b_media_gone;
     bool         b_media_gone_reported; /* See StreamMediaGoneRead(). */
+    /* The input is stopping, or the stream closing: the reads in progress,
+     * on either thread, give up. See StreamAbort(). */
+    atomic_bool  b_abort;
     vlc_mutex_t  refusal_lock;
     vlc_mutex_t  lock;
     vlc_cond_t   wait_worker;   /* worker waits here for a request      */
@@ -164,6 +168,15 @@ static void DirAddEntry(struct laser_dir_entry *entries, int *pi_count,
     (*pi_count)++;
 }
 
+/* liblaser's abort check while classifying: the preparser gave up - its
+ * timeout, or the item cancelled. Called on DirRead()'s thread, whose
+ * interrupt context that is. */
+static int DirAborted(void *opaque)
+{
+    (void)opaque;
+    return vlc_killed();
+}
+
 /* The disc's volume label, else [psz_default]. */
 static const char *DiscLabel(const laser_disc_t *disc, const char *psz_default)
 {
@@ -184,8 +197,19 @@ static int DirRead(stream_t *access, input_item_node_t *p_node)
 
     msg_Dbg(access, "classifying token=%d", token);
 
+    /* A classification given up stops at liblaser's next checkpoint, rather
+     * than running its retries and readiness waits to their end while the
+     * drive stays claimed. Every read below happens on this thread. */
+    laser_set_abort_cb(DirAborted, NULL);
+
     laser_disc_t disc;
     laser_disc_identify(token, &disc);
+
+    laser_set_abort_cb(NULL, NULL);
+
+    /* Stopped: what was read may be partial - a disc taken for unknown. No
+     * row, rather than a wrong one. */
+    const bool b_stopped = vlc_killed();
 
     switch (disc.kind)
     {
@@ -239,7 +263,12 @@ static int DirRead(stream_t *access, input_item_node_t *p_node)
     }
 
     int i_ret = VLC_SUCCESS;
-    if (i_entries == 0)
+    if (b_stopped)
+    {
+        msg_Dbg(access, "classification of token=%d stopped", token);
+        i_ret = VLC_EGENERIC;
+    }
+    else if (i_entries == 0)
     {
         msg_Dbg(access, "no CD/VCD/DVD/BD recognized on token=%d "
                 "(data disc, empty drive, or read failure)", token);
@@ -604,14 +633,40 @@ static int StreamWindowSectors(access_sys_t *sys, uint32_t i_lba)
     return i_want;
 }
 
+/* liblaser's abort check, on whichever thread reads. */
+static int StreamAborted(void *opaque)
+{
+    access_sys_t *sys = opaque;
+    return atomic_load(&sys->b_abort);
+}
+
+/* Gives up the reads in progress. Called by VLC's interrupt, from the thread
+ * stopping the input, while StreamRead() waits: a drive spinning up holds a
+ * read for tens of seconds, and the input could not stop before it ends. And
+ * by Close(), for the read-ahead's. */
+static void StreamAbort(void *opaque)
+{
+    access_sys_t *sys = opaque;
+
+    atomic_store(&sys->b_abort, true);
+    vlc_mutex_lock(&sys->lock);
+    vlc_cond_signal(&sys->wait_done);
+    vlc_mutex_unlock(&sys->lock);
+}
+
 /* The only access to the transport, shared by both threads. */
 static int StreamReadLocked(stream_t *access, uint32_t i_lba, int i_want,
                             uint8_t *p_dst)
 {
     access_sys_t *sys = access->p_sys;
 
+    if (atomic_load(&sys->b_abort))
+        return (int)LASER_ERR_CANCELLED;
+
     vlc_mutex_lock(&sys->io_lock);
+    laser_set_abort_cb(StreamAborted, sys);
     int i_read = StreamReadSectors(access, i_lba, i_want, p_dst);
+    laser_set_abort_cb(NULL, NULL);
     vlc_mutex_unlock(&sys->io_lock);
 
     return i_read;
@@ -673,6 +728,13 @@ static int StreamClassifyRead(stream_t *access, int i_read,
                               uint32_t i_lba, int i_want,
                               const char *psz_what)
 {
+    if (i_read == (int)LASER_ERR_CANCELLED)
+    {
+        msg_Dbg(access, "%s read of %d sectors at LBA %u abandoned: stopping",
+                psz_what, i_want, i_lba);
+        return -1;
+    }
+
     if (laser_status_is_positional(i_read) || i_read == (int)LASER_ERR_NO_KEY)
     {
         msg_Dbg(access, "%s read of %d sectors at LBA %u refused (%d)",
@@ -707,9 +769,16 @@ static int StreamRefillCache(stream_t *access, uint32_t i_lba)
 
     vlc_mutex_lock(&sys->lock);
 
-    /* A transfer in flight cannot be recalled, and writes into p_ahead. */
-    while (sys->b_ahead_busy)
+    /* A transfer in flight cannot be recalled, and writes into p_ahead. An
+     * abort makes it end soon, but it is not waited for: nothing is taken
+     * from p_ahead after one. */
+    while (sys->b_ahead_busy && !atomic_load(&sys->b_abort))
         vlc_cond_wait(&sys->wait_done, &sys->lock);
+    if (atomic_load(&sys->b_abort))
+    {
+        vlc_mutex_unlock(&sys->lock);
+        return -1;
+    }
 
     if (sys->b_ahead_ready && sys->i_ahead_lba == i_lba)
     {
@@ -771,7 +840,8 @@ static int StreamRefillCache(stream_t *access, uint32_t i_lba)
     return i_read;
 }
 
-static ssize_t StreamRead(stream_t *access, void *p_buffer, size_t i_len)
+static ssize_t StreamReadUninterruptible(stream_t *access, void *p_buffer,
+                                         size_t i_len)
 {
     access_sys_t *sys = access->p_sys;
 
@@ -844,6 +914,23 @@ static ssize_t StreamRead(stream_t *access, void *p_buffer, size_t i_len)
     memcpy(p_buffer, sys->p_cache + i_cache_offset, i_len);
     sys->i_pos += i_len;
     return (ssize_t)i_len;
+}
+
+/* While it reads, the input stopping aborts the read. */
+static ssize_t StreamRead(stream_t *access, void *p_buffer, size_t i_len)
+{
+    access_sys_t *sys = access->p_sys;
+
+    if (atomic_load(&sys->b_abort))
+        return -1;
+
+    vlc_interrupt_register(StreamAbort, sys);
+    ssize_t i_ret = StreamReadUninterruptible(access, p_buffer, i_len);
+    vlc_interrupt_unregister();
+
+    if (atomic_load(&sys->b_abort))
+        return -1;
+    return i_ret;
 }
 
 /* The cache survives seeks: navigation often stays within one window. */
@@ -957,9 +1044,11 @@ static void Close(vlc_object_t *obj)
     stream_t *access = (stream_t *)obj;
     access_sys_t *sys = access->p_sys;
 
-    /* Stop the worker before releasing the token it reads from. */
+    /* Stop the worker before releasing the token it reads from - and its
+     * read first, which a drive spinning up would hold for tens of seconds. */
     if (sys->b_readahead_started)
     {
+        StreamAbort(sys);
         vlc_mutex_lock(&sys->lock);
         sys->b_quit = true;
         vlc_cond_signal(&sys->wait_worker);
