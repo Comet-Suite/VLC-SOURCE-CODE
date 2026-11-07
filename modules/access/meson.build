@@ -323,7 +323,7 @@ endif
 #
 
 # Android USB optical drive support (contrib liblaser)
-laser_dep = dependency('liblaser', version: '>= 0.2.1',
+laser_dep = dependency('liblaser', version: '>= 0.3.1',
                        required: get_option('laser')
                            .require(host_system == 'android',
                                     error_message: 'liblaser is only used on Android'))

@@ -1,5 +1,5 @@
 # LASER
-LASER_VERSION := 0.2.1
+LASER_VERSION := 0.3.1
 
 LASER_URL := https://github.com/liblaser/liblaser/releases/download/v$(LASER_VERSION)/liblaser-$(LASER_VERSION).tar.bz2
 
@@ -8,7 +8,7 @@ ifdef HAVE_ANDROID
 PKGS += laser
 endif
 endif
-ifeq ($(call need_pkg,"liblaser >= 0.2.1"),)
+ifeq ($(call need_pkg,"liblaser >= 0.3.1"),)
 PKGS_FOUND += laser
 endif
 

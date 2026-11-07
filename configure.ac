@@ -2431,7 +2431,7 @@ PKG_ENABLE_MODULES_VLC([BLURAY], [libbluray], [libbluray >= 1.1.0], (libbluray f
 dnl
 dnl  Android USB optical drive disc classification and access
 dnl
-PKG_ENABLE_MODULES_VLC([LASER], [], [liblaser >= 0.2.1], [Android USB optical drive disc classification and access], [auto])
+PKG_ENABLE_MODULES_VLC([LASER], [], [liblaser >= 0.3.1], [Android USB optical drive disc classification and access], [auto])
 AM_CONDITIONAL([HAVE_LASER],
   [test "${enable_laser}" = "yes" && test "${VENDOR}" = "android"])
 
