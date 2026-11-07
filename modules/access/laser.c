@@ -57,6 +57,12 @@
 /* Read-ahead window, in sectors. */
 #define LASER_MAX_READ_SECTORS 128
 
+/* The window read after a jump, in sectors: one liblaser command, 64 KiB.
+ * What a jump reads - an IFO's tables, a menu's first VOBU - is mostly
+ * smaller, and a full window costs 256 KiB of transfer; reads going on from
+ * there get full windows again. */
+#define LASER_JUMP_READ_SECTORS 32
+
 /* Size of the refused-sector map, and how many refusals of one sector it
  * takes for reads there to return end of stream. */
 #define LASER_REFUSAL_SLOTS 16
@@ -684,12 +690,18 @@ static int StreamClassifyRead(stream_t *access, int i_read,
     return i_read; /* 0: end of medium */
 }
 
-/* Leaves a fetch of the following window in flight. Returns the sector count
- * now valid in the cache, 0 at end of medium, or -1. */
+/* Leaves a fetch of the following window in flight, when the reads go on
+ * sequentially. Returns the sector count now valid in the cache, 0 at end of
+ * medium, or -1. */
 static int StreamRefillCache(stream_t *access, uint32_t i_lba)
 {
     access_sys_t *sys = access->p_sys;
     int i_read;
+
+    /* Reading on from the end of the window: playback, a file read through.
+     * Otherwise a jump - navigation, an IFO, a title set after another. */
+    const bool b_sequential = sys->i_cache_blocks != 0 &&
+                              i_lba == sys->i_cache_lba + sys->i_cache_blocks;
 
     sys->i_cache_blocks = 0;    /* invalid until refilled */
 
@@ -721,13 +733,18 @@ static int StreamRefillCache(stream_t *access, uint32_t i_lba)
         return i_read;
     }
 
-    /* Miss: first read, or a seek away from the prefetched run. */
-    sys->b_ahead_ready = false;
+    /* Miss: first read, or a seek away from the prefetched run. A fetch
+     * asked for and not started yet is dropped: it would delay this read
+     * and the next ones, for a window a jump does not need. */
+    sys->b_ahead_ready  = false;
+    sys->b_ahead_wanted = false;
     vlc_mutex_unlock(&sys->lock);
 
     int i_want = StreamWindowSectors(sys, i_lba);
     if (i_want <= 0)
         return 0;
+    if (!b_sequential && i_want > LASER_JUMP_READ_SECTORS)
+        i_want = LASER_JUMP_READ_SECTORS;
 
     i_read = StreamClassifyRead(access,
                                 StreamReadLocked(access, i_lba, i_want,
@@ -739,10 +756,17 @@ static int StreamRefillCache(stream_t *access, uint32_t i_lba)
     sys->i_cache_lba    = i_lba;
     sys->i_cache_blocks = i_read;
 
-    /* Start prefetching the next window. */
-    vlc_mutex_lock(&sys->lock);
-    StreamRequestAhead(sys, i_lba + (uint32_t)i_read);
-    vlc_mutex_unlock(&sys->lock);
+    /* Prefetching the next window only once the reads go on sequentially:
+     * after a jump, the next read is most often another jump - scattered
+     * IFO tables, a menu - and waits for the fetch it does not use, a USB
+     * transfer being impossible to recall. Playback asks for the following
+     * window synchronously once, then reads ahead. */
+    if (b_sequential)
+    {
+        vlc_mutex_lock(&sys->lock);
+        StreamRequestAhead(sys, i_lba + (uint32_t)i_read);
+        vlc_mutex_unlock(&sys->lock);
+    }
 
     return i_read;
 }
