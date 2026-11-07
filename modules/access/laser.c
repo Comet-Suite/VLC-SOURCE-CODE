@@ -281,8 +281,18 @@ static int DirRead(stream_t *access, input_item_node_t *p_node)
     }
     else if (i_entries == 0)
     {
-        msg_Dbg(access, "no CD/VCD/DVD/BD recognized on token=%d "
-                "(data disc, empty drive, or read failure)", token);
+        /* Nothing to play: no row. Why, for the log only - an application
+         * asks the drive itself. */
+        const char *psz_state;
+        switch (disc.state)
+        {
+            case LASER_DISC_STATE_NO_MEDIUM: psz_state = "no-medium";    break;
+            case LASER_DISC_STATE_TRAY_OPEN: psz_state = "tray-open";    break;
+            case LASER_DISC_STATE_NOT_READY: psz_state = "not-ready";    break;
+            default:                         psz_state = "unrecognised"; break;
+        }
+        msg_Dbg(access, "no CD/VCD/DVD/BD recognized on token=%d (%s)",
+                token, psz_state);
     }
 
     for (int i = 0; i < i_entries && i_ret == VLC_SUCCESS; i++)
