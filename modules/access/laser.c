@@ -48,6 +48,7 @@
 #include <vlc_access.h>
 #include <vlc_input_item.h>
 #include <vlc_interrupt.h>
+#include <vlc_iso_lang.h>
 
 #include <laser.h>
 #include <laser_disc.h>
@@ -197,13 +198,36 @@ static int DirRead(stream_t *access, input_item_node_t *p_node)
 
     msg_Dbg(access, "classifying token=%d", token);
 
+    /* A Blu-ray's title in the menu language, as bluray.c reads it. Both
+     * ISO 639-2 forms, since disc authors use either. */
+    const char *langs[3] = { NULL, NULL, NULL };
+    char *psz_lang = var_InheritString(access, "menu-language");
+    if (psz_lang != NULL)
+    {
+        char *psz_comma = strchr(psz_lang, ',');
+        if (psz_comma != NULL)
+            *psz_comma = '\0';
+
+        const iso639_lang_t *pl = vlc_find_iso639(psz_lang, true);
+        if (pl != NULL)
+        {
+            int i_langs = 0;
+            if (pl->psz_iso639_2T[0] != '\0')
+                langs[i_langs++] = pl->psz_iso639_2T;
+            if (pl->psz_iso639_2B[0] != '\0' &&
+                strcmp(pl->psz_iso639_2B, pl->psz_iso639_2T) != 0)
+                langs[i_langs++] = pl->psz_iso639_2B;
+        }
+        free(psz_lang);
+    }
+
     /* A classification given up stops at liblaser's next checkpoint, rather
      * than running its retries and readiness waits to their end while the
      * drive stays claimed. Every read below happens on this thread. */
     laser_set_abort_cb(DirAborted, NULL);
 
     laser_disc_t disc;
-    laser_disc_identify(token, &disc);
+    laser_disc_identify_lang(token, langs, &disc);
 
     laser_set_abort_cb(NULL, NULL);
 
@@ -244,7 +268,8 @@ static int DirRead(stream_t *access, input_item_node_t *p_node)
         case LASER_DISC_BD_VIDEO:
             /* libbluray falls back to the first playlist without menus. */
             DirAddEntry(entries, &i_entries, i_capacity, "laser/bluray://%d",
-                        token, DiscLabel(&disc, "Blu-ray Disc"));
+                        token, disc.title[0] != '\0'
+                               ? disc.title : DiscLabel(&disc, "Blu-ray Disc"));
             break;
 
         case LASER_DISC_VCD:
