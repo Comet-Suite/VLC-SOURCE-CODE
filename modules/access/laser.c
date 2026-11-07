@@ -65,24 +65,11 @@
  * there get full windows again. */
 #define LASER_JUMP_READ_SECTORS 32
 
-/* Size of the refused-sector map, and how many refusals of one sector it
- * takes for reads there to return end of stream. */
-#define LASER_REFUSAL_SLOTS 16
-#define LASER_REFUSAL_MAX_HITS 3
-
 typedef struct
 {
-    /* Per sector: a protected VOB must not end the stream for the IFOs. */
-    struct
-    {
-        uint32_t i_lba;
-        unsigned i_hits;   /* 0 = slot empty */
-    } refusals[LASER_REFUSAL_SLOTS];
-
     int          token;
     uint64_t     i_size;
     uint64_t     i_pos;
-    unsigned     i_refusal_count;  /* for the log only */
     vlc_thread_t readahead_thread;
     bool         b_readahead_started;
     atomic_bool  b_media_gone;
@@ -90,7 +77,6 @@ typedef struct
     /* The input is stopping, or the stream closing: the reads in progress,
      * on either thread, give up. See StreamAbort(). */
     atomic_bool  b_abort;
-    vlc_mutex_t  refusal_lock;
     vlc_mutex_t  lock;
     vlc_cond_t   wait_worker;   /* worker waits here for a request      */
     vlc_cond_t   wait_done;     /* consumer waits here for a completion */
@@ -322,53 +308,6 @@ static int DirRead(stream_t *access, input_item_node_t *p_node)
  * Open / Close
  * ============================================================================ */
 
-/* Failure is not fatal: the stream size is then unknown. */
-static bool laser_read_capacity(stream_t *access, int token,
-                                uint64_t *pi_size)
-{
-    uint8_t cdb[10] = { 0 };
-    cdb[0] = 0x25; /* READ CAPACITY(10) */
-
-    uint8_t data[8] = { 0 };
-    int i_actual = 0;
-
-    laser_status_t st = laser_scsi_cdb(token, cdb, sizeof(cdb),
-                                       data, sizeof(data), 1,
-                                       &i_actual);
-    if (st != LASER_OK || i_actual < (int)sizeof(data))
-    {
-        msg_Warn(access, "READ CAPACITY failed (status %d, %d "
-                 "bytes) - continuing with an unknown medium size",
-                 (int)st, i_actual);
-        return false;
-    }
-
-    uint32_t i_last_lba   = ((uint32_t)data[0] << 24) | ((uint32_t)data[1] << 16)
-                          | ((uint32_t)data[2] <<  8) |  (uint32_t)data[3];
-    uint32_t i_block_size = ((uint32_t)data[4] << 24) | ((uint32_t)data[5] << 16)
-                          | ((uint32_t)data[6] <<  8) |  (uint32_t)data[7];
-
-    /* READ CAPACITY(10) overflow sentinel: implausible on optical media. */
-    if (i_last_lba == 0xFFFFFFFFu)
-    {
-        msg_Warn(access, "READ CAPACITY reports the 32-bit "
-                 "overflow sentinel - ignoring it");
-        return false;
-    }
-
-    /* The sector arithmetic below assumes 2048-byte blocks. */
-    if (i_block_size != LASER_SECTOR_SIZE)
-    {
-        msg_Warn(access, "drive reports a %u-byte block size, "
-                 "expected %u - ignoring the reported capacity",
-                 i_block_size, (unsigned)LASER_SECTOR_SIZE);
-        return false;
-    }
-
-    *pi_size = ((uint64_t)i_last_lba + 1) * (uint64_t)LASER_SECTOR_SIZE;
-    return true;
-}
-
 /* Reached through laser-dir://<fd>, and through laser://<fd>, which is
  * playback's: the location is the fd, the access name says which. */
 static int OpenDir(vlc_object_t *obj)
@@ -409,102 +348,14 @@ static int OpenDir(vlc_object_t *obj)
  * Playback: byte-stream access over the same SCSI transport
  * ============================================================================ */
 
-/* Checked before issuing, so a latched sector costs no SCSI command at all. */
-static bool StreamRefusalLatched(access_sys_t *sys, uint32_t i_lba)
-{
-    bool b_latched = false;
-
-    vlc_mutex_lock(&sys->refusal_lock);
-    for (unsigned i = 0; i < LASER_REFUSAL_SLOTS; i++)
-        if (sys->refusals[i].i_hits >= LASER_REFUSAL_MAX_HITS &&
-            sys->refusals[i].i_lba == i_lba)
-        {
-            b_latched = true;
-            break;
-        }
-    vlc_mutex_unlock(&sys->refusal_lock);
-
-    return b_latched;
-}
-
-/* Logs once per distinct refused sector. */
-static void StreamRefused(stream_t *access, uint32_t i_lba,
-                          laser_status_t reason)
-{
-    access_sys_t *sys = access->p_sys;
-
-    /* Messages are composed outside the lock. */
-    vlc_mutex_lock(&sys->refusal_lock);
-
-    for (unsigned i = 0; i < LASER_REFUSAL_SLOTS; i++)
-    {
-        if (sys->refusals[i].i_hits > 0 && sys->refusals[i].i_lba == i_lba)
-        {
-            /* Saturating: a wrap would unlatch. */
-            if (sys->refusals[i].i_hits < LASER_REFUSAL_MAX_HITS)
-                sys->refusals[i].i_hits++;
-            vlc_mutex_unlock(&sys->refusal_lock);
-            return;
-        }
-    }
-
-    /* Evict the least-hit slot. */
-    unsigned i_slot = 0;
-    for (unsigned i = 1; i < LASER_REFUSAL_SLOTS; i++)
-    {
-        if (sys->refusals[i].i_hits < sys->refusals[i_slot].i_hits)
-            i_slot = i;
-        if (sys->refusals[i_slot].i_hits == 0)
-            break;      /* an empty slot is as good as it gets */
-    }
-
-    sys->refusals[i_slot].i_lba  = i_lba;
-    sys->refusals[i_slot].i_hits = 1;
-    sys->i_refusal_count++;
-
-    const unsigned i_count = sys->i_refusal_count;
-
-    vlc_mutex_unlock(&sys->refusal_lock);
-
-    switch (reason)
-    {
-    case LASER_ERR_REGION:
-        msg_Err(access, "this disc's region does not match the "
-                "drive's. This is NOT an authentication problem and no key "
-                "exchange will fix it.");
-        break;
-
-    case LASER_ERR_SCRAMBLED:
-        msg_Warn(access, "the drive refuses to read LBA %u - "
-                 "CSS-scrambled content on a drive that has not been "
-                 "authenticated. Reads elsewhere on the disc are unaffected. "
-                 "(distinct refused sectors so far: %u)",
-                 i_lba, i_count);
-        break;
-
-    default:
-        msg_Warn(access, "the drive refuses to read LBA %u and "
-                 "will not explain why (status %d). Reads elsewhere on the "
-                 "disc are unaffected. (distinct refused sectors so far: %u)",
-                 i_lba, (int)reason, i_count);
-        break;
-    }
-}
-
-/* A changed medium is treated like an ejection. */
+/* A changed medium is treated like an ejection. liblaser forgets what it
+ * knew of the old one's sectors. */
 static void StreamForgetMedium(stream_t *access)
 {
     access_sys_t *sys = access->p_sys;
 
-    msg_Warn(access, "the medium may have changed - dropping the "
-             "refused-sector map and giving up on this medium");
-
-    /* The cache fields belong to the consumer thread: not touched here. */
-
-    vlc_mutex_lock(&sys->refusal_lock);
-    memset(sys->refusals, 0, sizeof(sys->refusals));
-    sys->i_refusal_count  = 0;
-    vlc_mutex_unlock(&sys->refusal_lock);
+    msg_Warn(access, "the medium may have changed - giving up on this "
+             "medium");
 
     /* Latched, or the caller would keep reading. */
     atomic_store_explicit(&sys->b_media_gone, true, memory_order_relaxed);
@@ -525,61 +376,6 @@ static ssize_t StreamMediaGoneRead(stream_t *access)
     return -1;
 }
 
-/* Called when the drive reports no CSS session: those sectors may become
- * readable once libdvdcss re-authenticates. */
-static void StreamForgetRefusals(stream_t *access)
-{
-    access_sys_t *sys = access->p_sys;
-
-    vlc_mutex_lock(&sys->refusal_lock);
-    const unsigned i_count = sys->i_refusal_count;
-    if (i_count > 0)
-    {
-        memset(sys->refusals, 0, sizeof(sys->refusals));
-        sys->i_refusal_count  = 0;
-    }
-    vlc_mutex_unlock(&sys->refusal_lock);
-
-    if (i_count == 0)
-        return;
-
-    msg_Warn(access, "the drive reports no CSS session in force - "
-             "forgetting %u refused sector(s), which may become readable "
-             "after re-authentication", i_count);
-}
-
-/* Stops a read short of a known-refused sector. */
-static int StreamClampBeforeRefused(access_sys_t *sys, uint32_t i_lba,
-                                    int i_want)
-{
-    vlc_mutex_lock(&sys->refusal_lock);
-
-    for (unsigned i = 0; i < LASER_REFUSAL_SLOTS; i++)
-    {
-        if (sys->refusals[i].i_hits == 0)
-            continue;
-
-        uint32_t i_bad = sys->refusals[i].i_lba;
-        if (i_bad < i_lba)
-            continue;
-        if (i_bad == i_lba)
-        {
-            /* Below the threshold, let the read fail again so that the
-             * counter advances. */
-            int i_ret = sys->refusals[i].i_hits >= LASER_REFUSAL_MAX_HITS
-                      ? 0 : 1;
-            vlc_mutex_unlock(&sys->refusal_lock);
-            return i_ret;
-        }
-        if (i_bad - i_lba < (uint32_t)i_want)
-            i_want = (int)(i_bad - i_lba);
-    }
-
-    vlc_mutex_unlock(&sys->refusal_lock);
-
-    return i_want;
-}
-
 /* Medium gone or drive unplugged: latched by StreamForgetMedium(). */
 static bool StreamIsTerminal(int i_status)
 {
@@ -587,8 +383,35 @@ static bool StreamIsTerminal(int i_status)
            i_status == (int)LASER_ERR_NO_DEVICE;
 }
 
-/* On a refusal, halves the request so that the readable prefix is kept: a
- * refusal fails the whole command. Only a single-sector refusal is recorded.
+/* Sectors the drive could not read, read as zeros.
+ *
+ * A read failing on the disc - liblaser's LASER_ERR_IO, its retries spent -
+ * is not passed on: VLC's cache_read filter retries a failed read for as long
+ * as the input runs. Some protections put unreadable sectors on purpose where
+ * no title plays, for a program reading the disc from its start to stop on;
+ * a scratch in the film gives a short glitch rather than a halt. liblaser
+ * records them and fails at once a read starting in them, for every consumer
+ * of the drive until the disc changes, and stops a read reaching them short:
+ * this fills those it knows of, from [i_lba], at most [i_want] - one at
+ * least, should it know of none. Returns their count. */
+static int StreamUnreadable(stream_t *access, uint32_t i_lba, int i_want,
+                            uint8_t *p_dst)
+{
+    access_sys_t *sys = access->p_sys;
+    int i_count = laser_unreadable_blocks(sys->token, i_lba, i_want);
+    if (i_count <= 0)
+        i_count = 1;
+
+    msg_Dbg(access, "LBA %u x %d unreadable - read as zeros", i_lba, i_count);
+    memset(p_dst, 0, (size_t)i_count * LASER_SECTOR_SIZE);
+    return i_count;
+}
+
+/* liblaser stops a read short of a refused sector, and of an unreadable one,
+ * and reads the readable sectors before a refused one. A read starting on a
+ * refused sector fails; once liblaser has seen it refused often enough, it
+ * reads as end of stream, at that position only. A read failing on the disc
+ * reads as zeros: see StreamUnreadable().
  *
  * Returns the sector count, 0 at end of medium, or a negative laser status. */
 static int StreamReadSectors(stream_t *access, uint32_t i_lba, int i_want,
@@ -596,46 +419,18 @@ static int StreamReadSectors(stream_t *access, uint32_t i_lba, int i_want,
 {
     access_sys_t *sys = access->p_sys;
 
-    i_want = StreamClampBeforeRefused(sys, i_lba, i_want);
-    if (i_want <= 0)
-        return 0;   /* the very next sector is known-refused: end of stream */
+    int i_read = laser_read_blocks(sys->token, i_lba, i_want, p_dst);
 
-    while (i_want > 1)
-    {
-        int i_read = laser_read_blocks(sys->token, i_lba, i_want, p_dst);
-
-        if (StreamIsTerminal(i_read))
-        {
-            StreamForgetMedium(access);
-            return i_read;
-        }
-        if (i_read == (int)LASER_ERR_NO_KEY)
-        {
-            /* The CSS session went away: no sector is to blame. */
-            StreamForgetRefusals(access);
-            return i_read;
-        }
-        if (!laser_status_is_positional(i_read))
-            return i_read;
-        i_want /= 2;
-    }
-
-    int i_read = laser_read_blocks(sys->token, i_lba, 1, p_dst);
     if (StreamIsTerminal(i_read))
     {
         StreamForgetMedium(access);
         return i_read;
     }
-    if (i_read == (int)LASER_ERR_NO_KEY)
-    {
-        StreamForgetRefusals(access);
-        return i_read;
-    }
-    if (laser_status_is_positional(i_read))
-    {
-        StreamRefused(access, i_lba, (laser_status_t)i_read);
-        return i_read;
-    }
+    if (i_read == (int)LASER_ERR_IO)
+        return StreamUnreadable(access, i_lba, i_want, p_dst);
+    if (laser_status_is_positional(i_read) &&
+        laser_refused_for_good(sys->token, i_lba))
+        return 0;   /* refused for good: end of stream, here */
 
     return i_read;
 }
@@ -748,7 +543,10 @@ static void *StreamReadaheadThread(void *p_data)
     return NULL;
 }
 
-/* Returns the sector count, 0 at end of medium, or -1, logging why. */
+/* Returns the sector count, 0 at end of medium, or -1, logging why. A
+ * failure is never the disc's: StreamReadSectors() reads a sector the drive
+ * cannot read as zeros. It is the input stopping, a refusal, the CSS session
+ * gone, or the disc or the drive gone. */
 static int StreamClassifyRead(stream_t *access, int i_read,
                               uint32_t i_lba, int i_want,
                               const char *psz_what)
@@ -886,9 +684,9 @@ static ssize_t StreamReadUninterruptible(stream_t *access, void *p_buffer,
     uint32_t i_lba    = (uint32_t)(sys->i_pos / LASER_SECTOR_SIZE);
     size_t   i_offset = (size_t)(sys->i_pos % LASER_SECTOR_SIZE);
 
-    /* A repeatedly refused sector reads as end of stream, at that position
-     * only. Scratches (LASER_ERR_IO) are never recorded. */
-    if (StreamRefusalLatched(sys, i_lba))
+    /* A sector refused for good reads as end of stream, at that position
+     * only, without a command: see StreamReadSectors(). */
+    if (laser_refused_for_good(sys->token, i_lba))
         return 0;
 
     /* Large aligned reads go straight to the caller's buffer. */
@@ -1028,7 +826,6 @@ static int OpenStream(vlc_object_t *obj)
 
     vlc_mutex_init(&sys->lock);
     vlc_mutex_init(&sys->io_lock);
-    vlc_mutex_init(&sys->refusal_lock);
     vlc_cond_init(&sys->wait_worker);
     vlc_cond_init(&sys->wait_done);
 
@@ -1041,12 +838,14 @@ static int OpenStream(vlc_object_t *obj)
         return VLC_EGENERIC;
     }
 
-    if (!laser_read_capacity(access, fd, &sys->i_size))
-        sys->i_size = 0;
-    else
-        msg_Dbg(access, "medium size %" PRIu64 " bytes (%" PRIu64
-                " sectors)", sys->i_size,
-                sys->i_size / LASER_SECTOR_SIZE);
+    /* Left 0, unknown, if the drive will not say: liblaser logs why. */
+    uint32_t i_blocks;
+    if (laser_capacity(fd, &i_blocks) == LASER_OK)
+    {
+        sys->i_size = (uint64_t)i_blocks * LASER_SECTOR_SIZE;
+        msg_Dbg(access, "medium size %" PRIu64 " bytes (%" PRIu32
+                " sectors)", sys->i_size, i_blocks);
+    }
 
     if (vlc_clone(&sys->readahead_thread, StreamReadaheadThread, access) == 0)
         sys->b_readahead_started = true;
