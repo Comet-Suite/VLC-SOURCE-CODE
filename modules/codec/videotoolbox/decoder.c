@@ -74,7 +74,7 @@ static void RequestFlush(decoder_t *);
 static void Drain(decoder_t *p_dec, bool flush);
 static void DecoderCallback(void *, void *, OSStatus, VTDecodeInfoFlags,
                             CVPixelBufferRef, CMTime, CMTime);
-static Boolean deviceSupportsHEVC();
+static Boolean deviceSupportsHardwareDecode(CMVideoCodecType codec);
 static bool deviceSupports42010bitRendering();
 static Boolean deviceSupportsAdvancedProfiles();
 static Boolean deviceSupportsAdvancedLevels();
@@ -153,7 +153,8 @@ static OSType GetBestChroma(uint8_t i_chroma_format, uint8_t i_depth_luma,
             return kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange;
         if (i_depth_luma == 10 && i_depth_chroma == 10)
         {
-            if (deviceSupportsHEVC() && deviceSupports42010bitRendering())
+            if (deviceSupportsHardwareDecode(kCMVideoCodecType_HEVC) &&
+                deviceSupports42010bitRendering())
                 return kCVPixelFormatType_420YpCbCr10BiPlanarVideoRange;
 
            /* Force BGRA output (and let VT handle the tone mapping) since the
@@ -208,6 +209,7 @@ struct vt_h264_context
 {
     struct hxxx_helper hh;
     h264_poc_context_t poc;
+    bool b_extra_has_config;
 };
 
 static void GetxPSH264(uint8_t i_pps_id, void *priv,
@@ -369,6 +371,7 @@ static bool InitH264(decoder_t *p_dec)
         CleanH264(ctx);
         return false;
     }
+    ctx->b_extra_has_config = hxxx_helper_has_config(&ctx->hh);
     p_sys->p_codec_context = ctx;
     p_sys->dpb.i_fields_per_buffer = 2;
     return true;
@@ -380,7 +383,7 @@ static CFDictionaryRef CopyDecoderExtradataH264(decoder_t *p_dec)
     struct vt_h264_context *h264ctx = p_sys->p_codec_context;
 
     CFDictionaryRef extradata = NULL;
-    if (p_dec->fmt_in->i_extra && h264ctx->hh.i_input_nal_length_size)
+    if (h264ctx->b_extra_has_config && h264ctx->hh.i_input_nal_length_size)
     {
         /* copy DecoderConfiguration */
         extradata = ExtradataInfoCreate(CFSTR("avcC"),
@@ -462,7 +465,7 @@ static bool LateStartH264(decoder_t *p_dec)
 {
     decoder_sys_t *p_sys = p_dec->p_sys;
     struct vt_h264_context *h264ctx = p_sys->p_codec_context;
-    return (p_dec->fmt_in->i_extra == 0 && !hxxx_helper_has_config(&h264ctx->hh));
+    return !hxxx_helper_has_config(&h264ctx->hh);
 }
 
 static bool ConfigureVoutH264(decoder_t *p_dec)
@@ -569,6 +572,8 @@ struct vt_hevc_context
 {
     struct hxxx_helper hh;
     hevc_poc_ctx_t poc;
+    bool b_extra_has_config;
+    bool b_dovi;
 };
 
 static void CleanHEVC(void *p_codec_context)
@@ -593,6 +598,15 @@ static bool InitHEVC(decoder_t *p_dec)
         CleanHEVC(ctx);
         return false;
     }
+    ctx->b_extra_has_config = ctx->hh.hevc.i_sps_count &&
+                              ctx->hh.hevc.i_pps_count;
+
+    const video_format_t *fmt = &p_dec->fmt_in->video;
+    ctx->b_dovi = p_sys->codec == kCMVideoCodecType_DolbyVisionHEVC ||
+        (fmt->dovi.profile == 8 && fmt->dovi.rpu_present &&
+         (fmt->dovi.bl_signal_compatibility_id == 1 ||
+          fmt->dovi.bl_signal_compatibility_id == 4) &&
+         deviceSupportsHardwareDecode(kCMVideoCodecType_DolbyVisionHEVC));
     p_sys->p_codec_context = ctx;
     return true;
 }
@@ -767,7 +781,7 @@ static CFDictionaryRef CopyDecoderExtradataHEVC(decoder_t *p_dec)
     struct vt_hevc_context *hevcctx = p_sys->p_codec_context;
 
     CFDictionaryRef extradata = NULL;
-    if (p_dec->fmt_in->i_extra && hevcctx->hh.i_input_nal_length_size)
+    if (hevcctx->b_extra_has_config && hevcctx->hh.i_input_nal_length_size)
     {
         /* copy DecoderConfiguration */
         extradata = ExtradataInfoCreate(CFSTR("hvcC"),
@@ -786,14 +800,30 @@ static CFDictionaryRef CopyDecoderExtradataHEVC(decoder_t *p_dec)
             block_Release(p_hvcC);
         }
     }
-    return extradata;
+
+    if (extradata == NULL || !hevcctx->b_dovi)
+        return extradata;
+
+    CFMutableDictionaryRef atoms =
+        CFDictionaryCreateMutableCopy(kCFAllocatorDefault, 0, extradata);
+    if (atoms == NULL)
+        return extradata;
+
+    if (!cfdict_set_dovi_config(atoms, &p_dec->fmt_in->video))
+    {
+        CFRelease(atoms);
+        return extradata;
+    }
+    CFRelease(extradata);
+    return atoms;
 }
 
 static bool LateStartHEVC(decoder_t *p_dec)
 {
     decoder_sys_t *p_sys = p_dec->p_sys;
     struct vt_hevc_context *hevcctx = p_sys->p_codec_context;
-    return (p_dec->fmt_in->i_extra == 0 && !hxxx_helper_has_config(&hevcctx->hh));
+    return !hevcctx->b_extra_has_config &&
+           !hxxx_helper_has_config(&hevcctx->hh);
 }
 
 static bool CodecSupportedHEVC(decoder_t *p_dec)
@@ -812,7 +842,24 @@ static void CodecFlushHEVC(decoder_t *p_dec)
     hevc_poc_cxt_init(&hevcctx->poc);
 }
 
-#define ConfigureVoutHEVC ConfigureVoutH264
+static bool ConfigureVoutHEVC(decoder_t *p_dec)
+{
+    decoder_sys_t *p_sys = p_dec->p_sys;
+    struct vt_hevc_context *hevcctx = p_sys->p_codec_context;
+    if (!ConfigureVoutH264(p_dec))
+        return false;
+
+    if (hevcctx->b_dovi)
+        p_dec->fmt_out.video.dovi = p_dec->fmt_in->video.dovi;
+    if (p_sys->codec == kCMVideoCodecType_DolbyVisionHEVC)
+    {
+        p_dec->fmt_out.video.primaries = COLOR_PRIMARIES_BT2020;
+        p_dec->fmt_out.video.transfer = TRANSFER_FUNC_SMPTE_ST2084;
+        p_dec->fmt_out.video.space = COLOR_SPACE_BT2020;
+    }
+    return true;
+}
+
 #define ProcessBlockHEVC ProcessBlockH264
 #define VideoToolboxNeedsToRestartHEVC VideoToolboxNeedsToRestartH264
 
@@ -950,10 +997,17 @@ static CMVideoCodecType CodecPrecheck(decoder_t *p_dec)
             return kCMVideoCodecType_H264;
 
         case VLC_CODEC_HEVC:
-            if (!deviceSupportsHEVC())
+            if (!deviceSupportsHardwareDecode(kCMVideoCodecType_HEVC))
             {
                 msg_Warn(p_dec, "device doesn't support HEVC");
                 return 0;
+            }
+            if (p_dec->fmt_in->video.dovi.profile == 5 &&
+                p_dec->fmt_in->video.dovi.rpu_present &&
+                deviceSupportsHardwareDecode(kCMVideoCodecType_DolbyVisionHEVC))
+            {
+                msg_Dbg(p_dec, "decoding Dolby Vision profile 5");
+                return kCMVideoCodecType_DolbyVisionHEVC;
             }
             return kCMVideoCodecType_HEVC;
 
@@ -1392,6 +1446,7 @@ static int OpenDecoder(vlc_object_t *p_this)
 
     p_dec->fmt_out.video = p_dec->fmt_in->video;
     p_dec->fmt_out.video.p_palette = NULL;
+    memset(&p_dec->fmt_out.video.dovi, 0, sizeof(p_dec->fmt_out.video.dovi));
 
     if (!p_dec->fmt_out.video.i_sar_num || !p_dec->fmt_out.video.i_sar_den)
     {
@@ -1429,6 +1484,7 @@ static int OpenDecoder(vlc_object_t *p_this)
             p_sys->start_sync_state = STATE_BITSTREAM_WAITING_RAP;
             break;
 
+        case kCMVideoCodecType_DolbyVisionHEVC:
         case kCMVideoCodecType_HEVC:
             p_sys->pf_codec_init = InitHEVC;
             p_sys->pf_codec_clean = CleanHEVC;
@@ -1482,10 +1538,10 @@ static int OpenDecoder(vlc_object_t *p_this)
 
 #pragma mark - helpers
 
-static Boolean deviceSupportsHEVC()
+static Boolean deviceSupportsHardwareDecode(CMVideoCodecType codec)
 {
     if (__builtin_available(macOS 10.13, iOS 11.0, tvOS 11.0, *))
-        return VTIsHardwareDecodeSupported(kCMVideoCodecType_HEVC);
+        return VTIsHardwareDecodeSupported(codec);
     else
         return false;
 }
