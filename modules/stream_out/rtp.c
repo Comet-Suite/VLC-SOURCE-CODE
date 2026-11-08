@@ -1581,6 +1581,11 @@ size_t rtp_mtu (const sout_stream_id_sys_t *id)
     return id->i_mtu - 12;
 }
 
+unsigned rtp_audio_channels(const sout_stream_id_sys_t *id)
+{
+    return id->rtp_fmt.channels;
+}
+
 /*****************************************************************************
  * Non-RTP mux
  *****************************************************************************/
