@@ -206,12 +206,16 @@ int rtp_get_fmt( vlc_object_t *obj, const es_format_t *p_fmt, const char *mux,
     switch( p_fmt->i_codec )
     {
         case VLC_CODEC_MULAW:
+            if( p_fmt->audio.i_channels == 0 )
+                return VLC_EINVAL;
             if( p_fmt->audio.i_channels == 1 && p_fmt->audio.i_rate == 8000 )
                 rtp_fmt->payload_type = 0;
             rtp_fmt->ptname = "PCMU";
             rtp_fmt->pf_packetize = rtp_packetize_pcm;
             break;
         case VLC_CODEC_ALAW:
+            if( p_fmt->audio.i_channels == 0 )
+                return VLC_EINVAL;
             if( p_fmt->audio.i_channels == 1 && p_fmt->audio.i_rate == 8000 )
                 rtp_fmt->payload_type = 8;
             rtp_fmt->ptname = "PCMA";
@@ -219,6 +223,8 @@ int rtp_get_fmt( vlc_object_t *obj, const es_format_t *p_fmt, const char *mux,
             break;
         case VLC_CODEC_S16B:
         case VLC_CODEC_S16L:
+            if( p_fmt->audio.i_channels == 0 )
+                return VLC_EINVAL;
             if( p_fmt->audio.i_channels == 1 && p_fmt->audio.i_rate == 44100 )
             {
                 rtp_fmt->payload_type = 11;
@@ -235,10 +241,14 @@ int rtp_get_fmt( vlc_object_t *obj, const es_format_t *p_fmt, const char *mux,
                 rtp_fmt->pf_packetize = rtp_packetize_swab;
             break;
         case VLC_CODEC_U8:
+            if( p_fmt->audio.i_channels == 0 )
+                return VLC_EINVAL;
             rtp_fmt->ptname = "L8";
             rtp_fmt->pf_packetize = rtp_packetize_pcm;
             break;
         case VLC_CODEC_S24B:
+            if( p_fmt->audio.i_channels == 0 )
+                return VLC_EINVAL;
             rtp_fmt->ptname = "L24";
             rtp_fmt->pf_packetize = rtp_packetize_pcm;
             break;
