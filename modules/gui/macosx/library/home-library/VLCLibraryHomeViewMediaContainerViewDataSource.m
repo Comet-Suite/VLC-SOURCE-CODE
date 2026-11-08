@@ -34,7 +34,6 @@
 #import "library/VLCLibraryRepresentedItem.h"
 
 #import "library/home-library/VLCLibraryHomeViewVideoCarouselContainerView.h"
-#import "library/home-library/VLCLibraryHomeViewVideoGridContainerView.h"
 
 #import "library/VLCLibraryMediaGroupDescriptor.h"
 

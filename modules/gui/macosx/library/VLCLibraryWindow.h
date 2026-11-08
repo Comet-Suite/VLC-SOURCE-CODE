@@ -66,7 +66,6 @@ extern NSString * const VLCLibraryWindowEmbeddedVideoPlaybackActiveKey;
 @property (readwrite, weak) IBOutlet NSSplitView *mainSplitView;
 @property (readwrite, weak) IBOutlet NSView *homeLibraryView;
 @property (readwrite, weak) IBOutlet NSScrollView *homeLibraryStackViewScrollView;
-@property (readwrite, weak) IBOutlet NSStackView *homeLibraryStackView;
 @property (readwrite, weak) IBOutlet NSView *videoLibraryView;
 @property (readwrite, weak) IBOutlet NSSplitView *videoLibrarySplitView;
 @property (readwrite, weak) IBOutlet NSScrollView *videoLibraryCollectionViewScrollView;

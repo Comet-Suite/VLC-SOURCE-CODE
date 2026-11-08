@@ -284,6 +284,8 @@ libmacosx_plugin_la_SOURCES = \
 	gui/macosx/library/home-library/VLCLibraryHomeBrowseCollectionViewItem.m \
 	gui/macosx/library/home-library/VLCLibraryHomeViewBrowseCarouselItemCell.h \
 	gui/macosx/library/home-library/VLCLibraryHomeViewBrowseCarouselItemCell.m \
+	gui/macosx/library/home-library/VLCLibraryHomeViewCollectionViewController.h \
+	gui/macosx/library/home-library/VLCLibraryHomeViewCollectionViewController.m \
 	gui/macosx/library/home-library/VLCLibraryHomeViewStackViewController.h \
 	gui/macosx/library/home-library/VLCLibraryHomeViewStackViewController.m \
 	gui/macosx/library/home-library/VLCLibraryHomeViewContainerView.h \
@@ -294,8 +296,6 @@ libmacosx_plugin_la_SOURCES = \
 	gui/macosx/library/home-library/VLCLibraryHomeViewVideoCarouselContainerView.m \
     gui/macosx/library/home-library/VLCLibraryHomeViewMediaContainerViewDataSource.h \
     gui/macosx/library/home-library/VLCLibraryHomeViewMediaContainerViewDataSource.m \
-	gui/macosx/library/home-library/VLCLibraryHomeViewVideoGridContainerView.h \
-    gui/macosx/library/home-library/VLCLibraryHomeViewVideoGridContainerView.m \
 	gui/macosx/library/video-library/VLCLibraryMoviesDataSource.h \
 	gui/macosx/library/video-library/VLCLibraryMoviesDataSource.m \
 	gui/macosx/library/video-library/VLCLibraryShowEpisodeTableViewDelegate.h \

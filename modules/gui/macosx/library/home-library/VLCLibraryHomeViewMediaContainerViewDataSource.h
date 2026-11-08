@@ -24,7 +24,6 @@
 
 #import "library/VLCLibraryCollectionViewDataSource.h"
 
-@class VLCLibraryHomeViewVideoGridContainerView;
 @class VLCLibraryMediaCollectionViewGroupDescriptor;
 @class VLCMediaLibraryMediaItem;
 
@@ -37,7 +36,6 @@ extern NSString * const VLCLibraryMediaCollectionViewDataSourceDisplayedCollecti
 @property (readwrite, weak) NSCollectionView *collectionView;
 @property (readwrite, copy) NSUserInterfaceItemIdentifier collectionViewItemIdentifier;
 @property (readwrite, assign, nonatomic) VLCLibraryMediaCollectionViewGroupDescriptor *groupDescriptor;
-@property (readwrite, assign) VLCLibraryHomeViewVideoGridContainerView *parentCell;
 
 // Zero keeps every item visible. The full source remains available when the
 // featured item changes, including when it is the only recent video.
