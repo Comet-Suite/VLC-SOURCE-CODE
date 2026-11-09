@@ -1158,6 +1158,7 @@ static int rtp_packetize_pcm(sout_stream_id_sys_t *id, block_t *in,
             return VLC_ENOMEM;
         }
 
+        out->i_pts = out->i_dts = in->i_pts;
         rtp_packetize_common(id, out, marker, in->i_pts);
         memcpy(out->p_buffer + 12, in->p_buffer, payload);
         rtp_packetize_send(id, out);
@@ -1213,6 +1214,7 @@ static int rtp_packetize_swab(sout_stream_id_sys_t *id, block_t *in)
             return VLC_ENOMEM;
         }
 
+        out->i_pts = out->i_dts = in->i_pts;
         rtp_packetize_common(id, out, marker, in->i_pts);
         swab(in->p_buffer, out->p_buffer + 12, payload);
         rtp_packetize_send(id, out);
