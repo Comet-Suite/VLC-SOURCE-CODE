@@ -721,6 +721,9 @@ vlc_clock_monotonic_to_system(vlc_clock_t *clock, struct vlc_clock_context *ctx,
      && ctx == main_clock->context
      && main_clock->first_pcr.system != VLC_TICK_INVALID)
     {
+        if (main_clock->paused && main_clock->pause_date != VLC_TICK_INVALID)
+            now = main_clock->pause_date;
+
         /* XXX: This input_delay calculation is needed until we (finally) get
          * ride of the input clock. This code is adapted from input_clock.c and
          * is used to introduce the same delay than the input clock (first PTS
