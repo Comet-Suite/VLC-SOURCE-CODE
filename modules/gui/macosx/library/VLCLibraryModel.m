@@ -151,7 +151,7 @@ NSString * const VLCLibraryModelDiscoveryFailed = @"VLCLibraryModelDiscoveryFail
 - (void)resetCachedListOfRecentlyAddedVideoMedia;
 - (void)resetCachedListOfRecentlyAddedAudioMedia;
 - (void)resetCachedListOfHistoryMedia;
-- (void)refreshCachedHistoryMediaIfNeeded;
+- (void)refreshCachedHistoryMediaIfNeededForMediaID:(nullable NSNumber *)mediaID;
 - (void)resetCachedListOfArtists;
 - (void)resetCachedListOfAlbums;
 - (void)resetCachedListOfGenres;
@@ -198,6 +198,7 @@ static void libraryCallback(void *p_data, const vlc_ml_event_t *p_event)
                 [libraryModel handleMediaItemDeletionEvent:p_event];
                 break;
             case VLC_ML_EVENT_MEDIA_THUMBNAIL_GENERATED:
+                // Medialibrary also delivers MEDIA_UPDATED when it stores the artwork.
                 if (p_event->media_thumbnail_generated.b_success) {
                     VLCMediaLibraryMediaItem *mediaItem = [[VLCMediaLibraryMediaItem alloc] initWithMediaItem:(struct vlc_ml_media_t *)p_event->media_thumbnail_generated.p_media];
                     if (mediaItem == nil) {
@@ -206,7 +207,6 @@ static void libraryCallback(void *p_data, const vlc_ml_event_t *p_event)
                     dispatch_async(dispatch_get_main_queue(), ^{
                         [libraryModel mediaItemThumbnailGenerated:mediaItem];
                     });
-                    [libraryModel refreshCachedHistoryMediaIfNeeded];
                 }
                 break;
             case VLC_ML_EVENT_ARTIST_ADDED:
@@ -262,7 +262,7 @@ static void libraryCallback(void *p_data, const vlc_ml_event_t *p_event)
             case VLC_ML_EVENT_HISTORY_CHANGED:
                 [libraryModel resetCachedListOfRecentMedia];
                 [libraryModel resetCachedListOfRecentAudioMedia];
-                [libraryModel refreshCachedHistoryMediaIfNeeded];
+                [libraryModel refreshCachedHistoryMediaIfNeededForMediaID:nil];
                 break;
             case VLC_ML_EVENT_FAVORITES_CHANGED:
             {
@@ -1454,7 +1454,7 @@ static void libraryCallback(void *p_data, const vlc_ml_event_t *p_event)
     });
 }
 
-- (void)refreshCachedHistoryMediaIfNeeded
+- (void)refreshCachedHistoryMediaIfNeededForMediaID:(NSNumber *)mediaID
 {
     const NSUInteger generation = self.cacheGeneration;
     dispatch_barrier_async(_mediaItemCacheModificationQueue, ^{
@@ -1464,11 +1464,22 @@ static void libraryCallback(void *p_data, const vlc_ml_event_t *p_event)
         @synchronized (self->_cacheUpdateTokens) {
             const BOOL pending = [self->_pendingCacheUpdates containsObject:
                 [NSValue valueWithPointer:@selector(cachedHistoryMedia)]];
-            if (self->_cachedHistoryMedia != nil || pending) {
-                // Replace pending snapshots as well: an update can change history
-                // membership, search results, or playback-date ordering.
-                [self resetCachedListOfHistoryMedia];
+            NSArray<VLCMediaLibraryMediaItem *> * const history = self->_cachedHistoryMedia;
+            // A pending snapshot may still contain an item absent from the current cache.
+            if (!pending) {
+                if (history == nil) {
+                    return;
+                }
+                if (mediaID != nil &&
+                    [history indexOfObjectPassingTest:^BOOL(VLCMediaLibraryMediaItem *item,
+                                                            NSUInteger __unused index,
+                                                            BOOL * __unused stop) {
+                    return item.libraryID == mediaID.longLongValue;
+                }] == NSNotFound) {
+                    return;
+                }
             }
+            [self resetCachedListOfHistoryMedia];
         }
     });
 }
@@ -1753,7 +1764,9 @@ static void libraryCallback(void *p_data, const vlc_ml_event_t *p_event)
     NSParameterAssert(p_event);
     const vlc_ml_media_t * const p_media = p_event->creation.p_media;
     NSParameterAssert(p_media);
-    [self refreshCachedHistoryMediaIfNeeded];
+    if (p_media->i_last_played_date > 0) {
+        [self refreshCachedHistoryMediaIfNeededForMediaID:nil];
+    }
 
     if (p_media->i_type == VLC_ML_MEDIA_TYPE_AUDIO || p_media->i_type == VLC_ML_MEDIA_TYPE_UNKNOWN) {
         [self resetCachedListOfAudioMedia];
@@ -2222,14 +2235,21 @@ static void libraryCallback(void *p_data, const vlc_ml_event_t *p_event)
 - (void)handleMediaItemUpdateEvent:(const vlc_ml_event_t * const)p_event
 {
     NSParameterAssert(p_event != NULL);
-    [self refreshCachedHistoryMediaIfNeeded];
 
     const int64_t itemId = p_event->modification.i_entity_id;
 
     VLCMediaLibraryMediaItem * const mediaItem = [VLCMediaLibraryMediaItem mediaItemForLibraryID:itemId];
     if (mediaItem == nil) {
+        // The item may have disappeared after this update was queued.
+        // Refresh any cached or pending History snapshot that could still include it.
+        [self refreshCachedHistoryMediaIfNeededForMediaID:@(itemId)];
         NSLog(@"Could not find a library media item with this ID. Can't handle update.");
         return;
+    }
+    // Metadata changes to played items can affect History rows and search
+    // results without emitting HISTORY_CHANGED. Playback resets send it separately.
+    if (mediaItem.lastPlayedDate > 0) {
+        [self refreshCachedHistoryMediaIfNeededForMediaID:nil];
     }
 
     if (mediaItem.mediaSubType == VLC_ML_MEDIA_SUBTYPE_MOVIE) {
@@ -2335,9 +2355,9 @@ static void libraryCallback(void *p_data, const vlc_ml_event_t *p_event)
 - (void)handleMediaItemDeletionEvent:(const vlc_ml_event_t * const)p_event
 {
     NSParameterAssert(p_event != NULL);
-    [self refreshCachedHistoryMediaIfNeeded];
 
-    const int64_t itemId = p_event->modification.i_entity_id;
+    const int64_t itemId = p_event->deletion.i_entity_id;
+    [self refreshCachedHistoryMediaIfNeededForMediaID:@(itemId)];
 
     dispatch_barrier_async(_mediaItemCacheModificationQueue,
                            ^{
