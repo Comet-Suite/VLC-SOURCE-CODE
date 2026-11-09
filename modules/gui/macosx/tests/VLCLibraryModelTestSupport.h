@@ -44,6 +44,7 @@
 - (void)resetCachedListOfRecentlyAddedVideoMedia;
 - (void)resetCachedListOfRecentlyAddedAudioMedia;
 - (void)mediaItemThumbnailGenerated:(VLCMediaLibraryMediaItem *)item;
+- (void)resetCachedListOfHistoryMedia;
 - (void)resetCachedListOfMonitoredFolders;
 - (void)handleMediaItemAddedEvent:(const vlc_ml_event_t *)event;
 - (void)handleMediaItemUpdateEvent:(const vlc_ml_event_t *)event;
@@ -62,7 +63,7 @@
               generation:(NSUInteger)generation
                    token:(NSObject *)token;
 - (NSArray *)readCacheOnQueue:(dispatch_queue_t)queue
-                  withBlock:(NSArray *(^)(void))block;
+                    withBlock:(NSArray *(^)(void))block;
 - (NSObject *)beginCacheUpdateForGetter:(SEL)getter;
 - (void)performCacheWriteForGeneration:(NSUInteger)generation
                                  token:(NSObject *)token
@@ -82,6 +83,7 @@
 @property (readwrite, nonatomic) NSArray<VLCMediaLibraryMediaItem *> *cachedRecentAudioMedia;
 @property (readwrite, nonatomic) NSArray<VLCMediaLibraryMediaItem *> *cachedRecentlyAddedVideoMedia;
 @property (readwrite, nonatomic) NSArray<VLCMediaLibraryMediaItem *> *cachedRecentlyAddedAudioMedia;
+@property (readwrite, nonatomic) NSArray<VLCMediaLibraryMediaItem *> *cachedHistoryMedia;
 @property (readwrite, nonatomic) NSArray<VLCMediaLibraryEntryPoint *> *cachedListOfMonitoredFolders;
 @property (readwrite, nonatomic) NSArray<NSString *> *cachedMediaTitles;
 @property (readonly, nonatomic) NSArray<VLCMediaLibraryFolderObserver *> *folderObservers;
@@ -102,7 +104,7 @@ VLCMediaLibraryMediaItem *VLCLibraryModelTestMediaItem(vlc_ml_media_type_t type,
 // Other queries and invalidations can proceed without depending on timing.
 @interface VLCLibraryModelTestQueryGate : VLCLibraryModelTestCacheReadGate
 - (instancetype)initWithLibrary:(vlc_medialibrary_t *)library
-                 observeEvents:(BOOL)observeEvents;
+                  observeEvents:(BOOL)observeEvents;
 
 - (void)holdNextQueryResultForGetter:(SEL)getter
                              handler:(dispatch_block_t)handler
@@ -128,7 +130,7 @@ VLCMediaLibraryMediaItem *VLCLibraryModelTestMediaItem(vlc_ml_media_type_t type,
 @property (readonly) NSUInteger showListQueryCount;
 @property (readonly) NSDictionary<NSNumber *, NSNumber *> *showQueryCounts;
 - (void)observeDeletionsForMediaIDs:(NSArray<NSNumber *> *)mediaIDs
-                          handler:(dispatch_block_t)handler;
+                            handler:(dispatch_block_t)handler;
 - (void)holdNextShowQueryResultWithHandler:(dispatch_block_t)handler
                          completionHandler:(dispatch_block_t)completionHandler;
 - (void)releaseShowQuery;
@@ -160,7 +162,7 @@ typedef NS_ENUM(NSUInteger, VLCLibraryModelTestCacheKind) {
 @interface VLCLibraryModelTestOverlapFixture : NSObject
 - (instancetype)initWithCacheKind:(VLCLibraryModelTestCacheKind)kind;
 - (instancetype)initWithGroupName:(NSString *)groupName
-                  otherGroupName:(NSString *)otherGroupName;
+                   otherGroupName:(NSString *)otherGroupName;
 @property (readonly) VLCLibraryModelTestQueryGate *model;
 @property (readonly) SEL cacheGetter;
 @property (readonly) NSArray<NSNotificationName> *changeNotifications;
@@ -181,7 +183,7 @@ typedef NS_ENUM(NSUInteger, VLCLibraryModelTestCacheKind) {
 - (void)deliverUpdateEvent;
 - (void)deliverUpdateEventForID:(int64_t)libraryID;
 - (BOOL)renameItemWithID:(int64_t)libraryID
-                    to:(NSString *)name;
+                      to:(NSString *)name;
 - (void)deliverDeletionEvent;
 - (void)deliverPendingDeletionEvent;
 - (void)deliverDeletionEventForID:(int64_t)libraryID;

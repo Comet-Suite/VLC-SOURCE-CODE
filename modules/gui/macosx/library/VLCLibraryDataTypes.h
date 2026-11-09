@@ -302,6 +302,8 @@ typedef NS_ENUM(NSUInteger, VLCMediaLibraryParentGroupType) {
 - (nullable instancetype)initWithExternalURL:(nullable NSURL *)url;
 - (nullable instancetype)initWithStreamURL:(nullable NSURL *)url;
 
+- (int)markAsUnplayed;
+
 @property (readonly) vlc_ml_media_type_t mediaType;
 @property (readonly) NSString *readableMediaType;
 @property (readonly) vlc_ml_media_subtype_t mediaSubType;
