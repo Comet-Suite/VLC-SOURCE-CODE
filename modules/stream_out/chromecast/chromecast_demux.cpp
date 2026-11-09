@@ -196,8 +196,10 @@ struct demux_cc
         vlc_tick_t cc_time = getCCTime();
 
         if( cc_time != VLC_TICK_INVALID )
+        {
             time += cc_time;
-        m_last_time = time;
+            m_last_time = time;
+        }
         return time;
     }
 
@@ -205,8 +207,12 @@ struct demux_cc
     {
         if( m_length > 0 && m_start_pos >= 0 )
         {
-            m_last_pos = ( getCCTime() / double( m_length ) ) + m_start_pos;
-            return m_last_pos;
+            vlc_tick_t cc_time = getCCTime();
+            double pos = ( cc_time / double( m_length ) ) + m_start_pos;
+
+            if( cc_time != VLC_TICK_INVALID )
+                m_last_pos = pos;
+            return pos;
         }
         else
             return -1;
@@ -240,8 +246,9 @@ struct demux_cc
                 return VLC_DEMUXER_EGENERIC;
             case CC_PACE_ERR_RETRY:
             {
-                /* Seek back to started position */
-                seekBack(m_start_time, m_start_pos);
+                /* Seek back to the last known position */
+                seekBack(m_last_time, m_last_pos);
+                resetTimes();
 
                 resetDemuxEof();
                 p_renderer->pf_send_input_event( p_renderer->p_opaque,
