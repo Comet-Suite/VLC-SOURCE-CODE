@@ -33,7 +33,7 @@ Widgets.PageExt {
     property alias model: tracklistdisplay_id.model
     property alias selectionModel: tracklistdisplay_id.selectionModel
 
-    property var sortModel: [
+    sortModel: [
         { text: qsTr("Title"),    criteria: "title"},
         { text: qsTr("Album"),    criteria: "album_title" },
         { text: qsTr("Artist"),   criteria: "main_artist" },
