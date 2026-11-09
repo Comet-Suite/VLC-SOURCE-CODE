@@ -1018,6 +1018,14 @@ FocusScope {
 
             onDragItemChanged: console.assert(tableView_id.dragItem === tableDragItem)
 
+            onSortCriteriaChangeRequested: (criteria /* : string */) => {
+                model.sortCriteria = criteria
+            }
+
+            onSortOrderChangeRequested: (order /* : int */) => {
+                model.sortOrder = order
+            }
+
             Behavior on contentY {
                 id: contentYBehavior
 

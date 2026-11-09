@@ -79,6 +79,9 @@ FocusScope {
 
     signal seeAll(int reason)
 
+    signal sortCriteriaChangeRequested(string criteria)
+    signal sortOrderChangeRequested(int order)
+
     // Events
 
     onFocusChanged: {
@@ -166,6 +169,13 @@ FocusScope {
         focus: (model.count !== 0)
 
         sourceComponent: (MainCtx.gridView) ? grid : list
+
+        onLoaded: {
+            if (item.sortOrderChangeRequested)
+                item.sortOrderChangeRequested.connect(root, root.sortOrderChangeRequested)
+            if (item.sortCriteriaChangeRequested)
+                item.sortCriteriaChangeRequested.connect(root, root.sortCriteriaChangeRequested)
+        }
     }
 
     Component {

@@ -66,6 +66,9 @@ Loader {
     property real leftPadding
     property real rightPadding
 
+    signal sortCriteriaChangeRequested(string criteria)
+    signal sortOrderChangeRequested(int order)
+
     onIsLoadingChanged: {
         // Adjust the cursor. Unless the loaded item (view) sets a cursor
         // globally or for itself, this is going to be respected. It should
@@ -168,6 +171,11 @@ Loader {
                 return root.rightPadding
             })
         }
+
+        if (item.sortOrderChangeRequested)
+            item.sortOrderChangeRequested.connect(root, root.sortOrderChangeRequested)
+        if (item.sortCriteriaChangeRequested)
+            item.sortCriteriaChangeRequested.connect(root, root.sortCriteriaChangeRequested)
     }
 
     Connections {

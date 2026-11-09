@@ -85,6 +85,21 @@ T.Page {
         }
     }
 
+    Connections {
+        target: root._firstChild
+
+        enabled: _sortCtx.available
+        ignoreUnknownSignals: true
+
+        function onSortCriteriaChangeRequested(criteria : string) {
+            _sortCtx.criteria = criteria
+        }
+
+        function onSortOrderChangeRequested(order : int) {
+            _sortCtx.order = order
+        }
+    }
+
     Binding {
         target: MainCtx
         property: "hasGridListMode";

@@ -33,7 +33,7 @@ Widgets.PageExt {
     property alias model: tracklistdisplay_id.model
     property alias selectionModel: tracklistdisplay_id.selectionModel
 
-    property var sortModel: [
+    sortModel: [
         { text: qsTr("Title"),    criteria: "title"},
         { text: qsTr("Album"),    criteria: "album_title" },
         { text: qsTr("Artist"),   criteria: "main_artist" },
@@ -50,54 +50,42 @@ Widgets.PageExt {
         tracklistdisplay_id.positionViewAtBeginningAnimated()
     }
 
-    FocusScope {
+    MusicTrackListDisplay {
+        id: tracklistdisplay_id
 
         anchors.fill: parent
 
+        visible: model.count > 0
         focus: true
 
-        // Aliases
+        searchPattern: root.search.pattern
+        sortOrder: root.sort.order
+        sortCriteria: root.sort.criteria
 
-        property alias leftPadding: tracklistdisplay_id.leftPadding
-        property alias rightPadding: tracklistdisplay_id.rightPadding
+        Navigation.parentItem: root
+        Navigation.upItem: root.header
 
-        MusicTrackListDisplay {
-            id: tracklistdisplay_id
-
-            anchors.fill: parent
-
-            visible: model.count > 0
-            focus: model.count > 0
-
-            searchPattern: root.search.pattern
-            sortOrder: root.sort.order
-            sortCriteria: root.sort.criteria
-
-            Navigation.parentItem: root
-            Navigation.upItem: root.header
-
-            Navigation.cancelAction: function() {
-                if (tracklistdisplay_id.currentIndex <= 0)
-                    root.Navigation.defaultNavigationCancel()
-                else
-                    tracklistdisplay_id.currentIndex = 0;
-            }
-
-
-            displayMarginBeginning: root.displayMarginBeginning
-            displayMarginEnd: root.displayMarginEnd
-
-            fadingEdge.enableEndFade: root.enableEndFade
-            fadingEdge.enableBeginningFade: root.enableBeginningFade
+        Navigation.cancelAction: function() {
+            if (tracklistdisplay_id.currentIndex <= 0)
+                root.Navigation.defaultNavigationCancel()
+            else
+                tracklistdisplay_id.currentIndex = 0;
         }
 
-        Widgets.EmptyLabelButton {
-            anchors.centerIn: parent
-            visible: !tracklistdisplay_id.model.loading && (tracklistdisplay_id.model.count <= 0)
-            focus: visible
-            text: qsTr("No tracks found\nPlease try adding sources")
-            Navigation.parentItem: root
-            cover: VLCStyle.noArtAlbumCover
-        }
+
+        displayMarginBeginning: root.displayMarginBeginning
+        displayMarginEnd: root.displayMarginEnd
+
+        fadingEdge.enableEndFade: root.enableEndFade
+        fadingEdge.enableBeginningFade: root.enableBeginningFade
+    }
+
+    Widgets.EmptyLabelButton {
+        anchors.centerIn: parent
+        visible: !tracklistdisplay_id.model.loading && (tracklistdisplay_id.model.count <= 0)
+        focus: visible
+        text: qsTr("No tracks found\nPlease try adding sources")
+        Navigation.parentItem: root
+        cover: VLCStyle.noArtAlbumCover
     }
 }

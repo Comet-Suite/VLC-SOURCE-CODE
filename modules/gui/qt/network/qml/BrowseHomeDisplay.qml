@@ -45,11 +45,6 @@ Widgets.PageExt {
             return 5
     }
 
-    sortModel: [
-        { text: qsTr("Alphabetic"), criteria: "name"},
-        { text: qsTr("Url"),        criteria: "mrl" }
-    ]
-
     hasGridListMode: true
     isSearchable: true
 
@@ -391,6 +386,14 @@ Widgets.PageExt {
                     contentYBehavior.enabled = false
                 }
             }
+        }
+
+        onSortCriteriaChangeRequested: (criteria /* : string */) => {
+            model.sortCriteria = criteria
+        }
+
+        onSortOrderChangeRequested: (order /* : int */) => {
+            model.sortOrder = order
         }
     }
 }

@@ -442,6 +442,14 @@ FocusScope {
                 currentIndex = 0
             }
 
+            onSortCriteriaChangeRequested: (criteria /* : string */) => {
+                model.sortCriteria = criteria
+            }
+
+            onSortOrderChangeRequested: (order /* : int */) => {
+                model.sortOrder = order
+            }
+
             sortModel: VLCStyle.isScreenSmall
                        ? _titleModel // use criterias text with small screens
                        : _allModel
