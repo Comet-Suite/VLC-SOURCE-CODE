@@ -74,7 +74,7 @@ protected:
     // Values of the uniform block members following `qt_Opacity`, in order.
     // Called from the rendering thread, while the GUI thread is blocked.
     // Call `update()` when they change:
-    virtual QVector<float> uniforms() const = 0;
+    virtual QVector<float> uniforms() const { return {}; };
 
     QSGNode *updatePaintNode(QSGNode *, UpdatePaintNodeData *) override;
 
