@@ -430,6 +430,12 @@ void intf_sys_t::setRetryOnFail( bool enabled )
     m_retry_on_fail = enabled;
 }
 
+bool intf_sys_t::hasPlayedOnce() const
+{
+    vlc::threads::mutex_locker locker(m_lock);
+    return m_played_once;
+}
+
 void intf_sys_t::setHasInput( const std::string mime_type )
 {
     vlc::threads::mutex_locker locker(m_lock);

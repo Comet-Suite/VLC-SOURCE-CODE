@@ -1277,10 +1277,17 @@ static void on_input_event_cb(void *data, enum cc_input_event event, union cc_in
             p_sys->stopSoutChain( p_stream );
             if( p_sys->transcodingCanFallback() )
             {
-                p_sys->setNextTranscodingState();
-                msg_Warn(p_stream, "Load failed detected. Switching to next "
-                         "configuration. Transcoding video%s",
-                         p_sys->transcoding_state & TRANSCODING_AUDIO ? "/audio" : "");
+                /* The format was accepted: only a failed load should switch */
+                if( p_sys->p_intf->hasPlayedOnce() )
+                    msg_Warn(p_stream, "Playback failed after it had started. "
+                             "Reloading with the same configuration");
+                else
+                {
+                    p_sys->setNextTranscodingState();
+                    msg_Warn(p_stream, "Load failed detected. Switching to next "
+                             "configuration. Transcoding video%s",
+                             p_sys->transcoding_state & TRANSCODING_AUDIO ? "/audio" : "");
+                }
                 p_sys->out_force_reload = p_sys->es_changed = true;
             }
             break;

@@ -173,6 +173,7 @@ struct intf_sys_t
 
     void setRetryOnFail(bool);
     void setHasInput(const std::string mime_type = "");
+    bool hasPlayedOnce() const;
 
     void setOnInputEventCb(on_input_event_itf on_input_event, void *on_input_event_data);
     void setDemuxEnabled(bool enabled, on_paused_changed_itf on_paused_changed,
