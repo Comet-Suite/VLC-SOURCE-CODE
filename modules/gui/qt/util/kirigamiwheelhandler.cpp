@@ -794,6 +794,21 @@ bool WheelHandler::eventFilter(QObject *watched, QEvent *event)
         // NOTE: Wheel events created by touchpad gestures with pixel deltas will cause scrolling to jump back
         // to where scrolling started unless the event is always accepted before it reaches the Flickable.
         bool flickableWillUseGestureScrolling = !(wheelEvent->source() == Qt::MouseEventNotSynthesized || wheelEvent->pixelDelta().isNull());
+
+        if (flickableWillUseGestureScrolling && m_flickable)
+        {
+            // Prevent swallowing the events if the wheel delta does not match the scrollable axis:
+            const auto delta = m_kirigamiWheelEvent.angleDelta().isNull() ? m_kirigamiWheelEvent.pixelDelta()
+                                                                          : m_kirigamiWheelEvent.angleDelta();
+            const auto h = (contentWidth > m_flickable->width());
+            const auto v = (contentHeight > m_flickable->height());
+            if (!((h && delta.x() != 0) || (v && delta.y() != 0)))
+            {
+                scrolled = false; // For some reason this is set even if the view is not scrolled.
+                flickableWillUseGestureScrolling = false;
+            }
+        }
+
         return scrolled || m_blockTargetWheel || flickableWillUseGestureScrolling;
     }
 
