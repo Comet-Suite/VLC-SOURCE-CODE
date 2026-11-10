@@ -46,7 +46,9 @@ static int rtp_packetize_ac3  (sout_stream_id_sys_t *, block_t *);
 static int rtp_packetize_eac3(sout_stream_id_sys_t *, block_t *);
 static int rtp_packetize_simple(sout_stream_id_sys_t *, block_t *);
 static int rtp_packetize_split(sout_stream_id_sys_t *, block_t *);
-static int rtp_packetize_pcm(sout_stream_id_sys_t *, block_t *);
+static int rtp_packetize_pcm8(sout_stream_id_sys_t *, block_t *);
+static int rtp_packetize_pcm16(sout_stream_id_sys_t *, block_t *);
+static int rtp_packetize_pcm24(sout_stream_id_sys_t *, block_t *);
 static int rtp_packetize_swab (sout_stream_id_sys_t *, block_t *);
 static int rtp_packetize_mp4a (sout_stream_id_sys_t *, block_t *);
 static int rtp_packetize_mp4a_latm (sout_stream_id_sys_t *, block_t *);
@@ -206,19 +208,25 @@ int rtp_get_fmt( vlc_object_t *obj, const es_format_t *p_fmt, const char *mux,
     switch( p_fmt->i_codec )
     {
         case VLC_CODEC_MULAW:
+            if( p_fmt->audio.i_channels == 0 )
+                return VLC_EINVAL;
             if( p_fmt->audio.i_channels == 1 && p_fmt->audio.i_rate == 8000 )
                 rtp_fmt->payload_type = 0;
             rtp_fmt->ptname = "PCMU";
-            rtp_fmt->pf_packetize = rtp_packetize_pcm;
+            rtp_fmt->pf_packetize = rtp_packetize_pcm8;
             break;
         case VLC_CODEC_ALAW:
+            if( p_fmt->audio.i_channels == 0 )
+                return VLC_EINVAL;
             if( p_fmt->audio.i_channels == 1 && p_fmt->audio.i_rate == 8000 )
                 rtp_fmt->payload_type = 8;
             rtp_fmt->ptname = "PCMA";
-            rtp_fmt->pf_packetize = rtp_packetize_pcm;
+            rtp_fmt->pf_packetize = rtp_packetize_pcm8;
             break;
         case VLC_CODEC_S16B:
         case VLC_CODEC_S16L:
+            if( p_fmt->audio.i_channels == 0 )
+                return VLC_EINVAL;
             if( p_fmt->audio.i_channels == 1 && p_fmt->audio.i_rate == 44100 )
             {
                 rtp_fmt->payload_type = 11;
@@ -230,17 +238,21 @@ int rtp_get_fmt( vlc_object_t *obj, const es_format_t *p_fmt, const char *mux,
             }
             rtp_fmt->ptname = "L16";
             if( p_fmt->i_codec == VLC_CODEC_S16B )
-                rtp_fmt->pf_packetize = rtp_packetize_pcm;
+                rtp_fmt->pf_packetize = rtp_packetize_pcm16;
             else
                 rtp_fmt->pf_packetize = rtp_packetize_swab;
             break;
         case VLC_CODEC_U8:
+            if( p_fmt->audio.i_channels == 0 )
+                return VLC_EINVAL;
             rtp_fmt->ptname = "L8";
-            rtp_fmt->pf_packetize = rtp_packetize_pcm;
+            rtp_fmt->pf_packetize = rtp_packetize_pcm8;
             break;
         case VLC_CODEC_S24B:
+            if( p_fmt->audio.i_channels == 0 )
+                return VLC_EINVAL;
             rtp_fmt->ptname = "L24";
-            rtp_fmt->pf_packetize = rtp_packetize_pcm;
+            rtp_fmt->pf_packetize = rtp_packetize_pcm24;
             break;
         case VLC_CODEC_MPGA:
             rtp_fmt->payload_type = 14;
@@ -1121,44 +1133,21 @@ static int rtp_packetize_split( sout_stream_id_sys_t *id, block_t *in )
     return VLC_SUCCESS;
 }
 
-static int rtp_packetize_pcm(sout_stream_id_sys_t *id, block_t *in)
+static int rtp_packetize_pcm(sout_stream_id_sys_t *id, block_t *in,
+                             unsigned sample_size)
 {
-    unsigned max = rtp_mtu(id);
+    unsigned frame_size = rtp_audio_channels(id) * sample_size;
+    unsigned max = (rtp_mtu(id) / frame_size) * frame_size;
 
-    while (in->i_buffer > max)
+    if (unlikely(max == 0))
     {
-        unsigned duration = (in->i_length * max) / in->i_buffer;
-        bool marker = (in->i_flags & BLOCK_FLAG_DISCONTINUITY) != 0;
-
-        block_t *out = block_Alloc(12 + max);
-        if (unlikely(out == NULL))
-        {
-            block_Release(in);
-            return VLC_ENOMEM;
-        }
-
-        rtp_packetize_common(id, out, marker, in->i_pts);
-        memcpy(out->p_buffer + 12, in->p_buffer, max);
-        rtp_packetize_send(id, out);
-
-        in->p_buffer += max;
-        in->i_buffer -= max;
-        in->i_pts += duration;
-        in->i_length -= duration;
-        in->i_flags &= ~BLOCK_FLAG_DISCONTINUITY;
+        block_Release(in);
+        return VLC_ENOTSUP;
     }
 
-    return rtp_packetize_simple(id, in); /* zero copy for the last frame */
-}
-
-/* split and convert from little endian to network byte order */
-static int rtp_packetize_swab(sout_stream_id_sys_t *id, block_t *in)
-{
-    unsigned max = rtp_mtu(id);
-
-    while (in->i_buffer > 0)
+    while (in->i_buffer >= frame_size)
     {
-        unsigned payload = (max < in->i_buffer) ? max : in->i_buffer;
+        size_t payload = (max < in->i_buffer) ? max : in->i_buffer;
         vlc_tick_t duration = (in->i_length * payload) / in->i_buffer;
         bool marker = (in->i_flags & BLOCK_FLAG_DISCONTINUITY) != 0;
 
@@ -1169,6 +1158,63 @@ static int rtp_packetize_swab(sout_stream_id_sys_t *id, block_t *in)
             return VLC_ENOMEM;
         }
 
+        out->i_pts = out->i_dts = in->i_pts;
+        rtp_packetize_common(id, out, marker, in->i_pts);
+        memcpy(out->p_buffer + 12, in->p_buffer, payload);
+        rtp_packetize_send(id, out);
+
+        in->p_buffer += payload;
+        in->i_buffer -= payload;
+        in->i_pts += duration;
+        in->i_length -= duration;
+        in->i_flags &= ~BLOCK_FLAG_DISCONTINUITY;
+    }
+
+    block_Release(in);
+    return VLC_SUCCESS;
+}
+
+static int rtp_packetize_pcm8(sout_stream_id_sys_t *id, block_t *in)
+{
+    return rtp_packetize_pcm(id, in, 1);
+}
+
+static int rtp_packetize_pcm16(sout_stream_id_sys_t *id, block_t *in)
+{
+    return rtp_packetize_pcm(id, in, 2);
+}
+
+static int rtp_packetize_pcm24(sout_stream_id_sys_t *id, block_t *in)
+{
+    return rtp_packetize_pcm(id, in, 3);
+}
+
+/* split and convert from little endian to network byte order */
+static int rtp_packetize_swab(sout_stream_id_sys_t *id, block_t *in)
+{
+    unsigned frame_size = rtp_audio_channels(id) * 2;
+    unsigned max = (rtp_mtu(id) / frame_size) * frame_size;
+
+    if (unlikely(max == 0))
+    {
+        block_Release(in);
+        return VLC_ENOTSUP;
+    }
+
+    while (in->i_buffer >= frame_size)
+    {
+        size_t payload = (max < in->i_buffer) ? max : in->i_buffer;
+        vlc_tick_t duration = (in->i_length * payload) / in->i_buffer;
+        bool marker = (in->i_flags & BLOCK_FLAG_DISCONTINUITY) != 0;
+
+        block_t *out = block_Alloc(12 + payload);
+        if (unlikely(out == NULL))
+        {
+            block_Release(in);
+            return VLC_ENOMEM;
+        }
+
+        out->i_pts = out->i_dts = in->i_pts;
         rtp_packetize_common(id, out, marker, in->i_pts);
         swab(in->p_buffer, out->p_buffer + 12, payload);
         rtp_packetize_send(id, out);

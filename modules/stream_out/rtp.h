@@ -55,6 +55,7 @@ void rtp_packetize_common (sout_stream_id_sys_t *id, block_t *out,
                            bool b_m_bit, vlc_tick_t i_pts);
 void rtp_packetize_send (sout_stream_id_sys_t *id, block_t *out);
 size_t rtp_mtu (const sout_stream_id_sys_t *id);
+unsigned rtp_audio_channels (const sout_stream_id_sys_t *id);
 
 int rtp_packetize_xiph_config( sout_stream_id_sys_t *id, const char *fmtp,
                                vlc_tick_t i_pts );
