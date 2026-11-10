@@ -506,40 +506,23 @@ FocusScope {
                 rightPadding: playlistLoader.shown ? 0 : VLCStyle.applicationHorizontalMargin
 
                 // Top-left corner rounding:
-                Widgets.AcrylicBackground {
+                // `RoundedCornerMask` replaces the area outside of the arc with anti-aliasing,
+                // regardless of the page content, but it requires RHI. Otherwise, we don't draw the rounded corner
+                Widgets.RoundedCornerMask {
                     id: topLeftCornerBackground
 
-                    z: 99
-                    color: sidebar.background.color
-                    visible: sidebar.visible && (stackViewTopLeftRadiusRectangle.topLeftRadius !== undefined)
-
                     anchors.left: stackView.left
-                    anchors.leftMargin: -1
+                    anchors.leftMargin: 0
                     anchors.top: stackView.top
 
-                    // (-1) is to prevent seams
-                    width: stackViewTopLeftRadiusRectangle.width - 1
-                    height: stackViewTopLeftRadiusRectangle.height - 1
+                    z: 99
 
-                    Rectangle {
-                        id: stackViewTopLeftRadiusRectangle
+                    width: VLCStyle.mainView_topLeftRadius
+                    height: VLCStyle.mainView_topLeftRadius
 
-                        width: (stackViewTopLeftRadiusRectangle.topLeftRadius * 2)
-                        height: (stackViewTopLeftRadiusRectangle.topLeftRadius * 2)
+                    visible: GraphicsInfo.shaderType === GraphicsInfo.RhiShader && sidebar.visible
 
-                        anchors.top: parent.top
-                        anchors.left: parent.left
-                        anchors.leftMargin: 1
-
-                        color: stackViewParent.color
-
-                        property real implicitTopLeftRadius: VLCStyle.mainView_topLeftRadius
-
-                        Component.onCompleted: {
-                            if (stackViewTopLeftRadiusRectangle.topLeftRadius !== undefined) // TODO: Directly set when minimum Qt is 6.7
-                                stackViewTopLeftRadiusRectangle.topLeftRadius = Qt.binding(() => stackViewTopLeftRadiusRectangle.implicitTopLeftRadius)
-                        }
-                    }
+                    color: sidebar.background.color
                 }
 
                 onCurrentItemChanged: {
@@ -631,6 +614,8 @@ FocusScope {
             background.visible: useAcrylic || (!MainCtx.backdropBlurRequested() || (GraphicsInfo.shaderType !== GraphicsInfo.RhiShader))
 
             readonly property bool needExternalBackgroundProvider: (visible && !background?.visible)
+
+            view.fadingEdge.uniformBackdrop: useAcrylic
 
             NavigationBarContextMenu {
                 id: navigationBarContextMenu
@@ -814,6 +799,7 @@ FocusScope {
                 useAcrylic: !VLCStyle.isScreenSmall
 
                 view.fadingEdge.pixelAlignedForDPR: !miniPlayer.visible
+                view.fadingEdge.uniformBackdrop: useAcrylic
 
                 // Otherwise `stackViewParent`'s layer effect becomes the background provider
                 background.visible: useAcrylic || (!MainCtx.backdropBlurRequested() || (GraphicsInfo.shaderType !== GraphicsInfo.RhiShader))
