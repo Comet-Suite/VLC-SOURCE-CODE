@@ -124,6 +124,7 @@ class MainCtx : public QObject
     Q_PROPERTY(float pinOpacity READ pinOpacity WRITE setPinOpacity NOTIFY pinOpacityChanged FINAL)
     Q_PROPERTY(ControlbarProfileModel* controlbarProfileModel READ controlbarProfileModel CONSTANT FINAL)
     Q_PROPERTY(bool hasAcrylicSurface READ hasAcrylicSurface NOTIFY hasAcrylicSurfaceChanged FINAL)
+    Q_PROPERTY(bool acrylicSurfaceRequiresOpacityLayer READ acrylicSurfaceRequiresOpacityLayer NOTIFY acrylicSurfaceRequiresOpacityLayerChanged FINAL)
     Q_PROPERTY(bool smoothScroll READ smoothScroll NOTIFY smoothScrollChanged FINAL)
     Q_PROPERTY(QWindow* intfMainWindow READ intfMainWindow CONSTANT FINAL)
     Q_PROPERTY(bool videoSurfaceCanHaveFractionalPosition READ videoSurfaceCanHaveFractionalPosition CONSTANT FINAL)
@@ -256,6 +257,7 @@ public:
     inline QUrl getDialogFilePath() const { return m_dialogFilepath; }
     inline void setDialogFilePath(const QUrl& filepath ){ m_dialogFilepath = filepath; }
     inline bool hasAcrylicSurface() const { return m_hasAcrylicSurface; }
+    inline bool acrylicSurfaceRequiresOpacityLayer() const { return m_acrylicSurfaceRequiresOpacityLayer; }
     inline void reloadFromSettings() { loadFromSettingsImpl(true); }
     inline bool getUseGlobalShortcuts() const { return m_useGlobalShortcuts; }
     void setUseGlobalShortcuts(bool useGlobalShortcuts );
@@ -479,6 +481,7 @@ protected:
     ControlbarProfileModel* m_controlbarProfileModel = nullptr;
 
     bool m_hasAcrylicSurface = false;
+    bool m_acrylicSurfaceRequiresOpacityLayer = false;
     bool m_acrylicActive = false;
 
     bool m_smoothScroll = true;
@@ -539,6 +542,7 @@ public slots:
     void updateIntfScaleFactor();
     void onWindowVisibilityChanged(QWindow::Visibility);
     void setHasAcrylicSurface(bool);
+    void setAcrylicSurfaceRequiresOpacityLayer(bool);
 
     void setMinimalView(bool);
     void setPlayerView(bool);
@@ -592,11 +596,13 @@ signals:
 
     void intfScaleFactorChanged();
     void intfDevicePixelRatioChanged();
+    void intfSizeChanged(const QSize&);
 
     void pinVideoControlsChanged();
     void pinOpacityChanged();
 
     void hasAcrylicSurfaceChanged(bool);
+    void acrylicSurfaceRequiresOpacityLayerChanged(bool);
 
     void acrylicActiveChanged();
 
