@@ -414,10 +414,8 @@ static int DecOpen( decoder_t *p_dec )
     {
         /* Setup the format */
         p_dec->fmt_out.i_codec = VLC_CODEC_S16N;
-        p_dec->fmt_out.audio.i_rate     = p_dec->fmt_in->audio.i_rate;
-        p_dec->fmt_out.audio.i_channels = p_dec->fmt_in->audio.i_channels;
         p_dec->fmt_out.audio.i_bitspersample = 16;//p_dec->fmt_in->audio.i_bitspersample; We request 16
-        if( p_dec->fmt_in->audio.i_channels > 8 )
+        if( p_dec->fmt_out.audio.i_channels > 8 )
             goto error;
         p_dec->fmt_out.audio.i_physical_channels =
             vlc_chan_maps[p_dec->fmt_out.audio.i_channels];
@@ -472,13 +470,8 @@ static int DecOpen( decoder_t *p_dec )
         p_dec->fmt_out.video.i_height = p_dec->fmt_in->video.i_height;
 
         /* If an aspect-ratio was specified in the input format then force it */
-        if( p_dec->fmt_in->video.i_sar_num > 0 &&
-            p_dec->fmt_in->video.i_sar_den > 0 )
-        {
-            p_dec->fmt_out.video.i_sar_num = p_dec->fmt_in->video.i_sar_num;
-            p_dec->fmt_out.video.i_sar_den = p_dec->fmt_in->video.i_sar_den;
-        }
-        else
+        if( p_dec->fmt_in->video.i_sar_num == 0 ||
+            p_dec->fmt_in->video.i_sar_den == 0 )
         {
             p_dec->fmt_out.video.i_sar_num = 1;
             p_dec->fmt_out.video.i_sar_den = 1;

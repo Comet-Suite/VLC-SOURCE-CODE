@@ -284,7 +284,6 @@ int InitAudioDec( vlc_object_t *obj )
         p_dec->fmt_out.audio.i_rate = p_dec->fmt_in->audio.i_rate;
     if( p_dec->fmt_out.audio.i_rate )
         date_Init( &p_sys->end_date, p_dec->fmt_out.audio.i_rate, 1 );
-    p_dec->fmt_out.audio.i_chan_mode = p_dec->fmt_in->audio.i_chan_mode;
 
     p_dec->pf_decode = DecodeAudio;
     p_dec->pf_flush  = Flush;
@@ -635,7 +634,6 @@ static void SetupOutputFormat( decoder_t *p_dec, bool b_trust )
     decoder_sys_t *p_sys = p_dec->p_sys;
 
     p_dec->fmt_out.i_codec = GetVlcAudioFormat( p_sys->p_context->sample_fmt );
-    p_dec->fmt_out.audio.channel_type = p_dec->fmt_in->audio.channel_type;
     p_dec->fmt_out.audio.i_format = p_dec->fmt_out.i_codec;
     p_dec->fmt_out.audio.i_rate = p_sys->p_context->sample_rate;
 

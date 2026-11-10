@@ -326,22 +326,14 @@ int OpenAPVDecoder(vlc_object_t *o)
         return VLC_EGENERIC;
     }
 
-    if (dec->fmt_in->video.primaries == COLOR_PRIMARIES_UNDEF)
+    if (dec->fmt_out.video.primaries == COLOR_PRIMARIES_UNDEF)
         dec->fmt_out.video.primaries = iso_23001_8_cp_to_vlc_primaries(color_primaries);
-    else
-        dec->fmt_out.video.primaries = dec->fmt_in->video.primaries;
-    if (dec->fmt_in->video.transfer == TRANSFER_FUNC_UNDEF)
+    if (dec->fmt_out.video.transfer == TRANSFER_FUNC_UNDEF)
         dec->fmt_out.video.transfer = iso_23001_8_tc_to_vlc_xfer(transfer_characteristics);
-    else
-        dec->fmt_out.video.transfer = dec->fmt_in->video.transfer;
-    if (dec->fmt_in->video.space == COLOR_SPACE_UNDEF)
+    if (dec->fmt_out.video.space == COLOR_SPACE_UNDEF)
         dec->fmt_out.video.space = iso_23001_8_mc_to_vlc_coeffs(matrix_coefficients);
-    else
-        dec->fmt_out.video.space = dec->fmt_in->video.space;
-    if (dec->fmt_in->video.color_range == COLOR_RANGE_UNDEF)
+    if (dec->fmt_out.video.color_range == COLOR_RANGE_UNDEF)
         dec->fmt_out.video.color_range = full_range_flag ? COLOR_RANGE_FULL : COLOR_RANGE_LIMITED;
-    else
-        dec->fmt_out.video.color_range = dec->fmt_in->video.color_range;
 
     dec->fmt_out.video.i_width = frame_width;
     dec->fmt_out.video.i_height = frame_height;

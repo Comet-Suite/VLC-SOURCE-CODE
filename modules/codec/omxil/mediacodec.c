@@ -1388,7 +1388,6 @@ static int OpenDecoder(vlc_object_t *p_this, pf_MediaCodecApi_init pf_init)
             goto bailout;
         }
 
-        p_dec->fmt_out.audio = p_dec->fmt_in->audio;
         p_sys->cat = AUDIO_ES;
     }
 
