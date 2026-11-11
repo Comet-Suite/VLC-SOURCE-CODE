@@ -470,10 +470,25 @@ libmacosx_plugin_la_SOURCES = \
 	gui/macosx/playqueue/VLCPlayQueueTableCellView.m \
 	gui/macosx/playqueue/VLCPlayQueueTableView.h \
 	gui/macosx/playqueue/VLCPlayQueueTableView.m \
+	gui/macosx/preferences/VLCAudioPreferencesController.h \
+	gui/macosx/preferences/VLCAudioPreferencesController.m \
+	gui/macosx/preferences/VLCPreferencesControlHelper.h \
+	gui/macosx/preferences/VLCPreferencesControlHelper.m \
+	gui/macosx/preferences/VLCInterfacePreferencesController.h \
+	gui/macosx/preferences/VLCInterfacePreferencesController.m \
+	gui/macosx/preferences/VLCInputPreferencesController.h \
+	gui/macosx/preferences/VLCInputPreferencesController.m \
 	gui/macosx/preferences/VLCHotkeyChangeWindow.h \
 	gui/macosx/preferences/VLCHotkeyChangeWindow.m \
+	gui/macosx/preferences/VLCHotkeyPreferencesController.h \
+	gui/macosx/preferences/VLCHotkeyPreferencesController.m \
 	gui/macosx/preferences/VLCMediaLibraryFolderManagementController.h \
 	gui/macosx/preferences/VLCMediaLibraryFolderManagementController.m \
+	gui/macosx/preferences/VLCVideoPreferencesController.h \
+	gui/macosx/preferences/VLCVideoPreferencesController.m \
+	gui/macosx/preferences/VLCSubtitlesPreferencesController.h \
+	gui/macosx/preferences/VLCSubtitlesPreferencesController.m \
+	gui/macosx/preferences/VLCSimplePreferencesPane.h \
 	gui/macosx/preferences/VLCSimplePrefsController.h \
 	gui/macosx/preferences/VLCSimplePrefsController.m \
 	gui/macosx/preferences/VLCSimplePrefsWindow.h \

@@ -22,7 +22,6 @@
 
 #import "VLCHotkeyChangeWindow.h"
 
-#import "preferences/VLCSimplePrefsController.h"
 
 @implementation VLCHotkeyChangeWindow
 
@@ -124,7 +123,7 @@
     else
         return NO;
 
-    return [VLCMain.sharedInstance.simplePreferences changeHotkeyTo: tempString];
+    return [self.hotkeyDelegate changeHotkeyTo:tempString];
 }
 
 @end
