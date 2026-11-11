@@ -66,6 +66,7 @@ typedef struct
 {
     /* Program context */
     input_source_t *source;
+    struct vlc_input_es_out *out;
 
     /* Program ID */
     int i_id;
@@ -1165,6 +1166,19 @@ static void EsOutChangePosition(es_out_sys_t *p_sys,
 
     input_SendEventCache( p_sys->p_input, 0.0 );
 
+    es_out_pgrm_t *pgrm;
+    vlc_list_foreach(pgrm, &p_sys->programs, node)
+    {
+        input_clock_Reset(pgrm->p_input_clock);
+        if (pgrm->clocks.input != NULL)
+        {
+            vlc_clock_Lock(pgrm->clocks.input);
+            pgrm->i_last_pcr = VLC_TICK_INVALID;
+            vlc_clock_Reset(pgrm->clocks.input);
+            vlc_clock_Unlock(pgrm->clocks.input);
+        }
+    }
+
     foreach_es_then_es_slaves(p_es)
     {
         if( p_es->p_dec != NULL )
@@ -1179,19 +1193,6 @@ static void EsOutChangePosition(es_out_sys_t *p_sys,
             }
         }
         p_es->i_pts_level = VLC_TICK_INVALID;
-    }
-
-    es_out_pgrm_t *pgrm;
-    vlc_list_foreach(pgrm, &p_sys->programs, node)
-    {
-        input_clock_Reset(pgrm->p_input_clock);
-        if (pgrm->clocks.input != NULL)
-        {
-            vlc_clock_Lock(pgrm->clocks.input);
-            pgrm->i_last_pcr = VLC_TICK_INVALID;
-            vlc_clock_Reset(pgrm->clocks.input);
-            vlc_clock_Unlock(pgrm->clocks.input);
-        }
     }
 
     p_sys->b_buffering = true;
@@ -1416,13 +1417,33 @@ static void EsOutProgramChangePause(es_out_sys_t *p_sys, bool b_paused, vlc_tick
 {
     es_out_pgrm_t *pgrm;
 
+    /* We need to pause the input clock, then the vlc_clock, and only
+     * unpause in the reverse order, so that the following operation are
+     * properly ordered:
+     *  - input clock is paused, the date is registered
+     *  - vlc_clock is paused, the date is registered
+     *  - ...
+     *  - vlc_clock is unpaused, the proper offsets are applied
+     *  - input_clock in unpaused, a new point is emitted right after
+     *
+     * Without this ordering for unpausing, the pause duration is accounted
+     * twice by the vlc_clock since the input clock point is registered while
+     * pause is in place in the vlc_clock, so it also gets the offset.
+     *
+     * Technically, pausing the input clock after has no harmful
+     * consequences currently, but is still semantically more correct.
+     * */
     vlc_list_foreach(pgrm, &p_sys->programs, node)
     {
-        input_clock_ChangePause(pgrm->p_input_clock, b_paused, i_date);
+        if (b_paused)
+            input_clock_ChangePause(pgrm->p_input_clock, b_paused, i_date);
 
         vlc_clock_main_Lock(pgrm->clocks.main);
         vlc_clock_main_ChangePause(pgrm->clocks.main, i_date, b_paused);
         vlc_clock_main_Unlock(pgrm->clocks.main);
+
+        if (!b_paused)
+            input_clock_ChangePause(pgrm->p_input_clock, b_paused, i_date);
     }
 }
 
@@ -1563,12 +1584,15 @@ ClockListenerUpdate(void *opaque, vlc_tick_t ck_system,
                     vlc_tick_t ck_stream, double rate, bool discontinuity)
 {
     es_out_pgrm_t *pgrm = opaque;
+    es_out_sys_t *p_sys = PRIV(&pgrm->out->out);
+    vlc_mutex_assert(&p_sys->lock);
     assert(pgrm->clocks.input != NULL);
     vlc_clock_Lock(pgrm->clocks.input);
 
     if (discontinuity)
     {
-        const vlc_tick_t current_date = vlc_tick_now();
+        const vlc_tick_t current_date = EsOutIsPaused(p_sys)
+                                      ? p_sys->i_pause_date : vlc_tick_now();
         vlc_clock_main_SetFirstPcr(pgrm->clocks.main, current_date, ck_stream);
     }
 
@@ -1797,6 +1821,7 @@ static es_out_pgrm_t *EsOutProgramAdd(es_out_sys_t *p_sys, input_source_t *sourc
 
     /* Init */
     p_pgrm->source = source;
+    p_pgrm->out = &p_sys->out;
     p_pgrm->i_id = i_group;
     p_pgrm->i_es = 0;
     p_pgrm->b_selected = false;
@@ -3723,9 +3748,10 @@ static int EsOutVaControlLocked(es_out_sys_t *p_sys, input_source_t *source,
         const bool b_low_delay = priv->b_low_delay;
         bool b_extra_buffering_allowed = !b_low_delay && EsOutIsExtraBufferingAllowed(p_sys);
         bool buffering = EsOutIsBuffering(p_sys) || p_sys->p_next_frame_es != NULL;
-        /* Do not account the download stall as clock lateness. The input
-         * clock will shift this frozen system date when rebuffering ends. */
-        const vlc_tick_t system_now = p_sys->b_rebuffering
+        /* Do not account the download stall and user pause as clock lateness.
+         * The input clock will shift this frozen system date when rebuffering
+         * ends. */
+        const vlc_tick_t system_now = EsOutIsPaused(p_sys)
                                     ? p_sys->i_pause_date : vlc_tick_now();
         vlc_tick_t i_late = input_clock_Update(
                             p_pgrm->p_input_clock,

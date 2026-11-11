@@ -239,6 +239,7 @@ struct vlc_input_decoder_t
     bool b_first;
     bool b_has_data;
     bool out_started;
+    vlc_tick_t out_first_ts;
 
     /* Flushing */
     bool flushing;
@@ -1196,7 +1197,10 @@ static int DecoderWaitUnblock(vlc_input_decoder_t *p_owner, vlc_tick_t date)
             vlc_tracer_TraceEvent(tracer, "DEC", p_owner->psz_id, "stop wait");
 
         vlc_clock_Lock(p_owner->p_clock);
-        vlc_clock_Start(p_owner->p_clock, vlc_tick_now(), date);
+        vlc_tick_t first_ts = p_owner->out_first_ts != VLC_TICK_INVALID
+                            ? p_owner->out_first_ts : date;
+        p_owner->out_first_ts = VLC_TICK_INVALID;
+        vlc_clock_Start(p_owner->p_clock, vlc_tick_now(), first_ts);
         vlc_clock_Unlock(p_owner->p_clock);
     }
 
@@ -1523,6 +1527,7 @@ static int ModuleThread_PlayVideo( vlc_input_decoder_t *p_owner, picture_t *p_pi
     {
         msg_Dbg( p_dec, "Received first picture" );
         p_owner->b_first = false;
+        p_owner->out_first_ts = p_picture->date;
         p_picture->b_force = true;
     }
     else
@@ -2009,6 +2014,7 @@ static void *DecoderThread( void *p_data )
              * harmless). */
             p_owner->flushing = false;
             p_owner->out_started = false;
+            p_owner->out_first_ts = VLC_TICK_INVALID;
             p_owner->i_preroll_end = PREROLL_NONE;
             continue;
         }
@@ -2062,7 +2068,7 @@ static void *DecoderThread( void *p_data )
                 p_owner->b_idle = true;
                 vlc_cond_signal( &p_owner->wait_acknowledge );
 
-                if (p_owner->frames_countdown > 0)
+                if (p_owner->cat == VIDEO_ES && p_owner->frames_countdown > 0)
                 {
                     /* next-frames are requested but the FIFO is empty, ask for
                      * more buffering */
@@ -2200,6 +2206,7 @@ CreateDecoder( vlc_object_t *p_parent, const struct vlc_input_decoder_cfg *cfg )
     p_owner->b_first = true;
     p_owner->b_has_data = false;
     p_owner->out_started = false;
+    p_owner->out_first_ts = VLC_TICK_INVALID;
 
     p_owner->error = false;
 
@@ -2683,7 +2690,8 @@ void vlc_input_decoder_DecodeWithStatus(vlc_input_decoder_t *p_owner, vlc_frame_
             vlc_fifo_WaitCond( p_owner->p_fifo, &p_owner->wait_fifo );
     }
 
-    if (vlc_fifo_IsEmpty(p_owner->p_fifo) && p_owner->frames_countdown > 0)
+    if (p_owner->cat == VIDEO_ES && vlc_fifo_IsEmpty(p_owner->p_fifo)
+     && p_owner->frames_countdown > 0)
         decoder_Notify(p_owner, frame_next_need_data, false);
 
     vlc_fifo_QueueUnlocked( p_owner->p_fifo, frame );
@@ -2925,6 +2933,7 @@ void vlc_input_decoder_StartWait( vlc_input_decoder_t *p_owner )
     vlc_fifo_Lock(p_owner->p_fifo);
     p_owner->b_has_data = false;
     p_owner->b_first = true;
+    p_owner->out_first_ts = VLC_TICK_INVALID;
     p_owner->b_waiting = true;
     vlc_cond_signal(&p_owner->wait_request);
     vlc_fifo_Unlock(p_owner->p_fifo);

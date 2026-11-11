@@ -373,6 +373,129 @@ static void test_clock_slave_only(
 
     destroy_fixture_simple(&f);
 }
+
+static void test_clock_input_reset_twice_restart(struct vlc_logger *logger)
+{
+    fprintf(stderr, "%s:\n", __func__);
+    struct clock_fixture_simple f = init_fixture_simple(logger, false, 0, 0);
+    vlc_clock_main_Lock(f.main);
+
+    const vlc_tick_t now = VLC_TICK_FROM_SEC(10);
+    vlc_clock_Start(f.input, now, now);
+    vlc_clock_Start(f.master, now, now);
+    vlc_clock_Start(f.slave, now, now);
+
+    vlc_clock_Reset(f.input);
+    vlc_clock_Reset(f.master);
+    vlc_clock_Reset(f.slave);
+    vlc_clock_Reset(f.input);
+
+    const vlc_tick_t ts = VLC_TICK_FROM_SEC(12);
+    vlc_clock_Start(f.input, 2 * now, ts);
+    vlc_clock_Start(f.master, 2 * now, ts);
+    vlc_clock_Start(f.slave, 2 * now, ts);
+
+    vlc_tick_t result = vlc_clock_ConvertToSystem(
+        f.slave, 2 * now, ts + VLC_TICK_FROM_SEC(1), 1., NULL);
+    fprintf(stderr, "%" PRId64 " = %" PRId64 "\n", result,
+            2 * now + VLC_TICK_FROM_SEC(1));
+    assert(result == 2 * now + VLC_TICK_FROM_SEC(1));
+    vlc_clock_main_Unlock(f.main);
+
+    destroy_fixture_simple(&f);
+}
+
+static void start_clock_context(struct clock_fixture_simple *f,
+                                bool clock_start,
+                                vlc_tick_t system, vlc_tick_t ts)
+{
+    if (clock_start)
+    {
+        vlc_clock_Reset(f->input);
+        vlc_clock_Start(f->input, system, ts);
+    }
+    else
+        vlc_clock_main_SetFirstPcr(f->main, system, ts);
+}
+
+static void test_clock_prev_context_paused(struct vlc_logger *logger,
+                                           bool clock_start,
+                                           bool paused_discontinuity)
+{
+    fprintf(stderr, "%s(%s, %s):\n", __func__,
+            clock_start ? "vlc_clock_Start" : "vlc_clock_main_SetFirstPcr",
+            paused_discontinuity ? "discontinuity while paused"
+                                 : "pause after discontinuity");
+    struct clock_fixture_simple f = init_fixture_simple(logger, false, 0, 0);
+    vlc_clock_main_Lock(f.main);
+
+    const vlc_tick_t start_date = VLC_TICK_FROM_SEC(10);
+    const vlc_tick_t old_ts = VLC_TICK_FROM_SEC(100);
+    const vlc_tick_t new_ts = VLC_TICK_FROM_SEC(500);
+    const vlc_tick_t pause_date = start_date + VLC_TICK_FROM_SEC(2);
+    const vlc_tick_t discontinuity_date = pause_date - VLC_TICK_FROM_SEC(1);
+    const vlc_tick_t pause_duration = VLC_TICK_FROM_SEC(5);
+    const vlc_tick_t resume_date = pause_date + pause_duration;
+
+    start_clock_context(&f, clock_start, start_date, old_ts);
+    vlc_clock_Update(f.master, start_date, old_ts, 1.);
+    vlc_clock_Update(f.master, start_date + VLC_TICK_FROM_SEC(1),
+                     old_ts + VLC_TICK_FROM_SEC(1), 1.);
+
+    vlc_tick_t result =
+        vlc_clock_ConvertToSystem(f.slave, start_date + VLC_TICK_FROM_SEC(1),
+                                  old_ts + VLC_TICK_FROM_SEC(1), 1., NULL);
+    assert(result == start_date + VLC_TICK_FROM_SEC(1));
+
+    if (paused_discontinuity)
+    {
+        vlc_clock_main_ChangePause(f.main, pause_date, true);
+        start_clock_context(&f, clock_start, pause_date, new_ts);
+    }
+    else
+    {
+        start_clock_context(&f, clock_start, discontinuity_date, new_ts);
+        vlc_clock_Update(f.master, discontinuity_date, new_ts, 1.);
+        vlc_clock_main_ChangePause(f.main, pause_date, true);
+    }
+    vlc_clock_main_ChangePause(f.main, resume_date, false);
+
+    const vlc_tick_t point = old_ts + VLC_TICK_FROM_MS(1500);
+    result = vlc_clock_ConvertToSystem(f.slave, resume_date, point, 1., NULL);
+    fprintf(stderr, "%" PRId64 " = %" PRId64 "\n", result,
+            start_date + VLC_TICK_FROM_MS(1500) + pause_duration);
+    assert(result == start_date + VLC_TICK_FROM_MS(1500) + pause_duration);
+    vlc_clock_main_Unlock(f.main);
+
+    destroy_fixture_simple(&f);
+}
+
+
+static void test_clock_output_start_paused(struct vlc_logger *logger)
+{
+    fprintf(stderr, "%s:\n", __func__);
+    struct clock_fixture_simple f = init_fixture_simple(logger, false, 0, 0);
+    vlc_clock_main_Lock(f.main);
+
+    const vlc_tick_t pause_date = VLC_TICK_FROM_SEC(10);
+    const vlc_tick_t seek_date = pause_date + VLC_TICK_FROM_SEC(2);
+    const vlc_tick_t resume_date = seek_date + VLC_TICK_FROM_SEC(3);
+    const vlc_tick_t ts = VLC_TICK_FROM_SEC(100);
+
+    vlc_clock_main_ChangePause(f.main, pause_date, true);
+    vlc_clock_Start(f.input, pause_date, ts);
+    vlc_clock_Start(f.slave, seek_date, ts);
+    vlc_clock_main_ChangePause(f.main, resume_date, false);
+
+    vlc_tick_t result =
+        vlc_clock_ConvertToSystem(f.slave, resume_date, ts, 1., NULL);
+    fprintf(stderr, "%" PRId64 " = %" PRId64 "\n", result, resume_date);
+    assert(result == resume_date);
+    vlc_clock_main_Unlock(f.main);
+
+    destroy_fixture_simple(&f);
+}
+
 int main(void)
 {
     libvlc_instance_t *libvlc = libvlc_new(0, NULL);
@@ -456,6 +579,12 @@ int main(void)
 
     test_clock_start_reset(logger);
     test_clock_slave_only(logger);
+    test_clock_input_reset_twice_restart(logger);
+    test_clock_prev_context_paused(logger, false, false);
+    test_clock_prev_context_paused(logger, false, true);
+    test_clock_prev_context_paused(logger, true, false);
+    test_clock_prev_context_paused(logger, true, true);
+    test_clock_output_start_paused(logger);
 
     libvlc_release(libvlc);
 }

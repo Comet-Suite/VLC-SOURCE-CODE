@@ -824,10 +824,11 @@ static vlc_tick_t stream_ClockConvert(vlc_aout_stream *stream,
                                   stream->sync.rate, &clock_id);
     vlc_clock_Unlock(stream->sync.clock);
 
-    if (clock_id != stream->sync.clock_id && stream->sync.played)
+    if (clock_id != stream->sync.clock_id)
     {
         stream->sync.clock_id = clock_id;
-        return VLC_TICK_INVALID;
+        if (stream->sync.played)
+            return VLC_TICK_INVALID;
     }
     return play_date;
 }
