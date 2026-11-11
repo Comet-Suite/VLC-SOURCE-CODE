@@ -51,8 +51,7 @@ FocusScope {
     }
 
     // Only applicable in video mode:
-    property bool displayFadeRectangles: !_controlsUnderVideo && (height > (implicitFadeRectangleHeight * 3))
-    property real implicitFadeRectangleHeight: VLCStyle.dp(206, VLCStyle.scale)
+    property bool displayFadeRectangles: !MainCtx.pinVideoControls && MainCtx.hasEmbededVideo
 
     // Private
 
@@ -83,7 +82,7 @@ FocusScope {
         rootPlayer.Navigation.defaultKeyAction(event)
 
         //unhandled keys are forwarded as hotkeys
-        if (!event.accepted || controlBar.state !== "visible")
+        if (!event.accepted || toolbarVisibility.state !== "visible")
             MainCtx.sendHotkey(event.key, event.modifiers);
     }
 
@@ -302,8 +301,22 @@ FocusScope {
                     }
                 }
 
-                component FadeRectangle : Rectangle {
-                    implicitHeight: rootPlayer.implicitFadeRectangleHeight
+                Rectangle {
+                    anchors.fill: parent
+
+                    visible: rootPlayer.displayFadeRectangles && toolbarVisibility.fadeVisible
+
+                    opacity: toolbarVisibility.fadeOpacity
+
+                    gradient: Gradient {
+                        GradientStop { position: 0; color: Qt.rgba(0, 0, 0, .8) }
+                        GradientStop { position: topBar.height  / videoSurface.height; color: Qt.rgba(0, 0, 0, .2) }
+                        GradientStop { position: topBar.height * 1.6 / videoSurface.height; color: Qt.rgba(0, 0, 0, 0) } //transparent
+                        GradientStop { position: 1 - (controlBar.height * 1.3  / videoSurface.height); color: Qt.rgba(0, 0, 0, 0) } //transparent
+                        GradientStop { position: 1 - ((controlBar.height - controlBar.sliderY - VLCStyle.margin_xxsmall) / videoSurface.height); color: Qt.rgba(0, 0, 0, .7) }
+                        GradientStop { position: 1 - (controlBar.height * 0.3 / videoSurface.height) ; color: Qt.rgba(0, 0, 0, .8) }
+                        GradientStop { position: 1; color: Qt.rgba(0, 0, 0, .9) }
+                    }
 
                     SGManipulator {
                         // The rectangle is the bottom-most item in the interface,
@@ -312,36 +325,6 @@ FocusScope {
                         // blending, we are using `SGManipulator`:
                         blending: false
                     }
-                }
-
-                FadeRectangle {
-                    anchors.top: parent.top
-                    anchors.left: parent.left
-                    anchors.right: parent.right
-
-                    opacity: topBar.opacity
-                    visible: rootPlayer.displayFadeRectangles && !topBarAcrylicBg.visible
-
-                    gradient: Gradient {
-                        GradientStop { position: 0; color: Qt.rgba(0, 0, 0, .8) }
-                        GradientStop { position: 1; color: "transparent" }
-                    }
-                }
-
-                FadeRectangle {
-                    anchors.bottom: parent.bottom
-                    anchors.left: parent.left
-                    anchors.right: parent.right
-
-                    opacity: controlBar.opacity
-
-                    gradient: Gradient {
-                        GradientStop { position: 0; color: "transparent" }
-                        GradientStop { position: .64; color: Qt.rgba(0, 0, 0, .8) }
-                        GradientStop { position: 1; color: "black" }
-                    }
-
-                    visible: rootPlayer.displayFadeRectangles && !(controlBar.background && controlBar.background.visible)
                 }
             }
         }
@@ -929,6 +912,20 @@ FocusScope {
         }
     }
 
+    FadeControllerStateGroup {
+        id: toolbarVisibility
+        //initial state value is "", using a binding avoid animation on startup
+        Binding on state {
+            when: playerToolbarVisibilityFSM.started
+            value: (playerToolbarVisibilityFSM.isVisible || rootPlayer._controlsUnderVideo) ? "visible" : "hidden"
+        }
+
+        onStateChanged: {
+            if (state === "visible")
+                controlBar.showChapterMarks()
+        }
+    }
+
     TopBar {
         id: topBar
 
@@ -947,11 +944,12 @@ FocusScope {
 
         // NOTE: With pinned controls, the top controls are hidden when switching to
         //       fullScreen. Except when resume is visible
-        visible: (MainCtx.pinVideoControls === false
-                  ||
-                  MainCtx.intfMainWindow.visibility !== Window.FullScreen
-                  ||
-                  resumeVisible)
+        visible: toolbarVisibility.fadeVisible &&
+            (MainCtx.pinVideoControls === false ||
+            MainCtx.intfMainWindow.visibility !== Window.FullScreen ||
+            resumeVisible)
+
+        opacity: toolbarVisibility.fadeOpacity
 
         focus: true
         title: Player.title
@@ -982,12 +980,6 @@ FocusScope {
             return controlBar
         }
 
-        //initial state value is "", using a binding avoid animation on startup
-        Binding on state {
-            when: playerToolbarVisibilityFSM.started
-            value: (playerToolbarVisibilityFSM.isVisible || rootPlayer._controlsUnderVideo) ? "visible" : "hidden"
-        }
-
         onTogglePlaylistVisibility: playlistVisibility.togglePlaylistVisibility()
 
         onRequestLockUnlockAutoHide: (lock) => {
@@ -1001,10 +993,6 @@ FocusScope {
             MainCtx.playerView = false
         }
 
-        FadeControllerStateGroup {
-            target: topBar
-        }
-
         // TODO: Make TopBar a Control and use background
         Widgets.AcrylicBackground {
             id: topBarAcrylicBg
@@ -1014,9 +1002,7 @@ FocusScope {
             anchors.fill: parent
 
             opacity: {
-                if (MainCtx.hasEmbededVideo && !MainCtx.pinVideoControls && !rootPlayer.displayFadeRectangles) {
-                    return 0.6
-                } else if (MainCtx.intfMainWindow.visibility === Window.FullScreen && MainCtx.hasEmbededVideo) {
+                if (MainCtx.intfMainWindow.visibility === Window.FullScreen && MainCtx.hasEmbededVideo) {
                     return MainCtx.pinOpacity
                 } else {
                     return 1.0
@@ -1025,7 +1011,7 @@ FocusScope {
 
             tintColor: windowTheme.bg.primary
 
-            visible: MainCtx.pinVideoControls || (MainCtx.hasEmbededVideo && !rootPlayer.displayFadeRectangles)
+            visible: MainCtx.pinVideoControls
         }
     }
 
@@ -1250,14 +1236,14 @@ FocusScope {
                  && MainCtx.hasEmbededVideo
                  && !(MainCtx.pinVideoControls && !Player.fullscreen)
                  && (interactiveAutoHideTimer.running === true
-                     || controlBar.state !== "hidden" || toggleControlBarButton.hovered)
+                     || toolbarVisibility.state !== "hidden" || toggleControlBarButton.hovered)
         focus: true
         anchors {
-            bottom: controlBar.state === "hidden" ? parent.bottom : controlBar.top
+            bottom: toolbarVisibility.state === "hidden" ? parent.bottom : controlBar.top
             horizontalCenter: parent.horizontalCenter
         }
         iconSize: VLCStyle.icon_large
-        iconTxt: controlBar.state === "hidden" ? VLCIcons.expand_inverted : VLCIcons.expand
+        iconTxt: toolbarVisibility.state === "hidden" ? VLCIcons.expand_inverted : VLCIcons.expand
 
         Navigation.parentItem: rootPlayer
         Navigation.upItem: playlistVisibility.isPlaylistVisible ? playlistpopup : (MainCtx.hasEmbededVideo ? playerSpecializationLoader : topBar)
@@ -1288,6 +1274,9 @@ FocusScope {
             right: parent.right
         }
 
+        opacity: toolbarVisibility.fadeOpacity
+        visible: toolbarVisibility.fadeVisible
+
         hoverEnabled: true
 
         focus: true
@@ -1304,11 +1293,6 @@ FocusScope {
         showRemainingTime: (textPosition !== ControlBar.TimeTextPosition.AboveSlider)
                            || !playlistVisibility.isPlaylistVisible
 
-        onStateChanged: {
-            if (state === "visible")
-                showChapterMarks()
-        }
-
         Navigation.parentItem: rootPlayer
         Navigation.upItem: {
             if (playlistVisibility.isPlaylistVisible)
@@ -1318,12 +1302,6 @@ FocusScope {
             if (!MainCtx.hasEmbededVideo)
                 return playerSpecializationLoader
             return topBar
-        }
-
-        //initial state value is "", using a binding avoid animation on startup
-        Binding on state {
-            when: playerToolbarVisibilityFSM.started
-            value: (playerToolbarVisibilityFSM.isVisible || rootPlayer._controlsUnderVideo) ? "visible" : "hidden"
         }
 
         onRequestLockUnlockAutoHide: (lock) => rootPlayer.lockUnlockAutoHide(lock)
@@ -1336,12 +1314,10 @@ FocusScope {
         background: Rectangle {
             id: controlBarBackground
 
-            visible: !MainCtx.hasEmbededVideo || MainCtx.pinVideoControls || !rootPlayer.displayFadeRectangles
+            visible: !MainCtx.hasEmbededVideo || MainCtx.pinVideoControls
 
             opacity: {
-                if (MainCtx.hasEmbededVideo && !MainCtx.pinVideoControls && !rootPlayer.displayFadeRectangles) {
-                    return 0.6
-                } else if ((Window.visibility === Window.FullScreen) && MainCtx.hasEmbededVideo) {
+                if ((Window.visibility === Window.FullScreen) && MainCtx.hasEmbededVideo) {
                     return MainCtx.pinOpacity
                 } else if (AcrylicController.enabled || !MainCtx.hasEmbededVideo) {
                     return 0.7
@@ -1351,10 +1327,6 @@ FocusScope {
             }
 
             color: windowTheme.bg.primary
-        }
-
-        FadeControllerStateGroup {
-            target: controlBar
         }
     }
 

@@ -25,29 +25,28 @@ import VLC.Style
 StateGroup {
     id: root
 
-    state: target?.state ?? ""
-
-    required property Item target
+    property bool fadeVisible: true
+    property real fadeOpacity: 1.0
 
     states: [
         State {
             name: "hidden"
 
             PropertyChanges {
-                target: root.target
+                target: root
 
-                visible: false
-                opacity: 0.0
+                fadeVisible: false
+                fadeOpacity: 0.0
             }
         },
         State {
             name: "visible"
 
             PropertyChanges {
-                target: root.target
+                target: root
 
-                visible: true
-                opacity: 1.0
+                fadeVisible: true
+                fadeOpacity: 1.0
             }
         }
     ]
@@ -58,14 +57,14 @@ StateGroup {
 
             SequentialAnimation {
                 NumberAnimation {
-                    property: "opacity"
+                    property: "fadeOpacity"
 
                     duration: VLCStyle.duration_long
                     easing.type: Easing.InSine
                 }
 
                 PropertyAction {
-                    property: "visible"
+                    property: "fadeVisible"
                 }
             }
         },
@@ -74,11 +73,11 @@ StateGroup {
 
             SequentialAnimation {
                 PropertyAction {
-                    property: "visible"
+                    property: "fadeVisible"
                 }
 
                 NumberAnimation {
-                    property: "opacity"
+                    property: "fadeOpacity"
 
                     duration: VLCStyle.duration_long
                     easing.type: Easing.OutSine
