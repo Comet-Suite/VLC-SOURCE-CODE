@@ -420,6 +420,7 @@ void MainUI::registerQMLTypes()
         qmlRegisterType<TextureProviderObserver>( uri, versionMajor, versionMinor, "TextureProviderObserver" );
         qmlRegisterType<TextureProviderIndirection>( uri, versionMajor, versionMinor, "TextureProviderIndirection" );
         qmlRegisterType<SGManipulator>( uri, versionMajor, versionMinor, "SGManipulator" );
+        qmlRegisterTypesAndRevisions<GraphicsPipelineState>( uri, versionMajor );
         qmlRegisterTypesAndRevisions<AccessibleCompatAttached>( uri, versionMajor );
 
         qmlRegisterModule(uri, versionMajor, versionMinor);
