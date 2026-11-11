@@ -23,11 +23,14 @@
 
 #import "VLCLibraryCollectionViewItem.h"
 
+#import <QuartzCore/QuartzCore.h>
+
 #import "extensions/NSColor+VLCAdditions.h"
 #import "extensions/NSString+Helpers.h"
 
 #import "library/VLCLibraryCollectionViewDataSource.h"
 #import "library/VLCLibraryCollectionViewFlowLayout.h"
+#import "library/VLCLibraryCollectionViewSwipeView.h"
 #import "library/VLCLibraryDataTypes.h"
 #import "library/VLCLibraryImageCache.h"
 #import "library/VLCLibraryMenuController.h"
@@ -45,6 +48,7 @@ NSString *VLCLibraryCollectionViewItemIdentifier = @"VLCLibraryCollectionViewIte
 {
     VLCLibraryMenuController *_menuController;
     NSLayoutConstraint *_videoImageViewAspectRatioConstraint;
+    VLCLibraryCollectionViewSwipeView *_swipeView;
 }
 @end
 
@@ -85,6 +89,16 @@ NSString *VLCLibraryCollectionViewItemIdentifier = @"VLCLibraryCollectionViewIte
 
     [super awakeFromNib];
 
+    NSView * const contentView = self.view;
+    // Detach the controller's responder chain before reparenting its original view.
+    self.view = [[NSView alloc] initWithFrame:contentView.frame];
+    _swipeView = [[VLCLibraryCollectionViewSwipeView alloc] initWithContentView:contentView];
+    self.view = _swipeView;
+    __weak typeof(self) weakSelf = self;
+    _swipeView.willRevealActions = ^{
+        [weakSelf updateSwipeActions];
+    };
+
     self.secondaryInfoTextField.textColor = NSColor.VLClibrarySubtitleColor;
     self.unplayedIndicatorTextField.stringValue = _NS("NEW");
     self.unplayedIndicatorTextField.font = [NSFont systemFontOfSize:NSFont.systemFontSize weight:NSFontWeightBold];
@@ -94,6 +108,8 @@ NSString *VLCLibraryCollectionViewItemIdentifier = @"VLCLibraryCollectionViewIte
 - (void)prepareForReuse
 {
     [super prepareForReuse];
+    _representedItem = nil;
+    [self resetSwipeActions];
     self.secondaryInfoTextField.stringValue = [NSString stringWithTime:0];
     self.progressIndicator.hidden = YES;
     [self setUnplayedIndicatorHidden:YES];
@@ -104,13 +120,86 @@ NSString *VLCLibraryCollectionViewItemIdentifier = @"VLCLibraryCollectionViewIte
     if (_representedItem == representedItem) {
         return;
     }
+    [self resetSwipeActions];
     _representedItem = representedItem;
     [self updateRepresentation];
 }
 
+- (void)resetSwipeActions
+{
+    [_swipeView setLeadingButtons:@[] trailingButtons:@[]];
+}
+
 - (void)setSelected:(BOOL)selected
 {
+    if (self.selected != selected) {
+        [_swipeView closeActionsAnimated:NO];
+    }
     [super setSelected:selected];
+}
+
+- (NSButton *)swipeButtonWithTitle:(NSString *)title
+                            action:(SEL)action
+                              item:(id)item
+                             color:(NSColor *)color
+{
+    NSButton * const button = [[NSButton alloc] init];
+    [button setButtonType:NSButtonTypeMomentaryPushIn];
+    button.bezelStyle = NSBezelStyleSmallSquare;
+    button.bordered = YES;
+    button.showsBorderOnlyWhileMouseInside = YES;
+    button.wantsLayer = YES;
+    button.layer.backgroundColor = color.CGColor;
+    button.font = [NSFont systemFontOfSize:NSFont.smallSystemFontSize];
+    button.title = title;
+    button.toolTip = title;
+    button.accessibilityLabel = title;
+    button.imagePosition = NSNoImage;
+    button.cell.wraps = YES;
+    button.cell.lineBreakMode = NSLineBreakByWordWrapping;
+    NSMutableParagraphStyle * const paragraph = [[NSMutableParagraphStyle alloc] init];
+    paragraph.alignment = NSTextAlignmentCenter;
+    paragraph.lineBreakMode = NSLineBreakByWordWrapping;
+    button.attributedTitle = [[NSAttributedString alloc] initWithString:title attributes:@{
+        NSFontAttributeName:button.font,
+        NSForegroundColorAttributeName:NSColor.whiteColor,
+        NSParagraphStyleAttributeName:paragraph,
+    }];
+    button.cell.representedObject = item;
+    button.target = self;
+    button.action = action;
+    return button;
+}
+
+- (void)updateSwipeActions
+{
+    if (_swipeView == nil) {
+        return;
+    }
+    _swipeView.collectionView = self.collectionView;
+    id<VLCMediaLibraryItemProtocol> actionItem = self.representedItem.item;
+    if ([actionItem isKindOfClass:VLCMediaLibraryMediaItem.class]) {
+        actionItem = [VLCMediaLibraryMediaItem mediaItemForLibraryID:actionItem.libraryID];
+    } else if ([actionItem isKindOfClass:VLCMediaLibraryGroup.class]) {
+        actionItem = [VLCMediaLibraryGroup groupWithID:actionItem.libraryID];
+    }
+    if (actionItem == nil) {
+        [self resetSwipeActions];
+        return;
+    }
+    NSButton * const queueButton = [self swipeButtonWithTitle:_NS("Append to Play Queue")
+                                                       action:@selector(queueFromSwipe:)
+                                                         item:self.representedItem
+                                                        color:NSColor.VLCAccentColor];
+
+    const BOOL favorited = actionItem.favorited;
+    NSString * const favoriteTitle = favorited ? _NS("Remove from Favorites") : _NS("Add to Favorites");
+    const SEL favoriteAction = favorited ? @selector(removeFavoriteFromSwipe:) : @selector(addFavoriteFromSwipe:);
+    NSButton * const favoriteButton = [self swipeButtonWithTitle:favoriteTitle
+                                                          action:favoriteAction
+                                                            item:actionItem
+                                                           color:favorited ? NSColor.systemRedColor : NSColor.systemBlueColor];
+    [_swipeView setLeadingButtons:@[queueButton] trailingButtons:@[favoriteButton]];
 }
 
 - (void)mediaItemThumbnailGenerated:(NSNotification *)aNotification
@@ -202,6 +291,31 @@ NSString *VLCLibraryCollectionViewItemIdentifier = @"VLCLibraryCollectionViewIte
 
 #pragma mark - actions
 
+- (void)queueFromSwipe:(NSButton *)sender
+{
+    VLCLibraryRepresentedItem * const item = sender.cell.representedObject;
+    [item queue];
+    [_swipeView closeActionsAnimated:YES];
+}
+
+- (void)setFavorite:(BOOL)favorite fromSwipeButton:(NSButton *)sender
+{
+    id<VLCMediaLibraryItemProtocol> const item = sender.cell.representedObject;
+    if ([item setFavorite:favorite] == VLC_SUCCESS) {
+        [_swipeView closeActionsAnimated:YES];
+    }
+}
+
+- (void)addFavoriteFromSwipe:(NSButton *)sender
+{
+    [self setFavorite:YES fromSwipeButton:sender];
+}
+
+- (void)removeFavoriteFromSwipe:(NSButton *)sender
+{
+    [self setFavorite:NO fromSwipeButton:sender];
+}
+
 - (IBAction)playInstantly:(id)sender
 {
     [self.representedItem play];
@@ -214,6 +328,7 @@ NSString *VLCLibraryCollectionViewItemIdentifier = @"VLCLibraryCollectionViewIte
 
 - (void)openContextMenu:(NSEvent *)event
 {
+    [VLCLibraryCollectionViewSwipeView closeActionsInCollectionView:self.collectionView];
     if (!_menuController) {
         _menuController = [[VLCLibraryMenuController alloc] init];
     }
@@ -246,6 +361,7 @@ NSString *VLCLibraryCollectionViewItemIdentifier = @"VLCLibraryCollectionViewIte
 
 - (void)mouseDown:(NSEvent *)event
 {
+    [VLCLibraryCollectionViewSwipeView closeActionsInCollectionView:self.collectionView];
     if (event.modifierFlags & NSEventModifierFlagControl) {
         [self openContextMenu:event];
         return;

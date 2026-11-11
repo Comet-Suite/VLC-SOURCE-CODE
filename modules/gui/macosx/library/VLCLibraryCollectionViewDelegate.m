@@ -25,6 +25,7 @@
 #import "VLCLibraryCollectionViewDataSource.h"
 #import "VLCLibraryCollectionViewFlowLayout.h"
 #import "VLCLibraryCollectionViewItem.h"
+#import "VLCLibraryCollectionViewSwipeView.h"
 #import "VLCLibraryDataTypes.h"
 
 @implementation VLCLibraryCollectionViewDelegate
@@ -107,6 +108,7 @@
 canDragItemsAtIndexPaths:(NSSet<NSIndexPath *> *)indexPaths
              withEvent:(NSEvent *)event
 {
+    [VLCLibraryCollectionViewSwipeView closeActionsInCollectionView:collectionView];
     return YES;
 }
 

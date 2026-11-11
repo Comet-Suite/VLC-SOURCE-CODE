@@ -174,6 +174,8 @@ libmacosx_plugin_la_SOURCES = \
 	gui/macosx/library/VLCLibraryCollectionViewFlowLayout.m \
 	gui/macosx/library/VLCLibraryCollectionViewItem.h \
 	gui/macosx/library/VLCLibraryCollectionViewItem.m \
+	gui/macosx/library/VLCLibraryCollectionViewSwipeView.h \
+	gui/macosx/library/VLCLibraryCollectionViewSwipeView.m \
 	gui/macosx/library/VLCLibraryCollectionViewMediaItemSupplementaryDetailView.h \
 	gui/macosx/library/VLCLibraryCollectionViewMediaItemSupplementaryDetailView.m \
 	gui/macosx/library/VLCLibraryCollectionViewMediaItemListSupplementaryDetailView.h \

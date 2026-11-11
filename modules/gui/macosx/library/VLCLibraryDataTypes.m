@@ -918,7 +918,12 @@ static NSString *genreArrayDisplayString(NSArray<VLCMediaLibraryGenre *> * const
         return nil;
     }
     vlc_ml_group_t * const p_group = vlc_ml_get_group(p_mediaLibrary, libraryID);
-    return p_group ? [[VLCMediaLibraryGroup alloc] initWithGroup:p_group] : nil;
+    if (p_group == NULL) {
+        return nil;
+    }
+    VLCMediaLibraryGroup * const group = [[VLCMediaLibraryGroup alloc] initWithGroup:p_group];
+    vlc_ml_group_release(p_group);
+    return group;
 }
 
 - (instancetype)initWithGroup:(struct vlc_ml_group_t *)p_group
