@@ -1,9 +1,9 @@
 /*****************************************************************************
- * VLCLibraryHomeViewVideoGridContainerView.h: MacOS X interface module
+ * VLCLibraryHomeViewCollectionViewController.h: MacOS X interface module
  *****************************************************************************
- * Copyright (C) 2022 VLC authors and VideoLAN
+ * Copyright (C) 2026 VLC authors and VideoLAN
  *
- * Authors: Claudio Cambra <developer@claudiocambra.com>
+ * Authors: Serhii Bykov <esphynox@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,25 +23,20 @@
 #import <Cocoa/Cocoa.h>
 
 #import "library/VLCLibraryItemPresentingCapable.h"
-#import "library/home-library/VLCLibraryHomeViewVideoContainerView.h"
-#import "library/VLCLibraryMediaGroupDescriptor.h"
-
-@class VLCSubScrollView;
-@class VLCLibraryCollectionView;
-@class VLCLibraryCollectionViewDelegate;
-@class VLCLibraryCollectionViewFlowLayout;
-@class VLCLibraryHomeViewSectionHeaderView;
-@class VLCLibraryMediaCollectionViewGroupDescriptor;
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface VLCLibraryHomeViewVideoGridContainerView : NSView<VLCLibraryHomeViewVideoContainerView, VLCLibraryItemPresentingCapable>
+@class VLCLibraryCollectionView;
+
+// Owns the single, viewport-sized collection view used by the Home page.
+@interface VLCLibraryHomeViewCollectionViewController : NSObject <VLCLibraryItemPresentingCapable>
 
 @property (readonly) VLCLibraryCollectionView *collectionView;
-@property (readonly) VLCLibraryCollectionViewDelegate *collectionViewDelegate;
-@property (readonly) VLCLibraryCollectionViewFlowLayout *collectionViewLayout;
-@property (readonly) VLCSubScrollView *scrollView;
-@property (readonly) VLCLibraryHomeViewSectionHeaderView *headerView;
+
+- (instancetype)initWithScrollView:(NSScrollView *)scrollView;
+- (void)reloadData;
+- (void)connect;
+- (void)disconnect;
 
 @end
 

@@ -27,7 +27,7 @@
 #import "library/VLCLibraryDynamicViewModeCapable.h"
 
 @class VLCLibraryWindow;
-@class VLCLibraryHomeViewStackViewController;
+@class VLCLibraryHomeViewCollectionViewController;
 
 @protocol VLCMediaLibraryItemProtocol;
 
@@ -39,9 +39,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (readonly, weak) NSView *homeLibraryView;
 @property (readonly, weak) NSScrollView *homeLibraryStackViewScrollView;
-@property (readonly, weak) NSStackView *homeLibraryStackView;
 
-@property (readonly) VLCLibraryHomeViewStackViewController *stackViewController;
+@property (readonly) VLCLibraryHomeViewCollectionViewController *collectionViewController;
 
 - (instancetype)initWithLibraryWindow:(VLCLibraryWindow *)libraryWindow;
 

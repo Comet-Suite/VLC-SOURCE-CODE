@@ -32,7 +32,6 @@
 #import "library/home-library/VLCLibraryHomeViewStackViewController.h"
 #import "library/home-library/VLCLibraryHomeViewVideoCarouselContainerView.h"
 #import "library/home-library/VLCLibraryHomeViewMediaContainerViewDataSource.h"
-#import "library/home-library/VLCLibraryHomeViewVideoGridContainerView.h"
 #import "main/VLCMain.h"
 
 // Unrelated sections are lightweight views. The stack, video carousels, and
@@ -61,27 +60,6 @@
 - (void)setup {}
 - (void)connect {}
 - (void)disconnect {}
-@end
-
-@implementation VLCLibraryHomeViewVideoGridContainerView
-@synthesize groupDescriptor = _groupDescriptor;
-@synthesize videoGroup = _videoGroup;
-@synthesize constraintsWithSuperview = _constraintsWithSuperview;
-@synthesize dataSource = _dataSource;
-
-- (instancetype)init
-{
-    self = [super init];
-    if (self) {
-        self.hidden = YES;
-        [self.heightAnchor constraintEqualToConstant:0.].active = YES;
-    }
-    return self;
-}
-
-- (void)connect {}
-- (void)disconnect {}
-- (void)presentLibraryItem:(id<VLCMediaLibraryItemProtocol>)item {}
 @end
 
 @interface VLCHomeStackTestMediaItem : NSObject

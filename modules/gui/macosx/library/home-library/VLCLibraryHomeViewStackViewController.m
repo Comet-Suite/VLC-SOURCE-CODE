@@ -24,12 +24,8 @@
 
 #import "extensions/NSView+VLCAdditions.h"
 
-#import "library/VLCLibraryCollectionViewDelegate.h"
-#import "library/VLCLibraryCollectionViewFlowLayout.h"
-#import "library/VLCLibraryCollectionViewSupplementaryElementView.h"
 #import "library/VLCLibraryController.h"
 #import "library/VLCLibraryHeroView.h"
-#import "library/VLCLibraryItemPresentingCapable.h"
 #import "library/VLCLibraryModel.h"
 
 #import "library/home-library/VLCLibraryHomeViewActionsView.h"
@@ -38,15 +34,12 @@
 #import "library/home-library/VLCLibraryHomeViewContainerView.h"
 #import "library/home-library/VLCLibraryHomeViewRecentlyAddedCarouselContainerView.h"
 #import "library/home-library/VLCLibraryHomeViewVideoCarouselContainerView.h"
-#import "library/home-library/VLCLibraryHomeViewVideoContainerView.h"
 #import "library/home-library/VLCLibraryHomeViewMediaContainerViewDataSource.h"
-#import "library/home-library/VLCLibraryHomeViewVideoGridContainerView.h"
 
 #import "library/VLCLibraryMediaGroupDescriptor.h"
 
 #import "main/VLCMain.h"
 
-#import "views/VLCSubScrollView.h"
 #import "views/VLCUIUnits.h"
 
 @interface VLCLibraryHomeViewStackViewController()
@@ -87,7 +80,6 @@
 
     _containers = [NSMutableArray array];
     [self generateCustomContainers];
-    [self generateGenericCollectionViewContainers];
 }
 
 - (void)generateCustomContainers
@@ -191,17 +183,6 @@
     } else {
         [self removeRecentItemsContainer:_audioRecentsView];
         _audioRecentsView = nil;
-    }
-}
-
-- (void)generateGenericCollectionViewContainers
-{
-    NSUInteger i = VLCMediaLibraryParentGroupTypeRecentVideos + 1;
-
-    for (; i <= VLCMediaLibraryParentGroupTypeVideoLibrary; ++i) {
-        VLCLibraryHomeViewVideoGridContainerView * const containerView = [[VLCLibraryHomeViewVideoGridContainerView alloc] init];
-        containerView.videoGroup = i;
-        [_containers addObject:containerView];
     }
 }
 
@@ -327,88 +308,6 @@
     for (NSView<VLCLibraryHomeViewContainerView> * const containerView in _containers) {
         [self addContainerView:containerView toStackView:_collectionsStackView];
     }
-}
-
-- (void)setCollectionViewItemSize:(NSSize)collectionViewItemSize
-{
-    _collectionViewItemSize = collectionViewItemSize;
-
-     for (NSView<VLCLibraryHomeViewContainerView> *containerView in _containers) {
-        if ([containerView isKindOfClass:VLCLibraryHomeViewVideoGridContainerView.class]) {
-            VLCLibraryHomeViewVideoGridContainerView * const collectionViewContainerView = (VLCLibraryHomeViewVideoGridContainerView *)containerView;
-            collectionViewContainerView.collectionViewDelegate.staticItemSize = collectionViewItemSize;
-        }
-    }
-}
-
-- (void)setCollectionViewSectionInset:(NSEdgeInsets)collectionViewSectionInset
-{
-    _collectionViewSectionInset = collectionViewSectionInset;
-
-     for (NSView<VLCLibraryHomeViewContainerView> *containerView in _containers) {
-        if ([containerView isKindOfClass:VLCLibraryHomeViewVideoGridContainerView.class]) {
-            VLCLibraryHomeViewVideoGridContainerView * const collectionViewContainerView = (VLCLibraryHomeViewVideoGridContainerView *)containerView;
-            collectionViewContainerView.collectionViewLayout.sectionInset = collectionViewSectionInset;
-        }
-     }
-}
-
-- (void)setCollectionViewMinimumLineSpacing:(CGFloat)collectionViewMinimumLineSpacing
-{
-    _collectionViewMinimumLineSpacing = collectionViewMinimumLineSpacing;
-
-     for (NSView<VLCLibraryHomeViewContainerView> *containerView in _containers) {
-        if ([containerView isKindOfClass:VLCLibraryHomeViewVideoGridContainerView.class]) {
-            VLCLibraryHomeViewVideoGridContainerView * const collectionViewContainerView = (VLCLibraryHomeViewVideoGridContainerView *)containerView;
-            collectionViewContainerView.collectionViewLayout.minimumLineSpacing = collectionViewMinimumLineSpacing;
-        }
-    }
-}
-
-- (void)setCollectionViewMinimumInteritemSpacing:(CGFloat)collectionViewMinimumInteritemSpacing
-{
-    _collectionViewMinimumInteritemSpacing = collectionViewMinimumInteritemSpacing;
-
-    for (NSView<VLCLibraryHomeViewContainerView> * const containerView in _containers) {
-        if ([containerView isKindOfClass:VLCLibraryHomeViewVideoGridContainerView.class]) {
-            VLCLibraryHomeViewVideoGridContainerView * const collectionViewContainerView = (VLCLibraryHomeViewVideoGridContainerView *)containerView;
-            collectionViewContainerView.collectionViewLayout.minimumInteritemSpacing = collectionViewMinimumInteritemSpacing;
-        }
-    }
-}
-
-
-- (NSView<VLCLibraryHomeViewContainerView> *)containerViewForGroup:(VLCMediaLibraryParentGroupType)group
-{
-    const NSUInteger index = [_containers indexOfObjectPassingTest:^BOOL(NSView<VLCLibraryHomeViewContainerView> * const container, const NSUInteger __unused idx, BOOL * const __unused stop) {
-        if ([container conformsToProtocol:@protocol(VLCLibraryHomeViewVideoContainerView)]) {
-            NSView<VLCLibraryHomeViewVideoContainerView> * const videoContainer = (NSView<VLCLibraryHomeViewVideoContainerView> *)container;
-            return videoContainer.videoGroup == group;
-        }
-        return NO;
-    }];
-
-    if (index == NSNotFound) {
-        return nil;
-    }
-
-    return [_containers objectAtIndex:index];
-}
-
-- (void)presentLibraryItem:(id<VLCMediaLibraryItemProtocol>)libraryItem
-{
-    if (libraryItem == nil) {
-        return;
-    }
-
-    // TODO: Make this work agnostically of video type
-    NSView<VLCLibraryHomeViewVideoContainerView, VLCLibraryItemPresentingCapable> * const containerView =
-        (NSView<VLCLibraryHomeViewVideoContainerView, VLCLibraryItemPresentingCapable> *)[self containerViewForGroup:VLCMediaLibraryParentGroupTypeVideoLibrary];
-    if (containerView == nil) {
-        return;
-    }
-
-    [containerView presentLibraryItem:libraryItem];
 }
 
 @end

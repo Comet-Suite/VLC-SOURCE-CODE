@@ -33,8 +33,7 @@
 
 #import "library/audio-library/VLCLibraryAudioViewController.h"
 
-#import "library/home-library/VLCLibraryHomeViewStackViewController.h"
-#import "library/home-library/VLCLibraryHomeViewMediaContainerViewDataSource.h"
+#import "library/home-library/VLCLibraryHomeViewCollectionViewController.h"
 
 #import "library/search-library/VLCLibrarySearchViewController.h"
 
@@ -128,13 +127,11 @@
     NSParameterAssert(libraryWindow);
     _homeLibraryView = libraryWindow.homeLibraryView;
     _homeLibraryStackViewScrollView = libraryWindow.homeLibraryStackViewScrollView;
-    _homeLibraryStackView = libraryWindow.homeLibraryStackView;
 }
 
 - (void)setupGridViewController
 {
-    _stackViewController = [[VLCLibraryHomeViewStackViewController alloc] init];
-    self.stackViewController.collectionsStackView = _homeLibraryStackView;
+    _collectionViewController = [[VLCLibraryHomeViewCollectionViewController alloc] initWithScrollView:_homeLibraryStackViewScrollView];
 }
 
 - (void)setupHomePlaceholderView
@@ -215,7 +212,7 @@
 {
     [self.libraryWindow displayLibraryView:self.homeLibraryView];
     self.homeLibraryStackViewScrollView.hidden = NO;
-    [self.stackViewController reloadData];
+    [self.collectionViewController reloadData];
 }
 
 - (void)presentSearchOverlay
@@ -312,7 +309,7 @@
 
     [_ongoingLongLoadingNotifications addObject:notification.name];
     if (self.connected) {
-        [self.stackViewController disconnectContainers];
+        [self.collectionViewController disconnect];
     }
     [self.libraryWindow showLoadingOverlay];
 }
@@ -324,19 +321,19 @@
         return;
     }
     if (self.connected) {
-        [self.stackViewController connectContainers];
+        [self.collectionViewController connect];
     }
     [self.libraryWindow hideLoadingOverlay];
 }
 
 - (void)connect
 {
-    [self.stackViewController connectContainers];
+    [self.collectionViewController connect];
 }
 
 - (void)disconnect
 {
-    [self.stackViewController disconnectContainers];
+    [self.collectionViewController disconnect];
 }
 
 #pragma mark - VLCLibraryDynamicToolbarFlagsCapable
@@ -356,7 +353,7 @@
 {
     VLCLibraryWindowPersistentPreferences * const prefs =
         VLCLibraryWindowPersistentPreferences.sharedInstance;
-    return self.isShowingSearchOverlay ? prefs.searchLibraryViewMode : prefs.homeLibraryViewMode;
+    return self.isShowingSearchOverlay ? prefs.searchLibraryViewMode : VLCLibraryGridViewModeSegment;
 }
 
 - (void)setViewMode:(VLCLibraryViewModeSegment)viewMode
@@ -366,8 +363,6 @@
     if (self.isShowingSearchOverlay) {
         prefs.searchLibraryViewMode = viewMode;
         [self.searchViewController presentInContainer:self.libraryTargetView];
-    } else {
-        prefs.homeLibraryViewMode = viewMode;
     }
 }
 

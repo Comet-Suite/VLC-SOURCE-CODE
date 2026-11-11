@@ -22,8 +22,6 @@
 
 #import <Cocoa/Cocoa.h>
 
-#import "library/VLCLibraryItemPresentingCapable.h"
-
 NS_ASSUME_NONNULL_BEGIN
 
 @class VLCLibraryHomeViewActionsView;
@@ -32,14 +30,8 @@ NS_ASSUME_NONNULL_BEGIN
 @class VLCLibraryHomeViewBrowseCarouselContainerView;
 @class VLCLibraryHomeViewRecentlyAddedCarouselContainerView;
 @class VLCLibraryHomeViewVideoCarouselContainerView;
-@protocol VLCMediaLibraryItemProtocol;
 
-@interface VLCLibraryHomeViewStackViewController : NSObject<VLCLibraryItemPresentingCapable>
-
-@property (readwrite, assign, nonatomic) NSSize collectionViewItemSize;
-@property (readwrite, assign, nonatomic) CGFloat collectionViewMinimumLineSpacing;
-@property (readwrite, assign, nonatomic) CGFloat collectionViewMinimumInteritemSpacing;
-@property (readwrite, assign, nonatomic) NSEdgeInsets collectionViewSectionInset;
+@interface VLCLibraryHomeViewStackViewController : NSObject
 
 @property (readwrite, weak, nonatomic) NSStackView *collectionsStackView;
 
