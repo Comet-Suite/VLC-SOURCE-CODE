@@ -1407,12 +1407,12 @@ static int DecodeBlock( decoder_t *p_dec, block_t **pp_block )
     else
         b_need_output_picture = false;
 
-    /* Change skip_frame config only if hurry_up is enabled, and never drop
-     * frames for codecs that cannot recover from it. */
+    p_context->skip_frame = p_sys->i_skip_frame;
+
+    /* Drop frames only when allowed, and never drop frames for codecs
+     * that cannot recover from it. */
     if( p_sys->b_hurry_up && !p_sys->b_no_frame_drop )
     {
-        p_context->skip_frame = p_sys->i_skip_frame;
-
         /* Check also if we should/can drop the block and move to next block
             as trying to catchup the speed*/
         if( p_dec->b_frame_drop_allowed )
