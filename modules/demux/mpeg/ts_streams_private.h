@@ -51,6 +51,7 @@ struct ts_pmt_t
     od_descriptors_t od;
 
     DECL_ARRAY(ts_pid_t *) e_streams;
+    DECL_ARRAY(ts_pid_t *) ecm_pids;
 
     /* Used for ref tracking PSIP pid chain */
     ts_pid_t        *p_atsc_si_basepid;

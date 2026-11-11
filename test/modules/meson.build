@@ -144,6 +144,17 @@ vlc_tests += {
     'module_depends' : vlc_plugins_targets.keys()
 }
 
+if libdvbpsi_dep.found()
+vlc_tests += {
+    'name' : 'test_modules_demux_ts_ecm',
+    'sources' : files('demux/ts_ecm.c'),
+    'suite' : ['modules', 'test_modules'],
+    'link_with' : [libvlc, libvlccore],
+    'c_args' : aribb24_dep.found() ? ['-DHAVE_ARIBB24=1'] : [],
+    'module_depends' : ['ts'],
+}
+endif
+
 vlc_tests += {
     'name' : 'test_modules_codec_hxxx_helper',
     'sources' : files('codec/hxxx_helper.c'),

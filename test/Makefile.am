@@ -411,6 +411,12 @@ test_modules_demux_ts_pes_LDADD = $(LIBVLCCORE) $(LIBVLC)
 test_modules_demux_ts_pes_SOURCES = modules/demux/ts_pes.c \
 				../modules/demux/mpeg/ts_pes.c \
 				../modules/demux/mpeg/ts_pes.h
+if HAVE_DVBPSI
+check_PROGRAMS += test_modules_demux_ts_ecm
+test_modules_demux_ts_ecm_SOURCES = modules/demux/ts_ecm.c
+test_modules_demux_ts_ecm_LDADD = $(LIBVLCCORE) $(LIBVLC)
+endif
+
 test_modules_playlist_m3u_SOURCES = modules/demux/playlist/m3u.c
 test_modules_playlist_m3u_LDADD = $(LIBVLCCORE) $(LIBVLC)
 

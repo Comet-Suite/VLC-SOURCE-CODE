@@ -829,6 +829,8 @@ void UpdatePESFilters( demux_t *p_demux, bool b_all )
         p_pmt_pid->i_flags &= ~FLAG_FILTERED;
         for( int j=0; j< p_pmt->e_streams.i_size; j++ )
             p_pmt->e_streams.p_elems[j]->i_flags &= ~FLAG_FILTERED;
+        for( int j=0; j< p_pmt->ecm_pids.i_size; j++ )
+            p_pmt->ecm_pids.p_elems[j]->i_flags &= ~FLAG_FILTERED;
         GetPID(p_sys, p_pmt->i_pid_pcr)->i_flags &= ~FLAG_FILTERED;
     }
 
@@ -851,6 +853,14 @@ void UpdatePESFilters( demux_t *p_demux, bool b_all )
         if( p_pmt->b_selected )
         {
             p_pmt_pid->i_flags |= FLAG_FILTERED;
+
+            for( int j=0; j<p_pmt->ecm_pids.i_size; j++ )
+            {
+                ts_pid_t *ecmpid = p_pmt->ecm_pids.p_elems[j];
+                ecmpid->i_flags |= FLAG_FILTERED;
+                msg_Dbg( p_demux, "enabling ECM pid %d from program %d",
+                         ecmpid->i_pid, p_pmt->i_number );
+            }
 
             for( int j=0; j<p_pmt->e_streams.i_size; j++ )
             {
@@ -884,6 +894,8 @@ void UpdatePESFilters( demux_t *p_demux, bool b_all )
         ts_pmt_t *p_pmt = p_pmt_pid->u.p_pmt;
 
         UpdateHWFilter( p_sys, p_pmt_pid );
+        for( int j=0; j< p_pmt->ecm_pids.i_size; j++ )
+            UpdateHWFilter( p_sys, p_pmt->ecm_pids.p_elems[j] );
         for( int j=0; j< p_pmt->e_streams.i_size; j++ )
         {
             ts_pid_t *espid = p_pmt->e_streams.p_elems[j];
