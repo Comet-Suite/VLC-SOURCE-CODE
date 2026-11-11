@@ -8,20 +8,25 @@ while this is not needed for older versions, it will still work.
 
 (cherry picked from commit 056b852018db04aa2ebc0982e27713afcea8106b)
 ---
- src/glsl/meson.build | 4 ++++
- 1 file changed, 4 insertions(+)
+ src/glsl/meson.build | 9 +++++++++
+ 1 file changed, 9 insertions(+)
 
 diff --git a/src/glsl/meson.build b/src/glsl/meson.build
 index 5cebfb89..4f68da11 100644
 --- a/src/glsl/meson.build
 +++ b/src/glsl/meson.build
-@@ -39,6 +39,10 @@ elif not glslang_req.disabled()
+@@ -39,5 +39,14 @@ elif not glslang_req.disabled()
  
      glslang_deps += spirv
  
 +    # Glslang 15.0.0 moved some code around, add also linking to glslang, while
 +    # this is not needed for older versions, it will still work.
-+    glslang_deps += cxx.find_library('glslang', required: not cxx.find_library('glslang-default-resource-limits', required: false).found(), static: static)
++    # glslang::* symbols are provided by libglslang itself and are not available
++    # transitively via glslang-default-resource-limits since glslang 15.0.0, so
++    # libglslang must always be linked explicitly. Use a non-static lookup so a
++    # shared libglslang (e.g. from the Flatpak SDK) is accepted when no static
++    # libglslang.a is available.
++    glslang_deps += cxx.find_library('glslang', required: true)
 +
      if static
        glslang_deps += [
