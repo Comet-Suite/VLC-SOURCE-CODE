@@ -363,6 +363,46 @@ SkinsRect X11Factory::getWorkArea() const
     return SkinsRect( x, y, x + w, y + h );
 }
 
+SkinsRect X11Factory::getWorkArea( const GenericWindow &rWindow ) const
+{
+    int monX = 0, monY = 0;
+    int monW = getScreenWidth(), monH = getScreenHeight();
+    getMonitorInfo( rWindow.getOSWindow(), &monX, &monY, &monW, &monH );
+
+    int x = 0, y = 0;
+    int w = getScreenWidth(), h = getScreenHeight();
+    if( m_pDisplay->m_net_workarea != None )
+    {
+        Atom ret;
+        int i_format;
+        unsigned long i_items, i_bytesafter;
+        long *values;
+        if( XGetWindowProperty( m_pDisplay->getDisplay(),
+                                DefaultRootWindow( m_pDisplay->getDisplay() ),
+                                m_pDisplay->m_net_workarea,
+                                0, 16384, False, XA_CARDINAL,
+                                &ret, &i_format, &i_items, &i_bytesafter,
+                                (unsigned char **)&values ) == Success )
+        {
+            if( values )
+            {
+                x = values[0];
+                y = values[1];
+                w = values[2];
+                h = values[3];
+                XFree( values );
+            }
+        }
+    }
+
+    int left = x > monX ? x : monX;
+    int top = y > monY ? y : monY;
+    int right = (x + w) < (monX + monW) ? (x + w) : (monX + monW);
+    int bottom = (y + h) < (monY + monH) ? (y + h) : (monY + monH);
+
+    return SkinsRect(left, top, right, bottom);
+}
+
 
 void X11Factory::getMousePos( int &rXPos, int &rYPos ) const
 {
