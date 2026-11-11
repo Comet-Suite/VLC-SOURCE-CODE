@@ -76,6 +76,53 @@ void input_resource_PutVout(input_resource_t *, vout_thread_t *,
 vout_thread_t *input_resource_HoldVout( input_resource_t * );
 
 /**
+ * State of an input_resource_WaitStartedVout() caller, only written by
+ * input_resource_ResetVoutWait() and input_resource_CancelVoutWait()
+ */
+struct input_resource_vout_wait
+{
+    vlc_tick_t since;
+    bool cancelled;
+};
+
+/**
+ * This function returns a started vout, unlike input_resource_HoldVout()
+ * which can return the stopped vout kept for reuse.
+ *
+ * Without any started vout, it waits for one as long as a video decoder may
+ * start it: until the timeout has elapsed after the last reset of the wait
+ * state or after the last signal of a video decoder (see
+ * input_resource_SignalVideoDecoder()), whichever is later, unless the wait
+ * is cancelled.
+ *
+ * You must call vout_Release() on the value returned (if non NULL).
+ */
+vout_thread_t *input_resource_WaitStartedVout(input_resource_t *,
+                                const struct input_resource_vout_wait *,
+                                vlc_tick_t timeout);
+
+/**
+ * This function resets a wait state, when its caller starts or restarts:
+ * its waits are no longer cancelled, and their timeout starts again.
+ */
+void input_resource_ResetVoutWait(input_resource_t *,
+                                  struct input_resource_vout_wait *);
+
+/**
+ * This function cancels the current and next waits of a wait state, until it
+ * is reset.
+ */
+void input_resource_CancelVoutWait(input_resource_t *,
+                                   struct input_resource_vout_wait *);
+
+/**
+ * This function signals that a video decoder may start a vout soon, with its
+ * first picture: when it is created or resumed before that picture, or when
+ * it is deleted, since another decoder can replace it.
+ */
+void input_resource_SignalVideoDecoder(input_resource_t *);
+
+/**
  * This function returns the dummy vout. It will be the parent of the future
  * main vout and can be used to pre-configure it. */
 vout_thread_t *input_resource_HoldDummyVout( input_resource_t * );

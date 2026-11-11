@@ -911,9 +911,20 @@ static int EsOutDrain(es_out_sys_t *p_sys)
     if( !p_sys->b_draining )
     {
         es_out_id_t *id;
+        bool has_video = false;
+        foreach_es_then_es_slaves(id)
+            if (id->p_dec != NULL && id->fmt.i_cat == VIDEO_ES)
+                has_video = true;
+
         foreach_es_then_es_slaves(id)
             if (id->p_dec != NULL)
+            {
                 EsOutDrainDecoder(p_sys, id, false);
+                /* Without video decoders, no vout can start for the last
+                 * subpictures */
+                if (!has_video)
+                    vlc_input_decoder_CancelVoutWait(id->p_dec);
+            }
         p_sys->b_draining = true;
     }
 
@@ -3355,6 +3366,9 @@ EsOutDrainDecoder(es_out_sys_t *p_sys, es_out_id_t *es, bool wait)
 
     if (!wait)
         return;
+
+    /* The input must not wait for subpictures waiting for a vout */
+    vlc_input_decoder_CancelVoutWait( es->p_dec );
 
     /* FIXME: This might hold the ES output caller (i.e. the demux), and
      * the corresponding thread (typically the input thread), for a little
