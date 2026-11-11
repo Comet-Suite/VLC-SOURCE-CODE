@@ -53,6 +53,56 @@ void decoder_Init( decoder_t *p_dec, es_format_t *restrict fmt_in, const es_form
     es_format_Init( &p_dec->fmt_out, p_fmt->i_cat, 0 );
 }
 
+static int load_decoder(void *func, bool forced, va_list ap)
+{
+    VLC_UNUSED(forced);
+    decoder_t *p_dec = va_arg(ap, decoder_t *);
+    vlc_object_t *obj = &p_dec->obj;
+    int (*activate)(vlc_object_t *) = func;
+    int ret;
+
+    // copy input metadata into the output
+    switch( p_dec->fmt_in->i_cat )
+    {
+        case VIDEO_ES:
+            p_dec->fmt_out.video.i_sar_den   = p_dec->fmt_in->video.i_sar_den;
+            p_dec->fmt_out.video.i_sar_num   = p_dec->fmt_in->video.i_sar_num;
+            p_dec->fmt_out.video.i_frame_rate      = p_dec->fmt_in->video.i_frame_rate;
+            p_dec->fmt_out.video.i_frame_rate_base = p_dec->fmt_in->video.i_frame_rate_base;
+            p_dec->fmt_out.video.orientation = p_dec->fmt_in->video.orientation;
+            p_dec->fmt_out.video.primaries   = p_dec->fmt_in->video.primaries;
+            p_dec->fmt_out.video.transfer    = p_dec->fmt_in->video.transfer;
+            p_dec->fmt_out.video.space       = p_dec->fmt_in->video.space;
+            p_dec->fmt_out.video.color_range = p_dec->fmt_in->video.color_range;
+            p_dec->fmt_out.video.chroma_location = p_dec->fmt_in->video.chroma_location;
+            p_dec->fmt_out.video.mastering   = p_dec->fmt_in->video.mastering;
+            p_dec->fmt_out.video.lighting    = p_dec->fmt_in->video.lighting;
+            p_dec->fmt_out.video.dovi        = p_dec->fmt_in->video.dovi;
+            p_dec->fmt_out.video.multiview_mode    = p_dec->fmt_in->video.multiview_mode;
+            p_dec->fmt_out.video.b_multiview_right_eye_first = p_dec->fmt_in->video.b_multiview_right_eye_first;
+            p_dec->fmt_out.video.projection_mode   = p_dec->fmt_in->video.projection_mode;
+            p_dec->fmt_out.video.pose              = p_dec->fmt_in->video.pose;
+            p_dec->fmt_out.video.i_cubemap_padding = p_dec->fmt_in->video.i_cubemap_padding;
+            break;
+        case AUDIO_ES:
+            p_dec->fmt_out.audio.i_rate              = p_dec->fmt_in->audio.i_rate;
+            p_dec->fmt_out.audio.i_physical_channels = p_dec->fmt_in->audio.i_physical_channels;
+            p_dec->fmt_out.audio.i_chan_mode         = p_dec->fmt_in->audio.i_chan_mode;
+            p_dec->fmt_out.audio.channel_type        = p_dec->fmt_in->audio.channel_type;
+            p_dec->fmt_out.audio.i_channels          = p_dec->fmt_in->audio.i_channels;
+            break;
+        case SPU_ES:
+        case DATA_ES:
+        case UNKNOWN_ES:
+            break;
+    }
+
+    ret = activate(obj);
+    if (ret != VLC_SUCCESS)
+        vlc_objres_clear(obj);
+    return ret;
+}
+
 int decoder_LoadModule(decoder_t *dec, bool packetizer,
                        bool use_varoption)
 {
@@ -82,10 +132,21 @@ int decoder_LoadModule(decoder_t *dec, bool packetizer,
         option = use_varoption ? "codec" : NULL;
     }
 
+    char *list = NULL;
     if (option != NULL)
-        dec->p_module = module_need_var(dec, type, option);
-    else
-        dec->p_module = module_need(dec, type, NULL, false);
+    {
+        list = var_InheritString(dec, option);
+        if (unlikely(list == NULL))
+            return VLC_EINVAL;
+    }
+
+    dec->p_module = vlc_module_load(dec->obj.logger, type, list, false,
+                                    load_decoder, dec);
+    if (dec->p_module != NULL) {
+        var_Create(dec, "module-name", VLC_VAR_STRING);
+        var_SetString(dec, "module-name", module_get_object(dec->p_module));
+    }
+    free(list);
 
     return dec->p_module == NULL ? VLC_ENOENT : VLC_SUCCESS;
 }

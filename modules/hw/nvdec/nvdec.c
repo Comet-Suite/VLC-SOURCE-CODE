@@ -900,7 +900,7 @@ static int OpenDecoder(vlc_object_t *p_this)
         if (result != VLC_SUCCESS)
             goto error;
 
-        if(p_dec->fmt_in->video.primaries == COLOR_PRIMARIES_UNDEF)
+        if(p_dec->fmt_out.video.primaries == COLOR_PRIMARIES_UNDEF)
         {
             video_color_primaries_t primaries;
             video_transfer_func_t transfer;
@@ -977,8 +977,6 @@ static int OpenDecoder(vlc_object_t *p_this)
     p_dec->fmt_out.video.i_sar_num = i_sar_num;
     p_dec->fmt_out.video.i_sar_den = i_sar_den;
 #undef ALIGN
-    p_dec->fmt_out.video.i_frame_rate = p_dec->fmt_in->video.i_frame_rate;
-    p_dec->fmt_out.video.i_frame_rate_base = p_dec->fmt_in->video.i_frame_rate_base;
 
     result = ProbeDecoder(p_dec, i_depth_luma, cudaChroma);
     if (result != VLC_SUCCESS)

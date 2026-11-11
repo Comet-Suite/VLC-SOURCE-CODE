@@ -282,10 +282,6 @@ static void OutputFrame(decoder_t *dec, const struct aom_image *img)
         v->color_range = img->range == AOM_CR_FULL_RANGE ? COLOR_RANGE_FULL : COLOR_RANGE_LIMITED;
     }
 
-    dec->fmt_out.video.projection_mode = dec->fmt_in->video.projection_mode;
-    dec->fmt_out.video.multiview_mode = dec->fmt_in->video.multiview_mode;
-    dec->fmt_out.video.pose = dec->fmt_in->video.pose;
-
     if (decoder_UpdateVideoFormat(dec) == 0)
     {
         picture_t *pic = decoder_NewPicture(dec);
@@ -408,17 +404,7 @@ static int OpenDecoder(vlc_object_t *p_this)
 
     dec->fmt_out.video.i_width = dec->fmt_in->video.i_width;
     dec->fmt_out.video.i_height = dec->fmt_in->video.i_height;
-    dec->fmt_out.video.orientation = dec->fmt_in->video.orientation;
     dec->fmt_out.i_codec = VLC_CODEC_I420;
-
-    if (dec->fmt_in->video.i_sar_num > 0 && dec->fmt_in->video.i_sar_den > 0) {
-        dec->fmt_out.video.i_sar_num = dec->fmt_in->video.i_sar_num;
-        dec->fmt_out.video.i_sar_den = dec->fmt_in->video.i_sar_den;
-    }
-    dec->fmt_out.video.primaries   = dec->fmt_in->video.primaries;
-    dec->fmt_out.video.transfer    = dec->fmt_in->video.transfer;
-    dec->fmt_out.video.space       = dec->fmt_in->video.space;
-    dec->fmt_out.video.color_range = dec->fmt_in->video.color_range;
 
     return VLC_SUCCESS;
 }
