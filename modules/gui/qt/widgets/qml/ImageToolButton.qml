@@ -35,6 +35,8 @@ T.ToolButton {
 
     property size sourceSize: Qt.size(VLCStyle.icon_normal, VLCStyle.icon_normal)
 
+    flat: true
+
     padding: 0
 
     enabled: !paintOnly
@@ -72,8 +74,13 @@ T.ToolButton {
 
         enabled: theme.initialized
 
-        color: theme.bg.primary
-        border.color: control.visualFocus ? theme.visualFocus : Qt.alpha(theme.visualFocus, 0.0)
+        color: (!control.flat || (control.enabled && (control.down || control.hovered)))
+               ? theme.bg.primary
+               : Qt.alpha(theme.bg.primary, 0.0)
+        border.color: control.visualFocus ? theme.visualFocus
+                    : (!control.flat || (control.enabled && (control.down || control.hovered)))
+                    ? theme.border
+                    : Qt.alpha(theme.border, 0.0)
     }
 
     contentItem: Image {

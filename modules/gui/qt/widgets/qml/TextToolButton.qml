@@ -25,7 +25,13 @@ import VLC.Style
 T.ToolButton {
     id: control
 
+    // NOTE: May not be respected if font.underline is set explicitly
+    property bool underlineOnHover: false
+
+    flat: true
+
     font.pixelSize: VLCStyle.fontSize_normal
+    font.underline: underlineOnHover && (hovered || down)
 
     implicitWidth: Math.max(implicitBackgroundWidth + leftInset + rightInset,
                             implicitContentWidth + leftPadding + rightPadding)
@@ -69,8 +75,13 @@ T.ToolButton {
 
     background: AnimatedBackground {
         enabled: theme.initialized
-        color: theme.bg.primary
-        border.color: visualFocus ? theme.visualFocus : Qt.alpha(theme.visualFocus, 0.0)
+        color: (!control.font.underline && (!control.flat || (control.enabled && (control.down || control.hovered))))
+               ? theme.bg.primary
+               : Qt.alpha(theme.bg.primary, 0.0)
+        border.color: visualFocus ? theme.visualFocus
+                    : (!control.font.underline && (!control.flat || (control.enabled && (control.down || control.hovered))))
+                    ? theme.border
+                    : Qt.alpha(theme.border, 0.0)
         radius: control.radius
     }
 }
