@@ -710,7 +710,8 @@ FocusScope {
                 panelObject: MainCtx.navigationPanel
                 atRight: true
 
-                resizeHandle.visible: (sidebar.state === "expanded") && !VLCStyle.isScreenSmall
+                resizeHandle.enabled: (sidebar.state === "expanded") && !VLCStyle.isScreenSmall
+                resizeHandle.hoverLine.anchors.topMargin: topLeftCornerBackground.visible ? VLCStyle.mainView_topLeftRadius : 0
                 visualBorder.visible: !topLeftCornerBackground.visible
 
                 minimumWidth: sidebar.minimumWidth
@@ -1128,7 +1129,7 @@ FocusScope {
         required property QtObject panelObject
         property alias atRight: resizeHandle.atRight
 
-        property alias visualBorder: visualBorder
+        property alias visualBorder: resizeHandle.handleVisual
         property alias resizeHandle: resizeHandle
 
         property alias minimumWidth: resizeHandle.minimumWidth
@@ -1136,24 +1137,12 @@ FocusScope {
 
         implicitWidth: resizeHandle.width
 
-        Rectangle {
-            id: visualBorder
-
-            anchors {
-                top: parent.top
-                bottom: parent.bottom
-                left: resizeHandle.atRight ? undefined : parent.left
-                right: resizeHandle.atRight ? parent.right: undefined
-            }
-
-            width: VLCStyle.border
-            color: theme.separator
-        }
-
         Widgets.HorizontalResizeHandle {
             id: resizeHandle
 
             property bool _inhibitMainInterfaceUpdate: false
+
+            hoverEnabled: true
 
             anchors {
                 top: parent.top
@@ -1165,7 +1154,7 @@ FocusScope {
             atRight: false
             currentWidth: target.width
 
-            visible: !VLCStyle.isScreenSmall
+            enabled: !VLCStyle.isScreenSmall
 
             onRequestedWidthChanged: {
                 if (!_inhibitMainInterfaceUpdate)

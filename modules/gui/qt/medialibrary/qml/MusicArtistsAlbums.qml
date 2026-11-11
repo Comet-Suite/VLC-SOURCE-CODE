@@ -243,6 +243,8 @@ Widgets.PageExt {
 
                 property bool _inhibitMainCtxUpdate: false
 
+                hoverEnabled: true
+
                 anchors {
                     top: parent.top
                     bottom: parent.bottom
@@ -281,14 +283,6 @@ Widgets.PageExt {
                     }
                 }
             }
-        }
-
-        Rectangle {
-            Layout.fillHeight: true
-
-            implicitWidth: VLCStyle.border
-            color: artistList.colorContext.separator
-            visible: artistList.visible
         }
 
         MusicArtist {
