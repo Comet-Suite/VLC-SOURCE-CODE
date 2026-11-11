@@ -358,6 +358,7 @@ Widgets.PageExt {
         maximumRows: root.maximumRows
 
         interactive: false
+        autoscroll: false
 
         enableBeginningFade: false
         enableEndFade: false
