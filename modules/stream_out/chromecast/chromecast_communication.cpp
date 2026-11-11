@@ -37,6 +37,66 @@
 #include <vlc_input_item.h>
 #include <vlc_url.h>
 
+static bool is_link_local( const struct addrinfo *ai )
+{
+    if (ai->ai_family != AF_INET6)
+        return false;
+
+    const struct sockaddr_in6 *sin6 = (const struct sockaddr_in6 *)ai->ai_addr;
+    return IN6_IS_ADDR_LINKLOCAL( &sin6->sin6_addr );
+}
+
+/* The local address of the control connection is also the address given to
+ * the receiver to reach our HTTP server. An IPv6 link-local address cannot be
+ * used for that, as its zone identifier is only meaningful to us, so only use
+ * the link-local addresses of the receiver if nothing else works. */
+static vlc_tls_t *open_tls( vlc_object_t *obj, vlc_tls_client_t *creds,
+                            const char *host, unsigned port )
+{
+    struct addrinfo hints = {}, *res;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_protocol = IPPROTO_TCP;
+
+    msg_Dbg( obj, "resolving %s ...", host );
+
+    int val = vlc_getaddrinfo_i11e( host, port, &hints, &res );
+    if (val != 0)
+    {
+        msg_Err( obj, "cannot resolve %s port %u: %s", host, port,
+                 gai_strerror(val) );
+        return NULL;
+    }
+
+    vlc_tls_t *tls = NULL;
+    for (int pass = 0; pass < 2 && tls == NULL; pass++)
+    {
+        for (const struct addrinfo *p = res; p != NULL && tls == NULL;
+             p = p->ai_next)
+        {
+            if (is_link_local( p ) != (pass == 1))
+                continue;
+
+            vlc_tls_t *sock = vlc_tls_SocketOpenAddrInfo( p, true );
+            if (sock == NULL)
+            {
+                msg_Warn( obj, "socket error: %s", vlc_strerror_c(errno) );
+                continue;
+            }
+
+            tls = vlc_tls_ClientSessionCreate( creds, sock, host, "tcps",
+                                               NULL, NULL );
+            if (tls == NULL)
+            {
+                msg_Warn( obj, "connection error: %s", vlc_strerror_c(errno) );
+                vlc_tls_SessionDelete( sock );
+            }
+        }
+    }
+
+    freeaddrinfo( res );
+    return tls;
+}
+
 ChromecastCommunication::ChromecastCommunication( vlc_object_t* p_module,
     std::string serverPath, unsigned int serverPort, const char* targetIP, unsigned int devicePort )
     : m_module( p_module )
@@ -54,8 +114,7 @@ ChromecastCommunication::ChromecastCommunication( vlc_object_t* p_module,
     if (m_creds == NULL)
         throw std::runtime_error( "Failed to create TLS client" );
 
-    m_tls = vlc_tls_SocketOpenTLS( m_creds, targetIP, devicePort, "tcps",
-                                   NULL, NULL );
+    m_tls = open_tls( m_module, m_creds, targetIP, devicePort );
     if (m_tls == NULL)
     {
         vlc_tls_ClientDelete(m_creds);
