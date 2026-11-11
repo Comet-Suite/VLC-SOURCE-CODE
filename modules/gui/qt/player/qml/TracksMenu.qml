@@ -22,6 +22,7 @@ import QtQuick.Layouts
 import QtQml.Models
 
 
+import VLC.MainInterface
 import VLC.Style
 import VLC.Widgets as Widgets
 import VLC.Util
@@ -74,6 +75,13 @@ T.Popup {
 
         focus: true
         clip: true
+
+        Keys.onEscapePressed: {
+            if (stackView.depth > 1)
+                trackMenuController.requestBack()
+            else
+                root.close()
+        }
 
         //erf, popup are weird, content is not parented to the root
         //so, duplicate the context here for the childrens

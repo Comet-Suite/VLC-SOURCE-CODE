@@ -67,15 +67,15 @@ public:
         return new NavigationAttached(parent);
     }
 
-    Q_INVOKABLE void defaultNavigationUp();
-    Q_INVOKABLE void defaultNavigationDown();
-    Q_INVOKABLE void defaultNavigationLeft();
-    Q_INVOKABLE void defaultNavigationRight();
-    Q_INVOKABLE void defaultNavigationCancel();
+    Q_INVOKABLE bool defaultNavigationUp();
+    Q_INVOKABLE bool defaultNavigationDown();
+    Q_INVOKABLE bool defaultNavigationLeft();
+    Q_INVOKABLE bool defaultNavigationRight();
+    Q_INVOKABLE bool defaultNavigationCancel();
 
 private:
-    void defaultNavigationGeneric(QJSValue& jsCallback, QQuickItem* directionItem,
-                                  void (NavigationAttached::* defaultNavFn)(void),
+    bool defaultNavigationGeneric(QJSValue& jsCallback, QQuickItem* directionItem,
+                                  bool (NavigationAttached::* defaultNavFn)(void),
                                   Qt::FocusReason reason);
 
 signals:

@@ -70,8 +70,11 @@ FocusScope {
 
     // Events
 
-    Component.onCompleted: MainCtx.preferHotkeys = true
-    Component.onDestruction: MainCtx.preferHotkeys = false
+    Binding {
+        target: MainCtx
+        property: "preferHotkeys"
+        value: !controlBar.menu
+    }
 
     Keys.priority: Keys.AfterItem
     Keys.onPressed: (event) => {
