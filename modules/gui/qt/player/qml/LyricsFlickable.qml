@@ -18,6 +18,7 @@
 import QtQuick
 import QtQuick.Templates as T
 import VLC.Player
+import VLC.Util
 import VLC.Widgets as Widgets
 import VLC.Style
 
@@ -51,6 +52,10 @@ Flickable {
         const idx = Player.currentLyricIndex
         if (idx < 0)
             return
+
+        // Force an early layout to prevent snapping to stale positions: the
+        // Column would only place the lines of a new lyrics track next frame
+        lyricsColumn.forceLayout()
 
         const item = lyricsRepeater.itemAt(idx)
         if (!item)
@@ -99,7 +104,7 @@ Flickable {
         Repeater {
             id: lyricsRepeater
 
-            model: Player.syltLyrics
+            model: Player.lyrics
 
             delegate: Text {
                 id: lyricDelegate
@@ -109,6 +114,17 @@ Flickable {
 
                 readonly property bool isCurrent: index === Player.currentLyricIndex
 
+                // A line with no text times an instrumental break: show that
+                // the song goes on rather than an empty row
+                readonly property bool instrumental: modelData.text.length === 0
+
+                // Media that time individual words let the current line be
+                // highlighted as it is sung. The highlight is expressed as
+                // markup rather than as a clipped overlay because a lyric can
+                // wrap, and only the text layout knows where its lines break.
+                readonly property bool karaoke: isCurrent && !instrumental
+                                                && Player.currentLyricSungChars >= 0
+
                 anchors.left: parent.left
                 anchors.right: parent.right
                 height: (index === (lyricsRepeater.count - 1))
@@ -116,7 +132,15 @@ Flickable {
                     : implicitHeight
                 padding: VLCStyle.margin_small
 
-                text: modelData.text
+                // Plain text everywhere else: the markup path only pays for
+                // itself on the single line being sung.
+                textFormat: karaoke ? Text.StyledText : Text.PlainText
+                text: instrumental
+                      ? "♪"
+                      : (karaoke ? Player.colorizePrefix(modelData.text,
+                                                         Player.currentLyricSungChars,
+                                                         lyricsFlickable.colorContext.accent)
+                                 : modelData.text)
 
                 horizontalAlignment: Text.AlignHCenter
                 wrapMode: Text.WordWrap

@@ -734,6 +734,7 @@ qml_modules += {
        'player/qml/ControlBar.qml',
        'player/qml/PlaybackSpeed.qml',
        'player/qml/LyricsFlickable.qml',
+       'player/qml/LyricsTrackSelector.qml',
        'player/qml/MiniPlayer.qml',
        'player/qml/PIPPlayer.qml',
        'player/qml/PlayerView.qml',
