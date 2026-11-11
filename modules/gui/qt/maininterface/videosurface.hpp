@@ -101,6 +101,8 @@ public:
     bool hovered() const { return m_hovered; }
 
 protected:
+    void keyPressEvent(QKeyEvent* event) override;
+    void keyReleaseEvent(QKeyEvent* event) override;
     QSGNode *updatePaintNode(QSGNode *, UpdatePaintNodeData *) override;
 
     int qtMouseButton2VLC( Qt::MouseButton qtButton );
