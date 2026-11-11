@@ -30,6 +30,22 @@ import VLC.Util
 T.Popup {
     id: root
 
+    modal: true
+    focus: true
+
+    Shortcut {
+        sequence: "Escape"
+        context: Qt.ApplicationShortcut
+        enabled: root.visible
+        onActivated: root.close()
+    }
+
+    onOpened: {
+        Qt.callLater(function() {
+            stackView.forceActiveFocus()
+        })
+    }
+
     // Settings
     property var preferredWidth : stackView.currentItem.preferredWidth
 

@@ -76,24 +76,36 @@ Widgets.IconToolButton {
         padding: VLCStyle.margin_small
 
         focus: true
+        modal: true
 
         // This popup should not exceed the boundaries of the scene.
         // Setting margins to >=0 makes it sure that this is satisfied.
+
         margins: MainCtx.windowExtendedMargin
+
+        Shortcut {
+            sequence: "Escape"
+            context: Qt.ApplicationShortcut
+            enabled: popup.visible
+            onActivated: popup.close()
+        }
 
         // Events
 
         onOpened: {
             control.requestLockUnlockAutoHide(true)
-
             control.menuOpened(popup)
+
+            Qt.callLater(function() {
+                if (popup.contentItem) {
+                    popup.contentItem.forceActiveFocus()
+                }
+            })
         }
 
         onClosed: {
             control.requestLockUnlockAutoHide(false)
-
             control.forceActiveFocus()
-
             control.menuOpened(null)
         }
 
