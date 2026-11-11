@@ -417,6 +417,8 @@ static VLCMain *sharedInstance = nil;
     }
     [notiticationCenter removeObserver: self];
 
+    [_coredialogs invalidate];
+
     // closes all open vouts
     _voutProvider = nil;
     _continuityController = nil;
