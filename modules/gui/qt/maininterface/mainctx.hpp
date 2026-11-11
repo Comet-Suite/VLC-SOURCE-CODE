@@ -136,6 +136,7 @@ class MainCtx : public QObject
     Q_PROPERTY(bool lyricsMode READ lyricsMode WRITE setLyricsMode NOTIFY lyricsModeChanged FINAL)
     Q_PROPERTY(bool usingTouch READ usingTouch NOTIFY usingTouchChanged FINAL)
     Q_PROPERTY(CSDButtonModel *csdButtonModel READ csdButtonModel CONSTANT FINAL)
+    Q_PROPERTY(bool csdRoundedCorners READ csdRoundedCorners NOTIFY csdRoundedCornersChanged FINAL)
     Q_PROPERTY(MainInterfaceModes mainInterfaceModes READ getMainInterfaceModes NOTIFY mainInterfaceModesChanged FINAL)
     Q_PROPERTY(MainInterfaceMode effectiveMainInterfaceMode READ getEffectiveMainInterfaceMode NOTIFY mainInterfaceModesChanged FINAL)
     Q_PROPERTY(MainInterfaceMode initialEffectiveMainInterfaceMode READ getInitialEffectiveMainInterfaceMode CONSTANT FINAL)
@@ -158,6 +159,7 @@ class MainCtx : public QObject
     Q_PROPERTY(bool bgCone READ isbgCone WRITE setbgCone NOTIFY bgConeToggled FINAL)
     Q_PROPERTY(bool windowSuportExtendedFrame READ windowSuportExtendedFrame NOTIFY windowSuportExtendedFrameChanged)
     Q_PROPERTY(unsigned windowExtendedMargin READ windowExtendedMargin WRITE setWindowExtendedMargin NOTIFY windowExtendedMarginChanged)
+    Q_PROPERTY(int windowRadius READ windowRadius MEMBER m_windowRadius NOTIFY windowRadiusChanged FINAL)
     Q_PROPERTY(SearchCtx* search MEMBER m_search CONSTANT FINAL)
     Q_PROPERTY(SortCtx* sort MEMBER m_sort CONSTANT FINAL)
 
@@ -240,6 +242,7 @@ public:
     inline bool hasGridView() const { return m_gridView; }
     inline Grouping grouping() const { return m_grouping; }
     inline bool albumSections() const { return m_albumSections; }
+    inline bool csdRoundedCorners() const { return m_csdRoundedCorners; }
     inline bool lyricsMode() const { return m_lyricsMode; }
     inline ColorSchemeModel* getColorScheme() const { return m_colorScheme; }
     bool hasVLM() const;
@@ -273,6 +276,7 @@ public:
 
     inline bool windowSuportExtendedFrame() const { return m_windowSuportExtendedFrame; }
     inline unsigned windowExtendedMargin() const { return m_windowExtendedMargin; }
+    int windowRadius() const { return m_windowRadius; }
     void setWindowSuportExtendedFrame(bool support);
     void setWindowExtendedMargin(unsigned margin);
 
@@ -356,6 +360,7 @@ public:
         });
     }
 
+    Q_INVOKABLE virtual bool platformHandlesRoundingWithCSD() const { return false; };
     Q_INVOKABLE virtual bool platformHandlesResizeWithCSD() const { return false; };
     Q_INVOKABLE virtual bool platformHandlesTitleBarButtonsWithCSD() const { return false; };
     Q_INVOKABLE virtual bool platformHandlesShadowsWithCSD() const { return false; };
@@ -484,6 +489,8 @@ protected:
 
     bool m_albumSections = true;
 
+    bool m_csdRoundedCorners = true;
+
     bool m_lyricsMode = true;
 
     bool m_usingTouch = false;
@@ -494,6 +501,7 @@ protected:
     bool m_bgCone = true;
     bool m_windowSuportExtendedFrame = false;
     unsigned m_windowExtendedMargin = 0;
+    int m_windowRadius = 0;
 
     std::unique_ptr<CSDButtonModel> m_csdButtonModel;
 
@@ -569,6 +577,7 @@ signals:
     void hasGridListModeChanged( bool );
     void groupingChanged( Grouping );
     void albumSectionsChanged( bool );
+    void csdRoundedCornersChanged( );
     void lyricsModeChanged( bool );
     void colorSchemeChanged( QString );
     void useClientSideDecorationChanged();
@@ -608,6 +617,7 @@ signals:
     void bgConeToggled();
     void windowSuportExtendedFrameChanged();
     void windowExtendedMarginChanged(unsigned margin);
+    void windowRadiusChanged(int radius);
 
     void artistAlbumsWidthChanged( double );
 
